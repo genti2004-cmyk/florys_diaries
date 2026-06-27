@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:florys_diaries/features/assistant/presentation/travel_assistant_screen.dart';
 import 'package:florys_diaries/features/map/presentation/world_map_screen.dart';
 import 'package:florys_diaries/features/settings/presentation/settings_screen.dart';
 import 'package:florys_diaries/features/statistics/presentation/statistics_screen.dart';
@@ -33,6 +34,14 @@ class _MainShellScreenState extends State<MainShellScreen> {
     'Einstellungen',
   ];
 
+  Future<void> _openAssistant() {
+    return Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => const TravelAssistantScreen(),
+      ),
+    );
+  }
+
   Future<void> _openTripEditor() {
     return Navigator.of(context).push(
       MaterialPageRoute<void>(builder: (_) => const TripEditorScreen()),
@@ -44,7 +53,17 @@ class _MainShellScreenState extends State<MainShellScreen> {
     final showNewTripAction = _index == 0;
 
     return Scaffold(
-      appBar: AppBar(title: Text(_titles[_index])),
+      appBar: AppBar(
+        title: Text(_titles[_index]),
+        actions: [
+          IconButton(
+            tooltip: 'Reiseassistent',
+            onPressed: _openAssistant,
+            icon: const Icon(Icons.auto_awesome_rounded),
+          ),
+          const SizedBox(width: 4),
+        ],
+      ),
       body: IndexedStack(
         index: _index,
         children: _screens,
