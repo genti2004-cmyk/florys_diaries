@@ -82,7 +82,10 @@ class TripAlbumEntryTypes {
   const TripAlbumEntryTypes._();
 
   static const note = TripAlbumEntryType(id: 'note', label: 'Tagesnotiz');
-  static const highlight = TripAlbumEntryType(id: 'highlight', label: 'Highlight');
+  static const highlight = TripAlbumEntryType(
+    id: 'highlight',
+    label: 'Highlight',
+  );
   static const place = TripAlbumEntryType(id: 'place', label: 'Ort');
   static const food = TripAlbumEntryType(id: 'food', label: 'Essen');
   static const memory = TripAlbumEntryType(id: 'memory', label: 'Erinnerung');
@@ -96,9 +99,6 @@ class TripAlbumEntryTypes {
   ];
 
   static TripAlbumEntryType byId(String id) {
-    return values.firstWhere(
-      (type) => type.id == id,
-      orElse: () => note,
-    );
+    return values.firstWhere((type) => type.id == id, orElse: () => note);
   }
 }

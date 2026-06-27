@@ -8,8 +8,8 @@ class GoogleDriveAppDataService {
   GoogleDriveAppDataService({
     GoogleDriveAuthService? authService,
     GoogleDriveRestClient? restClient,
-  })  : authService = authService ?? GoogleDriveAuthService.instance,
-        restClient = restClient ?? GoogleDriveRestClient();
+  }) : authService = authService ?? GoogleDriveAuthService.instance,
+       restClient = restClient ?? GoogleDriveRestClient();
 
   final GoogleDriveAuthService authService;
   final GoogleDriveRestClient restClient;
@@ -21,10 +21,7 @@ class GoogleDriveAppDataService {
     }
 
     final stored = await restClient.upload(session, sourceFile);
-    return GoogleDriveUploadResult(
-      backup: stored,
-      accountEmail: session.email,
-    );
+    return GoogleDriveUploadResult(backup: stored, accountEmail: session.email);
   }
 
   Future<GoogleDriveBackupHistoryResult?> loadBackupHistory() async {

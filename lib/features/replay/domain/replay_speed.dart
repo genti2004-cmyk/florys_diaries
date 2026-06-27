@@ -1,9 +1,5 @@
 enum ReplaySpeed {
-  normal(
-    multiplier: 1,
-    stepDuration: Duration(seconds: 3),
-    label: '×1',
-  ),
+  normal(multiplier: 1, stepDuration: Duration(seconds: 3), label: '×1'),
   doubleSpeed(
     multiplier: 2,
     stepDuration: Duration(milliseconds: 1500),

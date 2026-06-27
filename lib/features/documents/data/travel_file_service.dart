@@ -53,7 +53,6 @@ class TravelFileService {
     );
   }
 
-
   Future<File?> resolveDocumentFile(TravelDocument document) async {
     final relativePath = document.relativePath.trim();
     if (relativePath.isEmpty) {
@@ -70,7 +69,6 @@ class TravelFileService {
     return file != null && file.existsSync();
   }
 
-
   Future<Directory> rootDirectory() {
     return _rootDirectory();
   }
@@ -82,7 +80,9 @@ class TravelFileService {
 
   Future<Directory> tripExportDirectory(String tripId) async {
     final root = await _rootDirectory();
-    return Directory(_join(root.path, _joinMany([_relativeTripPath(tripId), 'export'])));
+    return Directory(
+      _join(root.path, _joinMany([_relativeTripPath(tripId), 'export'])),
+    );
   }
 
   Future<void> deleteTripFiles(String tripId) async {
@@ -156,6 +156,8 @@ class TravelFileService {
   }
 
   static String _joinMany(List<String> parts) {
-    return parts.where((part) => part.trim().isNotEmpty).join(Platform.pathSeparator);
+    return parts
+        .where((part) => part.trim().isNotEmpty)
+        .join(Platform.pathSeparator);
   }
 }

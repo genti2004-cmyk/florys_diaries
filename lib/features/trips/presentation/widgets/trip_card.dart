@@ -4,11 +4,7 @@ import 'package:florys_diaries/app/theme/app_colors.dart';
 import 'package:florys_diaries/features/trips/domain/trip.dart';
 
 class TripCard extends StatelessWidget {
-  const TripCard({
-    required this.trip,
-    required this.onTap,
-    super.key,
-  });
+  const TripCard({required this.trip, required this.onTap, super.key});
 
   final Trip trip;
   final VoidCallback onTap;
@@ -48,9 +44,7 @@ class TripCard extends StatelessWidget {
                       children: [
                         Text(
                           trip.title,
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleMedium
+                          style: Theme.of(context).textTheme.titleMedium
                               ?.copyWith(
                                 fontWeight: FontWeight.w900,
                                 color: AppColors.text,
@@ -59,9 +53,7 @@ class TripCard extends StatelessWidget {
                         const SizedBox(height: 3),
                         Text(
                           '${trip.destination}, ${trip.country}',
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodyMedium
+                          style: Theme.of(context).textTheme.bodyMedium
                               ?.copyWith(color: AppColors.textMuted),
                         ),
                       ],
@@ -99,10 +91,9 @@ class TripCard extends StatelessWidget {
                   trip.notes,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodyMedium
-                      ?.copyWith(color: AppColors.textMuted),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
                 ),
               ],
             ],
@@ -140,9 +131,9 @@ class _StatusBadge extends StatelessWidget {
       child: Text(
         isPast ? 'Archiv' : 'Geplant',
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: AppColors.primary,
-              fontWeight: FontWeight.w900,
-            ),
+          color: AppColors.primary,
+          fontWeight: FontWeight.w900,
+        ),
       ),
     );
   }
@@ -171,9 +162,9 @@ class _TripChip extends StatelessWidget {
           Text(
             label,
             style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  color: AppColors.text,
-                  fontWeight: FontWeight.w700,
-                ),
+              color: AppColors.text,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ],
       ),

@@ -36,16 +36,14 @@ class _MainShellScreenState extends State<MainShellScreen> {
 
   Future<void> _openAssistant() {
     return Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => const TravelAssistantScreen(),
-      ),
+      MaterialPageRoute<void>(builder: (_) => const TravelAssistantScreen()),
     );
   }
 
   Future<void> _openTripEditor() {
-    return Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => const TripEditorScreen()),
-    );
+    return Navigator.of(
+      context,
+    ).push(MaterialPageRoute<void>(builder: (_) => const TripEditorScreen()));
   }
 
   @override
@@ -64,10 +62,7 @@ class _MainShellScreenState extends State<MainShellScreen> {
           const SizedBox(width: 4),
         ],
       ),
-      body: IndexedStack(
-        index: _index,
-        children: _screens,
-      ),
+      body: IndexedStack(index: _index, children: _screens),
       floatingActionButton: showNewTripAction
           ? FloatingActionButton.extended(
               onPressed: _openTripEditor,

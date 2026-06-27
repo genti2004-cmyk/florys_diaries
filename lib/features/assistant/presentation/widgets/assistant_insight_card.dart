@@ -4,11 +4,7 @@ import 'package:florys_diaries/app/theme/app_colors.dart';
 import 'package:florys_diaries/features/assistant/domain/travel_assistant_models.dart';
 
 class AssistantInsightCard extends StatelessWidget {
-  const AssistantInsightCard({
-    required this.insight,
-    this.onTap,
-    super.key,
-  });
+  const AssistantInsightCard({required this.insight, this.onTap, super.key});
 
   final TravelAssistantInsight insight;
   final VoidCallback? onTap;
@@ -45,7 +41,8 @@ class AssistantInsightCard extends StatelessWidget {
                         Expanded(
                           child: Text(
                             insight.title,
-                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            style: Theme.of(context).textTheme.titleSmall
+                                ?.copyWith(
                                   color: AppColors.text,
                                   fontWeight: FontWeight.w900,
                                 ),
@@ -59,8 +56,8 @@ class AssistantInsightCard extends StatelessWidget {
                     Text(
                       insight.message,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: AppColors.textMuted,
-                          ),
+                        color: AppColors.textMuted,
+                      ),
                     ),
                   ],
                 ),

@@ -40,9 +40,10 @@ class BackupContentFingerprintService {
       }
 
       files.sort(
-        (left, right) => _relativePath(root, left.path).compareTo(
-          _relativePath(root, right.path),
-        ),
+        (left, right) => _relativePath(
+          root,
+          left.path,
+        ).compareTo(_relativePath(root, right.path)),
       );
 
       for (final file in files) {
@@ -61,15 +62,14 @@ class BackupContentFingerprintService {
 
   static Object? _normalizeJson(Object? value) {
     if (value is Map) {
-      final entries = value.entries
-          .map(
-            (entry) => MapEntry(
-              entry.key.toString(),
-              _normalizeJson(entry.value),
-            ),
-          )
-          .toList()
-        ..sort((left, right) => left.key.compareTo(right.key));
+      final entries =
+          value.entries
+              .map(
+                (entry) =>
+                    MapEntry(entry.key.toString(), _normalizeJson(entry.value)),
+              )
+              .toList()
+            ..sort((left, right) => left.key.compareTo(right.key));
       return <String, Object?>{
         for (final entry in entries) entry.key: entry.value,
       };

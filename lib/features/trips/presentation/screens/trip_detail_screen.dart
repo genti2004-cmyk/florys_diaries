@@ -5,6 +5,7 @@ import 'package:florys_diaries/app/theme/app_colors.dart';
 import 'package:florys_diaries/core/widgets/app_section_card.dart';
 import 'package:florys_diaries/core/widgets/app_section_title.dart';
 import 'package:florys_diaries/features/album/presentation/widgets/trip_album_section.dart';
+import 'package:florys_diaries/features/checklist/presentation/widgets/trip_checklist_section.dart';
 import 'package:florys_diaries/features/documents/data/travel_file_service.dart';
 import 'package:florys_diaries/features/documents/domain/document_category.dart';
 import 'package:florys_diaries/features/documents/domain/travel_document.dart';
@@ -42,7 +43,6 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
     super.dispose();
   }
 
-
   Future<void> _openReplay(BuildContext context, Trip currentTrip) {
     return Navigator.of(context).push(
       MaterialPageRoute<void>(
@@ -67,10 +67,8 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
     final store = TripStoreScope.of(context);
     final result = await Navigator.of(context).push<DocumentEditorResult>(
       MaterialPageRoute<DocumentEditorResult>(
-        builder: (_) => DocumentEditorScreen(
-          tripId: currentTrip.id,
-          document: document,
-        ),
+        builder: (_) =>
+            DocumentEditorScreen(tripId: currentTrip.id, document: document),
       ),
     );
 
@@ -83,7 +81,9 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
       await const TravelFileService().deleteDocumentFile(result.document);
       documents.removeWhere((item) => item.id == result.document.id);
     } else {
-      final index = documents.indexWhere((item) => item.id == result.document.id);
+      final index = documents.indexWhere(
+        (item) => item.id == result.document.id,
+      );
       if (index == -1) {
         documents.add(result.document);
       } else {
@@ -142,7 +142,6 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
     await store.updateTrip(currentTrip.copyWith(documents: documents));
   }
 
-
   Future<void> _exportTrip(BuildContext context, Trip currentTrip) async {
     final messenger = ScaffoldMessenger.of(context);
     final box = context.findRenderObject() as RenderBox?;
@@ -151,7 +150,9 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
       const SnackBar(content: Text('Reise-Export wird vorbereitet ...')),
     );
 
-    final zipFile = await const TripExportService().exportTripAsZip(currentTrip);
+    final zipFile = await const TripExportService().exportTripAsZip(
+      currentTrip,
+    );
     if (!context.mounted) {
       return;
     }
@@ -161,13 +162,17 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
         files: [XFile(zipFile.path)],
         subject: 'FlorysDiaries Export: ${currentTrip.title}',
         text: 'Reise-Export aus FlorysDiaries: ${currentTrip.title}',
-        sharePositionOrigin: box == null ? null : box.localToGlobal(Offset.zero) & box.size,
+        sharePositionOrigin: box == null
+            ? null
+            : box.localToGlobal(Offset.zero) & box.size,
       ),
     );
 
     if (result.status == ShareResultStatus.unavailable) {
       messenger.showSnackBar(
-        const SnackBar(content: Text('Teilen ist auf diesem Gerät nicht verfügbar.')),
+        const SnackBar(
+          content: Text('Teilen ist auf diesem Gerät nicht verfügbar.'),
+        ),
       );
     }
   }
@@ -180,7 +185,9 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
       builder: (dialogContext) {
         return AlertDialog(
           title: const Text('Reise löschen?'),
-          content: Text('${currentTrip.title} wird aus FlorysDiaries entfernt.'),
+          content: Text(
+            '${currentTrip.title} wird aus FlorysDiaries entfernt.',
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(false),
@@ -257,6 +264,8 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
               onTap: () => _openReplay(context, currentTrip),
             ),
             const SizedBox(height: 16),
+            TripChecklistSection(trip: currentTrip),
+            const SizedBox(height: 16),
             TripAlbumSection(trip: currentTrip),
             const SizedBox(height: 16),
             const AppSectionTitle(
@@ -269,7 +278,8 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
                   child: AppSectionCard(
                     icon: Icons.description_outlined,
                     title: '${currentTrip.documentCount} Dokumente',
-                    subtitle: '${_favoriteCount(currentTrip.documents)} Favoriten',
+                    subtitle:
+                        '${_favoriteCount(currentTrip.documents)} Favoriten',
                     onTap: () => _openDocumentEditor(context, currentTrip),
                   ),
                 ),
@@ -324,16 +334,10 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
                   padding: const EdgeInsets.only(bottom: 12),
                   child: TravelDocumentCard(
                     document: document,
-                    onTap: () => _openDocumentDetail(
-                      context,
-                      currentTrip,
-                      document,
-                    ),
-                    onFavoriteToggle: () => _toggleFavorite(
-                      context,
-                      currentTrip,
-                      document,
-                    ),
+                    onTap: () =>
+                        _openDocumentDetail(context, currentTrip, document),
+                    onFavoriteToggle: () =>
+                        _toggleFavorite(context, currentTrip, document),
                   ),
                 ),
               ),
@@ -356,7 +360,8 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
         document.fileExtension,
         document.description,
       ].join(' ').toLowerCase();
-      final matchesQuery = lowerQuery.isEmpty || searchableText.contains(lowerQuery);
+      final matchesQuery =
+          lowerQuery.isEmpty || searchableText.contains(lowerQuery);
       return matchesFavorite && matchesCategory && matchesQuery;
     }).toList();
 
@@ -537,9 +542,9 @@ class _TripHeroCard extends StatelessWidget {
                       Text(
                         currentTrip.title,
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              color: AppColors.text,
-                              fontWeight: FontWeight.w900,
-                            ),
+                          color: AppColors.text,
+                          fontWeight: FontWeight.w900,
+                        ),
                       ),
                       const SizedBox(height: 4),
                       Text(
@@ -563,9 +568,9 @@ class _TripHeroCard extends StatelessWidget {
               currentTrip.notes.trim().isEmpty
                   ? 'Keine Notizen gespeichert.'
                   : currentTrip.notes,
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: AppColors.text,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyLarge?.copyWith(color: AppColors.text),
             ),
           ],
         ),
@@ -597,9 +602,9 @@ class _DetailChip extends StatelessWidget {
           Text(
             label,
             style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  color: AppColors.text,
-                  fontWeight: FontWeight.w800,
-                ),
+              color: AppColors.text,
+              fontWeight: FontWeight.w800,
+            ),
           ),
         ],
       ),

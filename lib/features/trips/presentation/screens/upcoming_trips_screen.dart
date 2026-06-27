@@ -14,9 +14,9 @@ class UpcomingTripsScreen extends StatelessWidget {
   const UpcomingTripsScreen({super.key});
 
   Future<void> _openEditor(BuildContext context) {
-    return Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => const TripEditorScreen()),
-    );
+    return Navigator.of(
+      context,
+    ).push(MaterialPageRoute<void>(builder: (_) => const TripEditorScreen()));
   }
 
   void _openTrip(BuildContext context, Trip trip) {

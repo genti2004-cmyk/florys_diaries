@@ -46,7 +46,11 @@ class WorldSummaryCard extends StatelessWidget {
                   color: AppColors.primarySoft,
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: const Icon(Icons.public, color: AppColors.primary, size: 31),
+                child: const Icon(
+                  Icons.public,
+                  color: AppColors.primary,
+                  size: 31,
+                ),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -56,17 +60,17 @@ class WorldSummaryCard extends StatelessWidget {
                     Text(
                       '${progressPercent.toStringAsFixed(1)}% der Welt',
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            color: AppColors.text,
-                            fontWeight: FontWeight.w900,
-                          ),
+                        color: AppColors.text,
+                        fontWeight: FontWeight.w900,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       'Automatisch aus deinen Reisen berechnet.',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: AppColors.textMuted,
-                            fontWeight: FontWeight.w600,
-                          ),
+                        color: AppColors.textMuted,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ],
                 ),
@@ -86,10 +90,21 @@ class WorldSummaryCard extends StatelessWidget {
           const SizedBox(height: 16),
           Row(
             children: [
-              Expanded(child: _MiniStat(label: 'Reisen', value: tripCount.toString())),
-              Expanded(child: _MiniStat(label: 'Länder', value: countryCount.toString())),
-              Expanded(child: _MiniStat(label: 'Städte', value: cityCount.toString())),
-              Expanded(child: _MiniStat(label: 'Tage', value: travelDays.toString())),
+              Expanded(
+                child: _MiniStat(label: 'Reisen', value: tripCount.toString()),
+              ),
+              Expanded(
+                child: _MiniStat(
+                  label: 'Länder',
+                  value: countryCount.toString(),
+                ),
+              ),
+              Expanded(
+                child: _MiniStat(label: 'Städte', value: cityCount.toString()),
+              ),
+              Expanded(
+                child: _MiniStat(label: 'Tage', value: travelDays.toString()),
+              ),
             ],
           ),
         ],
@@ -112,17 +127,17 @@ class _MiniStat extends StatelessWidget {
         Text(
           value,
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: AppColors.primary,
-                fontWeight: FontWeight.w900,
-              ),
+            color: AppColors.primary,
+            fontWeight: FontWeight.w900,
+          ),
         ),
         const SizedBox(height: 3),
         Text(
           label,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: AppColors.textMuted,
-                fontWeight: FontWeight.w700,
-              ),
+            color: AppColors.textMuted,
+            fontWeight: FontWeight.w700,
+          ),
         ),
       ],
     );

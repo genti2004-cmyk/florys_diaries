@@ -51,7 +51,8 @@ class ReplayDocumentMoment extends StatelessWidget {
                     Expanded(
                       child: Text(
                         isImage ? 'Fotomoment' : 'Reisedokument',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(
                               color: AppColors.text,
                               fontWeight: FontWeight.w900,
                             ),
@@ -81,9 +82,7 @@ class ReplayDocumentMoment extends StatelessWidget {
                             ? Icons.photo_outlined
                             : Icons.visibility_outlined,
                       ),
-                      label: Text(
-                        isImage ? 'Foto öffnen' : 'Dokument öffnen',
-                      ),
+                      label: Text(isImage ? 'Foto öffnen' : 'Dokument öffnen'),
                     ),
                   ),
                 ] else ...[
@@ -137,9 +136,9 @@ class _DocumentFallback extends StatelessWidget {
           Text(
             document.fileTypeLabel,
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.w900,
-                ),
+              color: AppColors.primary,
+              fontWeight: FontWeight.w900,
+            ),
           ),
         ],
       ),
@@ -165,10 +164,7 @@ class ReplayMemoryInfoLine extends StatelessWidget {
         Icon(icon, size: 18, color: AppColors.primary),
         const SizedBox(width: 8),
         Expanded(
-          child: Text(
-            text,
-            style: const TextStyle(color: AppColors.textMuted),
-          ),
+          child: Text(text, style: const TextStyle(color: AppColors.textMuted)),
         ),
       ],
     );

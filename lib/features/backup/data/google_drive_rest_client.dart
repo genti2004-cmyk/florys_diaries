@@ -9,7 +9,7 @@ import 'package:florys_diaries/features/backup/domain/google_drive_backup_models
 
 class GoogleDriveRestClient {
   GoogleDriveRestClient({http.Client? client})
-      : _client = client ?? http.Client();
+    : _client = client ?? http.Client();
 
   final http.Client _client;
 
@@ -30,14 +30,10 @@ class GoogleDriveRestClient {
       final headers = await session.authorizationHeaders();
 
       final createResponse = await _client.post(
-        Uri.https(
-          'www.googleapis.com',
-          '/upload/drive/v3/files',
-          const {
-            'uploadType': 'resumable',
-            'fields': 'id,name,createdTime,modifiedTime,size',
-          },
-        ),
+        Uri.https('www.googleapis.com', '/upload/drive/v3/files', const {
+          'uploadType': 'resumable',
+          'fields': 'id,name,createdTime,modifiedTime,size',
+        }),
         headers: {
           ...headers,
           'Content-Type': 'application/json; charset=UTF-8',
@@ -60,10 +56,7 @@ class GoogleDriveRestClient {
 
       if (createResponse.statusCode != 200 &&
           createResponse.statusCode != 201) {
-        _throwDriveError(
-          createResponse.statusCode,
-          createResponse.body,
-        );
+        _throwDriveError(createResponse.statusCode, createResponse.body);
       }
 
       final uploadLocation = createResponse.headers['location'];
@@ -73,13 +66,11 @@ class GoogleDriveRestClient {
         );
       }
 
-      final uploadRequest = http.StreamedRequest(
-        'PUT',
-        Uri.parse(uploadLocation),
-      )
-        ..headers.addAll(headers)
-        ..headers['Content-Type'] = 'application/zip'
-        ..contentLength = length;
+      final uploadRequest =
+          http.StreamedRequest('PUT', Uri.parse(uploadLocation))
+            ..headers.addAll(headers)
+            ..headers['Content-Type'] = 'application/zip'
+            ..contentLength = length;
 
       final responseFuture = _client.send(uploadRequest);
       await uploadRequest.sink.addStream(sourceFile.openRead());
@@ -92,9 +83,7 @@ class GoogleDriveRestClient {
         _throwDriveError(streamedResponse.statusCode, responseBody);
       }
 
-      return GoogleDriveStoredBackup.fromJson(
-        _decodeObject(responseBody),
-      );
+      return GoogleDriveStoredBackup.fromJson(_decodeObject(responseBody));
     });
   }
 
@@ -104,18 +93,15 @@ class GoogleDriveRestClient {
     return _withNetworkErrors(() async {
       final headers = await session.authorizationHeaders();
       final response = await _client.get(
-        Uri.https(
-          'www.googleapis.com',
-          '/drive/v3/files',
-          {
-            'spaces': 'appDataFolder',
-            'q': "trashed = false and appProperties has { key='florysDiariesBackup' and value='true' }",
-            'orderBy': 'createdTime desc',
-            'pageSize': '100',
-            'fields':
-                'files(id,name,createdTime,modifiedTime,size,appProperties)',
-          },
-        ),
+        Uri.https('www.googleapis.com', '/drive/v3/files', {
+          'spaces': 'appDataFolder',
+          'q':
+              "trashed = false and appProperties has { key='florysDiariesBackup' and value='true' }",
+          'orderBy': 'createdTime desc',
+          'pageSize': '100',
+          'fields':
+              'files(id,name,createdTime,modifiedTime,size,appProperties)',
+        }),
         headers: headers,
       );
 
@@ -155,11 +141,9 @@ class GoogleDriveRestClient {
       final headers = await session.authorizationHeaders();
       final request = http.Request(
         'GET',
-        Uri.https(
-          'www.googleapis.com',
-          '/drive/v3/files/${backup.id}',
-          const {'alt': 'media'},
-        ),
+        Uri.https('www.googleapis.com', '/drive/v3/files/${backup.id}', const {
+          'alt': 'media',
+        }),
       )..headers.addAll(headers);
 
       final response = await _client.send(request);
@@ -170,10 +154,7 @@ class GoogleDriveRestClient {
 
       final temporaryDirectory = await getTemporaryDirectory();
       final importsDirectory = Directory(
-        _join(
-          temporaryDirectory.path,
-          'florys_diaries_google_drive_imports',
-        ),
+        _join(temporaryDirectory.path, 'florys_diaries_google_drive_imports'),
       );
       await importsDirectory.create(recursive: true);
 
@@ -203,10 +184,7 @@ class GoogleDriveRestClient {
     return _withNetworkErrors(() async {
       final headers = await session.authorizationHeaders();
       final response = await _client.delete(
-        Uri.https(
-          'www.googleapis.com',
-          '/drive/v3/files/${backup.id}',
-        ),
+        Uri.https('www.googleapis.com', '/drive/v3/files/${backup.id}'),
         headers: headers,
       );
 
@@ -246,9 +224,7 @@ class GoogleDriveRestClient {
       );
     }
 
-    return decoded.map(
-      (key, value) => MapEntry(key.toString(), value),
-    );
+    return decoded.map((key, value) => MapEntry(key.toString(), value));
   }
 
   static Never _throwDriveError(int statusCode, String responseBody) {
@@ -296,9 +272,7 @@ class GoogleDriveRestClient {
         .split('/')
         .where((part) => part.trim().isNotEmpty)
         .toList(growable: false);
-    return parts.isEmpty
-        ? 'FlorysDiaries_Backup.zip'
-        : parts.last;
+    return parts.isEmpty ? 'FlorysDiaries_Backup.zip' : parts.last;
   }
 
   static String _safeFileName(String value) {
@@ -308,9 +282,7 @@ class GoogleDriveRestClient {
     if (cleaned.isEmpty) {
       return 'FlorysDiaries_Backup.zip';
     }
-    return cleaned.toLowerCase().endsWith('.zip')
-        ? cleaned
-        : '$cleaned.zip';
+    return cleaned.toLowerCase().endsWith('.zip') ? cleaned : '$cleaned.zip';
   }
 
   static String _join(String left, String right) {

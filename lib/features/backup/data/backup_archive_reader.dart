@@ -141,9 +141,7 @@ class BackupArchiveReader {
 
     for (final value in decoded) {
       if (value is! Map<String, dynamic>) {
-        throw const FormatException(
-          'Ein Reiseeintrag im Backup ist ungültig.',
-        );
+        throw const FormatException('Ein Reiseeintrag im Backup ist ungültig.');
       }
 
       final id = value['id'];
@@ -235,9 +233,9 @@ class BackupArchiveReader {
         RegExp(r'^[a-zA-Z]:').hasMatch(path)) {
       return false;
     }
-    return !path.split('/').any(
-          (segment) => segment == '..' || segment.isEmpty,
-        );
+    return !path
+        .split('/')
+        .any((segment) => segment == '..' || segment.isEmpty);
   }
 
   static String _normalizePath(String path) {

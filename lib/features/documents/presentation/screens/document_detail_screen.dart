@@ -36,7 +36,6 @@ class DocumentDetailScreen extends StatelessWidget {
     }
   }
 
-
   Future<void> _shareFile(BuildContext context) async {
     final messenger = ScaffoldMessenger.of(context);
     final box = context.findRenderObject() as RenderBox?;
@@ -55,13 +54,17 @@ class DocumentDetailScreen extends StatelessWidget {
         files: [XFile(file.path)],
         subject: document.title,
         text: 'Dokument aus FlorysDiaries: ${document.title}',
-        sharePositionOrigin: box == null ? null : box.localToGlobal(Offset.zero) & box.size,
+        sharePositionOrigin: box == null
+            ? null
+            : box.localToGlobal(Offset.zero) & box.size,
       ),
     );
 
     if (result.status == ShareResultStatus.unavailable) {
       messenger.showSnackBar(
-        const SnackBar(content: Text('Teilen ist auf diesem Gerät nicht verfügbar.')),
+        const SnackBar(
+          content: Text('Teilen ist auf diesem Gerät nicht verfügbar.'),
+        ),
       );
     }
   }
@@ -162,7 +165,9 @@ class DocumentDetailScreen extends StatelessWidget {
                 Expanded(
                   child: _MetaCard(
                     label: 'Größe',
-                    value: document.sizeLabel.isEmpty ? '—' : document.sizeLabel,
+                    value: document.sizeLabel.isEmpty
+                        ? '—'
+                        : document.sizeLabel,
                     icon: Icons.storage_outlined,
                   ),
                 ),
@@ -185,7 +190,8 @@ class DocumentDetailScreen extends StatelessWidget {
                     children: [
                       Text(
                         'Notiz',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(
                               color: AppColors.text,
                               fontWeight: FontWeight.w900,
                             ),
@@ -202,7 +208,9 @@ class DocumentDetailScreen extends StatelessWidget {
             ],
             const SizedBox(height: 18),
             FilledButton.icon(
-              onPressed: document.hasFile ? () => _showIntegratedPreview(context) : null,
+              onPressed: document.hasFile
+                  ? () => _showIntegratedPreview(context)
+                  : null,
               icon: const Icon(Icons.visibility_outlined),
               label: const Text('Vorschau öffnen'),
             ),
@@ -276,7 +284,10 @@ class _DocumentPreview extends StatelessWidget {
 
   static bool _isImage(String extension) {
     final value = extension.toLowerCase().trim();
-    return value == 'jpg' || value == 'jpeg' || value == 'png' || value == 'webp';
+    return value == 'jpg' ||
+        value == 'jpeg' ||
+        value == 'png' ||
+        value == 'webp';
   }
 }
 
@@ -305,9 +316,9 @@ class _PreviewFallback extends StatelessWidget {
           Text(
             document.fileTypeLabel,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.w900,
-                ),
+              color: AppColors.primary,
+              fontWeight: FontWeight.w900,
+            ),
           ),
           const SizedBox(height: 4),
           Text(
@@ -349,9 +360,9 @@ class _MetaCard extends StatelessWidget {
                   Text(
                     label,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.textMuted,
-                          fontWeight: FontWeight.w700,
-                        ),
+                      color: AppColors.textMuted,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                   const SizedBox(height: 2),
                   Text(
@@ -359,9 +370,9 @@ class _MetaCard extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          color: AppColors.text,
-                          fontWeight: FontWeight.w900,
-                        ),
+                      color: AppColors.text,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                 ],
               ),

@@ -8,9 +8,7 @@ import 'package:florys_diaries/features/backup/domain/local_backup_entry.dart';
 import 'package:florys_diaries/features/trips/domain/trip.dart';
 
 class LocalBackupService {
-  const LocalBackupService({
-    this.backupService = const AppBackupService(),
-  });
+  const LocalBackupService({this.backupService = const AppBackupService()});
 
   final AppBackupService backupService;
 
@@ -18,9 +16,7 @@ class LocalBackupService {
   static const Duration automaticBackupInterval = Duration(hours: 24);
   static const String _directoryName = 'FlorysDiariesLocalBackups';
 
-  Future<LocalBackupEntry?> createAutomaticBackupIfDue(
-    List<Trip> trips,
-  ) async {
+  Future<LocalBackupEntry?> createAutomaticBackupIfDue(List<Trip> trips) async {
     final entries = await listBackups();
     final automaticEntries = entries
         .where((entry) => entry.isAutomatic)
@@ -122,9 +118,7 @@ class LocalBackupService {
 
   Future<Directory> _backupDirectory() async {
     final supportDirectory = await getApplicationSupportDirectory();
-    final directory = Directory(
-      _join(supportDirectory.path, _directoryName),
-    );
+    final directory = Directory(_join(supportDirectory.path, _directoryName));
     if (!await directory.exists()) {
       await directory.create(recursive: true);
     }

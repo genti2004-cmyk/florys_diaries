@@ -25,7 +25,9 @@ class ReplayProgress extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasMultipleEvents = totalCount > 1;
-    final safeIndex = totalCount == 0 ? 0 : currentIndex.clamp(0, totalCount - 1);
+    final safeIndex = totalCount == 0
+        ? 0
+        : currentIndex.clamp(0, totalCount - 1);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -36,9 +38,9 @@ class ReplayProgress extends StatelessWidget {
               child: Text(
                 'Replay-Fortschritt',
                 style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color: AppColors.textMuted,
-                      fontWeight: FontWeight.w700,
-                    ),
+                  color: AppColors.textMuted,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
             Container(
@@ -50,9 +52,9 @@ class ReplayProgress extends StatelessWidget {
               child: Text(
                 statusLabel,
                 style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w900,
-                    ),
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w900,
+                ),
               ),
             ),
           ],
@@ -66,9 +68,9 @@ class ReplayProgress extends StatelessWidget {
                     ? 'Keine Ereignisse'
                     : 'Ereignis ${safeIndex + 1} von $totalCount',
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      color: AppColors.text,
-                      fontWeight: FontWeight.w900,
-                    ),
+                  color: AppColors.text,
+                  fontWeight: FontWeight.w900,
+                ),
               ),
             ),
             const SizedBox(width: 8),
@@ -79,9 +81,9 @@ class ReplayProgress extends StatelessWidget {
                 textAlign: TextAlign.end,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: AppColors.textMuted,
-                      fontWeight: FontWeight.w700,
-                    ),
+                  color: AppColors.textMuted,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
           ],

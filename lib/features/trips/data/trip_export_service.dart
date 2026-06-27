@@ -50,19 +50,26 @@ class TripExportService {
 
   Future<File> _targetZipFile(Trip trip) async {
     final temp = await getTemporaryDirectory();
-    final directory = Directory(_joinMany([temp.path, 'florys_diaries_exports']));
+    final directory = Directory(
+      _joinMany([temp.path, 'florys_diaries_exports']),
+    );
     if (!await directory.exists()) {
       await directory.create(recursive: true);
     }
 
     final stamp = DateTime.now().millisecondsSinceEpoch;
-    return File(_joinMany([directory.path, '${_safeName(trip.title)}_$stamp.zip']));
+    return File(
+      _joinMany([directory.path, '${_safeName(trip.title)}_$stamp.zip']),
+    );
   }
 
   Future<void> _writeTripMetadata(Trip trip, Directory exportRoot) async {
     final encoder = const JsonEncoder.withIndent('  ');
     final metadataFile = File(_joinMany([exportRoot.path, 'reise.json']));
-    await metadataFile.writeAsString(encoder.convert(trip.toJson()), flush: true);
+    await metadataFile.writeAsString(
+      encoder.convert(trip.toJson()),
+      flush: true,
+    );
 
     final readme = File(_joinMany([exportRoot.path, 'README.txt']));
     await readme.writeAsString(
@@ -77,7 +84,9 @@ class TripExportService {
   }
 
   Future<void> _copyDocumentFiles(Trip trip, Directory exportRoot) async {
-    final documentsDirectory = Directory(_joinMany([exportRoot.path, 'documents']));
+    final documentsDirectory = Directory(
+      _joinMany([exportRoot.path, 'documents']),
+    );
     await documentsDirectory.create(recursive: true);
 
     for (final document in trip.documents) {
@@ -89,7 +98,9 @@ class TripExportService {
       final targetName = _safeName(
         document.fileName.trim().isEmpty ? document.title : document.fileName,
       );
-      final target = File(_joinMany([documentsDirectory.path, '${document.id}_$targetName']));
+      final target = File(
+        _joinMany([documentsDirectory.path, '${document.id}_$targetName']),
+      );
       await source.copy(target.path);
     }
   }
@@ -106,6 +117,8 @@ class TripExportService {
   }
 
   static String _joinMany(List<String> parts) {
-    return parts.where((part) => part.trim().isNotEmpty).join(Platform.pathSeparator);
+    return parts
+        .where((part) => part.trim().isNotEmpty)
+        .join(Platform.pathSeparator);
   }
 }

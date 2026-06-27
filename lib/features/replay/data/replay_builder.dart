@@ -96,10 +96,7 @@ class ReplayBuilder {
         extension == 'webp';
   }
 
-  ReplayEvent _albumEvent(
-    TripAlbumEntry entry, {
-    required String country,
-  }) {
+  ReplayEvent _albumEvent(TripAlbumEntry entry, {required String country}) {
     return ReplayEvent(
       id: 'album_${entry.id}',
       type: _typeForAlbumEntry(entry),

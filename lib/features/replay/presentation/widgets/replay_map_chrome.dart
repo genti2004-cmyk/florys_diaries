@@ -40,9 +40,9 @@ class ReplayMapHeader extends StatelessWidget {
                 Text(
                   'Replay-Karte',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: AppColors.text,
-                        fontWeight: FontWeight.w900,
-                      ),
+                    color: AppColors.text,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -86,7 +86,11 @@ class ReplayMapFooter extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
       child: Row(
         children: [
-          const Icon(Icons.route_outlined, color: AppColors.textMuted, size: 18),
+          const Icon(
+            Icons.route_outlined,
+            color: AppColors.textMuted,
+            size: 18,
+          ),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -126,9 +130,9 @@ class ReplayNoPositionOverlay extends StatelessWidget {
                 'Die Karte folgt, sobald ein Ereignis mit bekanntem Ort erreicht wird.',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.text,
-                      fontWeight: FontWeight.w800,
-                    ),
+                  color: AppColors.text,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ],
           ),

@@ -25,9 +25,7 @@ class GoogleDriveStoredBackup {
     return backup;
   }
 
-  static GoogleDriveStoredBackup? tryFromJson(
-    Map<String, dynamic> json,
-  ) {
+  static GoogleDriveStoredBackup? tryFromJson(Map<String, dynamic> json) {
     final id = json['id']?.toString().trim() ?? '';
     final name = json['name']?.toString().trim() ?? '';
     if (id.isEmpty || name.isEmpty) {
@@ -51,7 +49,8 @@ class GoogleDriveStoredBackup {
       name: name,
       createdAt: createdAt,
       sizeBytes: int.tryParse(json['size']?.toString() ?? '') ?? 0,
-      isAutomatic: properties['backupKind'] == 'automatic' ||
+      isAutomatic:
+          properties['backupKind'] == 'automatic' ||
           name.contains('_Cloud_Auto_'),
     );
   }

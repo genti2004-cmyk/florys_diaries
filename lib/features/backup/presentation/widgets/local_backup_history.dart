@@ -52,7 +52,8 @@ class LocalBackupHistory extends StatelessWidget {
                     children: [
                       Text(
                         'Lokale Backup-Historie',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(
                               fontWeight: FontWeight.w800,
                               color: AppColors.text,
                             ),
@@ -61,8 +62,8 @@ class LocalBackupHistory extends StatelessWidget {
                       Text(
                         'Beim App-Start entsteht höchstens einmal in 24 Stunden ein automatisches Backup. Die 7 neuesten lokalen Sicherungen bleiben erhalten.',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: AppColors.textMuted,
-                            ),
+                          color: AppColors.textMuted,
+                        ),
                       ),
                     ],
                   ),
@@ -93,9 +94,9 @@ class LocalBackupHistory extends StatelessWidget {
                 ),
                 child: Text(
                   'Noch keine lokale Sicherung vorhanden.',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.textMuted,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
                 ),
               )
             else
@@ -142,9 +143,7 @@ class _LocalBackupTile extends StatelessWidget {
         backgroundColor: AppColors.primarySoft,
         foregroundColor: AppColors.primary,
         child: Icon(
-          entry.isAutomatic
-              ? Icons.autorenew_outlined
-              : Icons.save_outlined,
+          entry.isAutomatic ? Icons.autorenew_outlined : Icons.save_outlined,
         ),
       ),
       title: Text(

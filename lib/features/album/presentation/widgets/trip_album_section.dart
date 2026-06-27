@@ -95,7 +95,9 @@ class _TripAlbumSectionState extends State<TripAlbumSection> {
               child: AppSectionCard(
                 icon: Icons.photo_library_outlined,
                 title: '${photos.length} Fotos',
-                subtitle: photos.isEmpty ? 'Noch keine Foto-Dateien' : 'Aus Travel Vault',
+                subtitle: photos.isEmpty
+                    ? 'Noch keine Foto-Dateien'
+                    : 'Aus Travel Vault',
               ),
             ),
           ],
@@ -124,7 +126,8 @@ class _TripAlbumSectionState extends State<TripAlbumSection> {
           AppSectionCard(
             icon: Icons.favorite_border_rounded,
             title: 'Keine Lieblingsmomente sichtbar',
-            subtitle: 'Schalte den Filter aus oder markiere Einträge als Favorit.',
+            subtitle:
+                'Schalte den Filter aus oder markiere Einträge als Favorit.',
             onTap: () => setState(() => _showFavoritesOnly = false),
           )
         else
@@ -151,11 +154,13 @@ class _TripAlbumSectionState extends State<TripAlbumSection> {
   }
 
   static List<TravelDocument> _photoDocuments(List<TravelDocument> documents) {
-    return documents.where((document) {
-      final extension = document.fileExtension.toLowerCase();
-      return document.categoryId == DocumentCategories.photo.id ||
-          const ['jpg', 'jpeg', 'png', 'webp'].contains(extension);
-    }).toList(growable: false);
+    return documents
+        .where((document) {
+          final extension = document.fileExtension.toLowerCase();
+          return document.categoryId == DocumentCategories.photo.id ||
+              const ['jpg', 'jpeg', 'png', 'webp'].contains(extension);
+        })
+        .toList(growable: false);
   }
 }
 
@@ -237,9 +242,9 @@ class _PhotoPreviewStrip extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: AppColors.text,
-                          fontWeight: FontWeight.w700,
-                        ),
+                      color: AppColors.text,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ],

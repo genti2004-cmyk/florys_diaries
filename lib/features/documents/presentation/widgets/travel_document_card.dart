@@ -49,7 +49,8 @@ class TravelDocumentCard extends StatelessWidget {
                             document.title,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            style: Theme.of(context).textTheme.titleSmall
+                                ?.copyWith(
                                   color: AppColors.text,
                                   fontWeight: FontWeight.w900,
                                 ),
@@ -70,9 +71,9 @@ class TravelDocumentCard extends StatelessWidget {
                     Text(
                       document.category.label,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.textMuted,
-                            fontWeight: FontWeight.w700,
-                          ),
+                        color: AppColors.textMuted,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     if (document.fileName.trim().isNotEmpty) ...[
                       const SizedBox(height: 3),
@@ -81,8 +82,8 @@ class TravelDocumentCard extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: AppColors.textMuted,
-                            ),
+                          color: AppColors.textMuted,
+                        ),
                       ),
                     ],
                     if (meta.isNotEmpty) ...[
@@ -106,10 +107,15 @@ class TravelDocumentCard extends StatelessWidget {
                   document.isFavorite
                       ? Icons.star_rounded
                       : Icons.star_border_rounded,
-                  color: document.isFavorite ? AppColors.sand : AppColors.textMuted,
+                  color: document.isFavorite
+                      ? AppColors.sand
+                      : AppColors.textMuted,
                 ),
               ),
-              const Icon(Icons.chevron_right_rounded, color: AppColors.textMuted),
+              const Icon(
+                Icons.chevron_right_rounded,
+                color: AppColors.textMuted,
+              ),
             ],
           ),
         ),
@@ -146,9 +152,9 @@ class _DocumentMetaChip extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: AppColors.text,
-              fontWeight: FontWeight.w800,
-            ),
+          color: AppColors.text,
+          fontWeight: FontWeight.w800,
+        ),
       ),
     );
   }

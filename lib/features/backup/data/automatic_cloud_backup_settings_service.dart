@@ -8,8 +8,7 @@ import 'package:florys_diaries/features/backup/domain/automatic_cloud_backup_set
 class AutomaticCloudBackupSettingsService {
   const AutomaticCloudBackupSettingsService();
 
-  static const String _fileName =
-      'florys_diaries_automatic_cloud_backup.json';
+  static const String _fileName = 'florys_diaries_automatic_cloud_backup.json';
 
   Future<AutomaticCloudBackupSettings> load() async {
     final file = await _settingsFile();
@@ -25,9 +24,7 @@ class AutomaticCloudBackupSettingsService {
       }
 
       return AutomaticCloudBackupSettings.fromJson(
-        decoded.map(
-          (key, value) => MapEntry(key.toString(), value),
-        ),
+        decoded.map((key, value) => MapEntry(key.toString(), value)),
       );
     } on FileSystemException {
       return AutomaticCloudBackupSettings.defaults;
@@ -57,8 +54,6 @@ class AutomaticCloudBackupSettingsService {
     if (!await directory.exists()) {
       await directory.create(recursive: true);
     }
-    return File(
-      '${directory.path}${Platform.pathSeparator}$_fileName',
-    );
+    return File('${directory.path}${Platform.pathSeparator}$_fileName');
   }
 }

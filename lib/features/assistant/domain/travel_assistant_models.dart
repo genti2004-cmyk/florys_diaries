@@ -8,11 +8,7 @@ enum TravelAssistantInsightKind {
   overview,
 }
 
-enum TravelAssistantPriority {
-  high,
-  medium,
-  low,
-}
+enum TravelAssistantPriority { high, medium, low }
 
 class TravelAssistantInsight {
   const TravelAssistantInsight({
@@ -43,6 +39,8 @@ class TravelAssistantSnapshot {
     required this.photoCount,
     required this.memoryCount,
     required this.highlightCount,
+    required this.checklistItemCount,
+    required this.checklistCompletedCount,
     required this.nextTripReadiness,
     required this.insights,
     this.nextTrip,
@@ -57,11 +55,15 @@ class TravelAssistantSnapshot {
   final int photoCount;
   final int memoryCount;
   final int highlightCount;
+  final int checklistItemCount;
+  final int checklistCompletedCount;
   final int nextTripReadiness;
   final List<TravelAssistantInsight> insights;
   final Trip? nextTrip;
 
   bool get hasTrips => tripCount > 0;
+
+  int get checklistOpenCount => checklistItemCount - checklistCompletedCount;
 
   String get readinessLabel {
     if (nextTrip == null) {

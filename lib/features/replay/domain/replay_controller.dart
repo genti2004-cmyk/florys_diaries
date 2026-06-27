@@ -6,13 +6,7 @@ import 'replay_event.dart';
 import 'replay_speed.dart';
 import 'replay_timeline.dart';
 
-enum ReplayPlaybackStatus {
-  empty,
-  ready,
-  playing,
-  paused,
-  completed,
-}
+enum ReplayPlaybackStatus { empty, ready, playing, paused, completed }
 
 class ReplayController extends ChangeNotifier {
   ReplayController({required this.timeline});

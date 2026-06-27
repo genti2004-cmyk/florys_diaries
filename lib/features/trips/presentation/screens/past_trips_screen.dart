@@ -35,7 +35,8 @@ class PastTripsScreen extends StatelessWidget {
             const AppSectionCard(
               icon: Icons.history_rounded,
               title: 'Noch kein Archiv',
-              subtitle: 'Wenn das Enddatum vorbei ist, erscheint die Reise hier.',
+              subtitle:
+                  'Wenn das Enddatum vorbei ist, erscheint die Reise hier.',
             )
           else
             for (final entry in groupedTrips.entries) ...[
@@ -44,8 +45,8 @@ class PastTripsScreen extends StatelessWidget {
                 child: Text(
                   entry.key.toString(),
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w900,
-                      ),
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
               ),
               ...entry.value.map(

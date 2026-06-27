@@ -48,7 +48,9 @@ class TripStorageService {
     }
 
     final encoder = const JsonEncoder.withIndent('  ');
-    final rawJson = encoder.convert(trips.map((trip) => trip.toJson()).toList());
+    final rawJson = encoder.convert(
+      trips.map((trip) => trip.toJson()).toList(),
+    );
     await file.writeAsString(rawJson, flush: true);
   }
 

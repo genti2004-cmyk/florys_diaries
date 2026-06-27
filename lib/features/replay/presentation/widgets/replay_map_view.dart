@@ -92,7 +92,8 @@ class _ReplayMapViewState extends State<ReplayMapView>
                         onPositionChanged:
                             _cinematicController.handlePositionChanged,
                         interactionOptions: const InteractionOptions(
-                          flags: InteractiveFlag.drag |
+                          flags:
+                              InteractiveFlag.drag |
                               InteractiveFlag.pinchZoom |
                               InteractiveFlag.doubleTapZoom,
                         ),
@@ -111,8 +112,9 @@ class _ReplayMapViewState extends State<ReplayMapView>
                                 points: routePoints,
                                 color: AppColors.primary,
                                 strokeWidth: 4.2,
-                                borderColor:
-                                    Colors.white.withValues(alpha: 0.88),
+                                borderColor: Colors.white.withValues(
+                                  alpha: 0.88,
+                                ),
                                 borderStrokeWidth: 1.5,
                               ),
                             ],
@@ -197,10 +199,7 @@ class _ReplayMapViewState extends State<ReplayMapView>
   void _moveToCurrentLocation(int oldIndex) {
     final targetPosition = _currentPositionedEvent?.position;
     if (targetPosition == null || !targetPosition.isValid) {
-      _cinematicController.reset(
-        center: _initialCenter,
-        zoom: _initialZoom,
-      );
+      _cinematicController.reset(center: _initialCenter, zoom: _initialZoom);
       return;
     }
 
@@ -294,8 +293,7 @@ class _ReplayMapViewState extends State<ReplayMapView>
           height: 56,
           child: ReplayTravelMarker(
             bearingDegrees: _cinematicController.travelBearing,
-            isPlaying:
-                widget.isPlaying || _cinematicController.isAnimating,
+            isPlaying: widget.isPlaying || _cinematicController.isAnimating,
           ),
         ),
       );

@@ -3,11 +3,7 @@ import 'package:flutter/material.dart';
 import '../../app/theme/app_colors.dart';
 
 class AppSectionTitle extends StatelessWidget {
-  const AppSectionTitle({
-    required this.title,
-    this.subtitle,
-    super.key,
-  });
+  const AppSectionTitle({required this.title, this.subtitle, super.key});
 
   final String title;
   final String? subtitle;
@@ -30,9 +26,9 @@ class AppSectionTitle extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               subtitle!,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColors.textMuted,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
             ),
           ],
         ],

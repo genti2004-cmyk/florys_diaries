@@ -115,7 +115,9 @@ class _TripEditorScreenState extends State<TripEditorScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(_isEditing ? 'Reise bearbeiten' : 'Reise anlegen')),
+      appBar: AppBar(
+        title: Text(_isEditing ? 'Reise bearbeiten' : 'Reise anlegen'),
+      ),
       body: SafeArea(
         child: Form(
           key: _formKey,
@@ -177,7 +179,9 @@ class _TripEditorScreenState extends State<TripEditorScreen> {
               FilledButton.icon(
                 onPressed: _saveTrip,
                 icon: const Icon(Icons.check),
-                label: Text(_isEditing ? 'Änderungen speichern' : 'Reise speichern'),
+                label: Text(
+                  _isEditing ? 'Änderungen speichern' : 'Reise speichern',
+                ),
               ),
             ],
           ),

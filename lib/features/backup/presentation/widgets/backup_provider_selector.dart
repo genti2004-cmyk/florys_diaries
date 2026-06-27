@@ -50,7 +50,8 @@ class BackupProviderSelector extends StatelessWidget {
                     children: [
                       Text(
                         'Backup-Ziel',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(
                               fontWeight: FontWeight.w800,
                               color: AppColors.text,
                             ),
@@ -59,8 +60,8 @@ class BackupProviderSelector extends StatelessWidget {
                       Text(
                         'Backups können auf dem Gerät oder im privaten Google-Drive-App-Datenordner gespeichert werden.',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: AppColors.textMuted,
-                            ),
+                          color: AppColors.textMuted,
+                        ),
                       ),
                     ],
                   ),
@@ -84,17 +85,16 @@ class BackupProviderSelector extends StatelessWidget {
                       }
                     },
                   ),
-                  if (index != providers.length - 1)
-                    const Divider(height: 1),
+                  if (index != providers.length - 1) const Divider(height: 1),
                 ],
               );
             }),
             const SizedBox(height: 10),
             Text(
               'Google Drive ist verfügbar und verwendet ausschließlich den versteckten App-Datenordner. OneDrive und Dropbox bleiben vorbereitet.',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.textMuted,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColors.textMuted),
             ),
           ],
         ),
@@ -143,16 +143,16 @@ class _ProviderTile extends StatelessWidget {
                   Text(
                     provider.displayName,
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.text,
-                        ),
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.text,
+                    ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     provider.description,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.textMuted,
-                        ),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: AppColors.textMuted),
                   ),
                 ],
               ),
@@ -179,10 +179,7 @@ class _ProviderTile extends StatelessWidget {
 }
 
 class _ProviderStatus extends StatelessWidget {
-  const _ProviderStatus({
-    required this.isAvailable,
-    required this.isSelected,
-  });
+  const _ProviderStatus({required this.isAvailable, required this.isSelected});
 
   final bool isAvailable;
   final bool isSelected;
@@ -192,8 +189,8 @@ class _ProviderStatus extends StatelessWidget {
     final label = isSelected
         ? 'Aktiv'
         : isAvailable
-            ? 'Verfügbar'
-            : 'Vorbereitet';
+        ? 'Verfügbar'
+        : 'Vorbereitet';
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
       decoration: BoxDecoration(
@@ -203,9 +200,9 @@ class _ProviderStatus extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: isSelected ? AppColors.primary : AppColors.textMuted,
-              fontWeight: FontWeight.w700,
-            ),
+          color: isSelected ? AppColors.primary : AppColors.textMuted,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }

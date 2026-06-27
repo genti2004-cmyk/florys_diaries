@@ -35,7 +35,10 @@ class AlbumEntryCard extends StatelessWidget {
                   color: AppColors.primarySoft,
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: Icon(_iconForType(entry.typeId), color: AppColors.primary),
+                child: Icon(
+                  _iconForType(entry.typeId),
+                  color: AppColors.primary,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -49,7 +52,8 @@ class AlbumEntryCard extends StatelessWidget {
                             entry.title,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(
                                   fontWeight: FontWeight.w900,
                                   color: AppColors.text,
                                 ),
@@ -89,8 +93,8 @@ class AlbumEntryCard extends StatelessWidget {
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: AppColors.textMuted,
-                            ),
+                          color: AppColors.textMuted,
+                        ),
                       ),
                     ],
                   ],
@@ -137,9 +141,9 @@ class _AlbumChip extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: AppColors.text,
-              fontWeight: FontWeight.w700,
-            ),
+          color: AppColors.text,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }

@@ -4,10 +4,7 @@ import 'package:florys_diaries/app/theme/app_colors.dart';
 import 'package:florys_diaries/features/assistant/domain/travel_assistant_models.dart';
 
 class AssistantOverviewGrid extends StatelessWidget {
-  const AssistantOverviewGrid({
-    required this.snapshot,
-    super.key,
-  });
+  const AssistantOverviewGrid({required this.snapshot, super.key});
 
   final TravelAssistantSnapshot snapshot;
 
@@ -80,12 +77,17 @@ class _MetricTile extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    value,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.w900,
-                        ),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      value,
+                      maxLines: 1,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
                   ),
                   Text(
                     label,

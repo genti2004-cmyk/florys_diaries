@@ -1,4 +1,5 @@
 import 'package:florys_diaries/features/album/domain/trip_album_entry.dart';
+import 'package:florys_diaries/features/checklist/domain/trip_checklist_item.dart';
 import 'package:florys_diaries/features/documents/domain/travel_document.dart';
 
 class Trip {
@@ -12,6 +13,7 @@ class Trip {
     this.notes = '',
     this.documents = const [],
     this.albumEntries = const [],
+    this.checklistItems = const [],
     this.photoCount = 0,
   });
 
@@ -24,6 +26,7 @@ class Trip {
   final String notes;
   final List<TravelDocument> documents;
   final List<TripAlbumEntry> albumEntries;
+  final List<TripChecklistItem> checklistItems;
   final int photoCount;
 
   int get documentCount => documents.length;
@@ -32,6 +35,23 @@ class Trip {
 
   int get highlightCount {
     return albumEntries.where((entry) => entry.isHighlight).length;
+  }
+
+  int get checklistCompletedCount {
+    return checklistItems.where((item) => item.isCompleted).length;
+  }
+
+  int get checklistOpenCount => checklistItems.length - checklistCompletedCount;
+
+  int get checklistOverdueCount {
+    return checklistItems.where((item) => item.isOverdue).length;
+  }
+
+  double get checklistProgress {
+    if (checklistItems.isEmpty) {
+      return 0;
+    }
+    return checklistCompletedCount / checklistItems.length;
   }
 
   int get durationDays {
@@ -57,6 +77,7 @@ class Trip {
       'notes': notes,
       'documents': documents.map((document) => document.toJson()).toList(),
       'albumEntries': albumEntries.map((entry) => entry.toJson()).toList(),
+      'checklistItems': checklistItems.map((item) => item.toJson()).toList(),
       'photoCount': photoCount,
     };
   }
@@ -72,6 +93,7 @@ class Trip {
       notes: (json['notes'] as String?) ?? '',
       documents: _parseDocuments(json['documents']),
       albumEntries: _parseAlbumEntries(json['albumEntries']),
+      checklistItems: _parseChecklistItems(json['checklistItems']),
       photoCount: (json['photoCount'] as num?)?.toInt() ?? 0,
     );
   }
@@ -86,6 +108,7 @@ class Trip {
     String? notes,
     List<TravelDocument>? documents,
     List<TripAlbumEntry>? albumEntries,
+    List<TripChecklistItem>? checklistItems,
     int? photoCount,
   }) {
     return Trip(
@@ -98,6 +121,7 @@ class Trip {
       notes: notes ?? this.notes,
       documents: documents ?? this.documents,
       albumEntries: albumEntries ?? this.albumEntries,
+      checklistItems: checklistItems ?? this.checklistItems,
       photoCount: photoCount ?? this.photoCount,
     );
   }
@@ -133,4 +157,17 @@ class Trip {
         .toList(growable: false);
   }
 
+  static List<TripChecklistItem> _parseChecklistItems(Object? value) {
+    if (value is! List) {
+      return const [];
+    }
+
+    return value
+        .whereType<Map<String, dynamic>>()
+        .map(TripChecklistItem.fromJson)
+        .where(
+          (item) => item.id.trim().isNotEmpty && item.title.trim().isNotEmpty,
+        )
+        .toList(growable: false);
+  }
 }

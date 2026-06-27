@@ -48,7 +48,8 @@ class BackupPanel extends StatelessWidget {
                     children: [
                       Text(
                         'Backup & Wiederherstellung',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(
                               fontWeight: FontWeight.w800,
                               color: AppColors.text,
                             ),
@@ -57,8 +58,8 @@ class BackupPanel extends StatelessWidget {
                       Text(
                         'Aktives Ziel: $providerName. Gesichert werden Reisen, Album-Einträge und lokale Dokumente.',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: AppColors.textMuted,
-                            ),
+                          color: AppColors.textMuted,
+                        ),
                       ),
                     ],
                   ),
@@ -77,9 +78,9 @@ class BackupPanel extends StatelessWidget {
                 child: Text(
                   statusText!,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.w700,
-                      ),
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
             ],

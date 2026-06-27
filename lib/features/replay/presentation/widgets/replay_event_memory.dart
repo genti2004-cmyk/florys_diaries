@@ -8,11 +8,7 @@ import 'package:florys_diaries/features/replay/presentation/widgets/replay_docum
 import 'package:florys_diaries/features/trips/domain/trip.dart';
 
 class ReplayEventMemory extends StatelessWidget {
-  const ReplayEventMemory({
-    required this.trip,
-    required this.event,
-    super.key,
-  });
+  const ReplayEventMemory({required this.trip, required this.event, super.key});
 
   final Trip trip;
   final ReplayEvent event;

@@ -9,15 +9,15 @@ class ReplayCinematicMapController extends ChangeNotifier {
     required TickerProvider vsync,
     required LatLng initialCenter,
     required double initialZoom,
-  })  : mapController = MapController(),
-        _cameraCenter = initialCenter,
-        _cameraZoom = initialZoom,
-        _animationCameraFrom = initialCenter,
-        _animationTravelFrom = initialCenter,
-        _animationTarget = initialCenter,
-        _animationFromZoom = initialZoom,
-        _animationTravelZoom = initialZoom,
-        _animationTargetZoom = initialZoom {
+  }) : mapController = MapController(),
+       _cameraCenter = initialCenter,
+       _cameraZoom = initialZoom,
+       _animationCameraFrom = initialCenter,
+       _animationTravelFrom = initialCenter,
+       _animationTarget = initialCenter,
+       _animationFromZoom = initialZoom,
+       _animationTravelZoom = initialZoom,
+       _animationTargetZoom = initialZoom {
     _animationController = AnimationController(
       vsync: vsync,
       duration: const Duration(milliseconds: 680),
@@ -106,10 +106,7 @@ class ReplayCinematicMapController extends ChangeNotifier {
     );
     _animationTravelZoom = _travelZoomForDistance(distanceKm);
     _animationTargetZoom = _targetZoomForDistance(distanceKm);
-    _travelBearing = _bearingDegrees(
-      _animationTravelFrom,
-      _animationTarget,
-    );
+    _travelBearing = _bearingDegrees(_animationTravelFrom, _animationTarget);
 
     if (!_mapReady) {
       _cameraCenter = target;
@@ -127,16 +124,8 @@ class ReplayCinematicMapController extends ChangeNotifier {
     }
 
     final eased = Curves.easeInOutCubic.transform(_animationController.value);
-    final center = _lerpPosition(
-      _animationCameraFrom,
-      _animationTarget,
-      eased,
-    );
-    final travel = _lerpPosition(
-      _animationTravelFrom,
-      _animationTarget,
-      eased,
-    );
+    final center = _lerpPosition(_animationCameraFrom, _animationTarget, eased);
+    final travel = _lerpPosition(_animationTravelFrom, _animationTarget, eased);
     final zoom = _cinematicZoom(_animationController.value);
 
     _cameraCenter = center;
@@ -179,16 +168,15 @@ class ReplayCinematicMapController extends ChangeNotifier {
     final firstLatitude = _toRadians(from.latitude);
     final secondLatitude = _toRadians(to.latitude);
 
-    final a = math.sin(latitudeDelta / 2) * math.sin(latitudeDelta / 2) +
+    final a =
+        math.sin(latitudeDelta / 2) * math.sin(latitudeDelta / 2) +
         math.cos(firstLatitude) *
             math.cos(secondLatitude) *
             math.sin(longitudeDelta / 2) *
             math.sin(longitudeDelta / 2);
     final normalizedA = a.clamp(0.0, 1.0).toDouble();
-    final c = 2 * math.atan2(
-      math.sqrt(normalizedA),
-      math.sqrt(1 - normalizedA),
-    );
+    final c =
+        2 * math.atan2(math.sqrt(normalizedA), math.sqrt(1 - normalizedA));
     return earthRadiusKm * c;
   }
 
@@ -227,7 +215,8 @@ class ReplayCinematicMapController extends ChangeNotifier {
     final longitudeDelta = _toRadians(to.longitude - from.longitude);
 
     final y = math.sin(longitudeDelta) * math.cos(toLatitude);
-    final x = math.cos(fromLatitude) * math.sin(toLatitude) -
+    final x =
+        math.cos(fromLatitude) * math.sin(toLatitude) -
         math.sin(fromLatitude) *
             math.cos(toLatitude) *
             math.cos(longitudeDelta);

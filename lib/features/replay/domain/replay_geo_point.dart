@@ -1,8 +1,5 @@
 class ReplayGeoPoint {
-  const ReplayGeoPoint({
-    required this.latitude,
-    required this.longitude,
-  });
+  const ReplayGeoPoint({required this.latitude, required this.longitude});
 
   final double latitude;
   final double longitude;

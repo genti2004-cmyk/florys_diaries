@@ -67,7 +67,6 @@ class GoogleDriveAuthService {
     return GoogleDriveSession(user);
   }
 
-
   Future<GoogleDriveSession?> connectSilently() async {
     await initialize();
 
@@ -132,10 +131,7 @@ class GoogleDriveAuthService {
 }
 
 class GoogleDriveSession {
-  const GoogleDriveSession(
-    this.user, {
-    this.allowPrompt = true,
-  });
+  const GoogleDriveSession(this.user, {this.allowPrompt = true});
 
   final GoogleSignInAccount user;
   final bool allowPrompt;

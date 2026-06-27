@@ -85,7 +85,8 @@ class _TravelAssistantScreenState extends State<TravelAssistantScreen> {
           children: [
             const AppSectionTitle(
               title: 'Smart Travel Assistant',
-              subtitle: 'Lokale Hinweise aus deinen Reisen, Dokumenten und Erinnerungen.',
+              subtitle:
+                  'Lokale Hinweise aus deinen Reisen, Dokumenten und Erinnerungen.',
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -110,9 +111,9 @@ class _TravelAssistantScreenState extends State<TravelAssistantScreen> {
                   Text(
                     'Empfehlungen',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: AppColors.text,
-                          fontWeight: FontWeight.w900,
-                        ),
+                      color: AppColors.text,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                   const SizedBox(height: 10),
                   ...snapshot.insights.map(
@@ -163,9 +164,9 @@ class _ReadinessCard extends StatelessWidget {
                         ? 'Aktuell keine kommende Reise'
                         : 'Nächste Reise: ${trip.destination}',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: AppColors.text,
-                          fontWeight: FontWeight.w900,
-                        ),
+                      color: AppColors.text,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                 ),
                 Text(

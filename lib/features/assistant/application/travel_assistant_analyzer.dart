@@ -4,11 +4,16 @@ import 'package:florys_diaries/features/trips/domain/trip.dart';
 class TravelAssistantAnalyzer {
   const TravelAssistantAnalyzer();
 
-  TravelAssistantSnapshot analyze(List<Trip> source) {
+  TravelAssistantSnapshot analyze(List<Trip> source, {DateTime? now}) {
+    final today = _dateOnly(now ?? DateTime.now());
     final trips = List<Trip>.from(source)
       ..sort((a, b) => a.startDate.compareTo(b.startDate));
-    final upcoming = trips.where((trip) => !trip.isPast).toList(growable: false);
-    final past = trips.where((trip) => trip.isPast).toList(growable: false);
+    final upcoming = trips
+        .where((trip) => !_isPast(trip, today))
+        .toList(growable: false);
+    final past = trips
+        .where((trip) => _isPast(trip, today))
+        .toList(growable: false);
     final nextTrip = upcoming.isEmpty ? null : upcoming.first;
     final insights = <TravelAssistantInsight>[];
 
@@ -19,12 +24,13 @@ class TravelAssistantAnalyzer {
           kind: TravelAssistantInsightKind.overview,
           priority: TravelAssistantPriority.high,
           title: 'Dein Reisetagebuch wartet',
-          message: 'Lege eine Reise an. Danach kann der Assistent Unterlagen, '
+          message:
+              'Lege eine Reise an. Danach kann der Assistent Unterlagen, '
               'Erinnerungen und Vorbereitung auswerten.',
         ),
       );
     } else {
-      _addUpcomingInsights(upcoming, insights);
+      _addUpcomingInsights(upcoming, insights, today);
       _addPastTripInsights(past, insights);
       _addOverviewInsight(trips, insights);
     }
@@ -47,7 +53,17 @@ class TravelAssistantAnalyzer {
       fileCount: documents.where((document) => document.hasFile).length,
       photoCount: trips.fold(0, (sum, trip) => sum + trip.photoCount),
       memoryCount: entries.length,
-      highlightCount: entries.where((entry) => entry.isHighlight).length,
+      highlightCount: entries
+          .where((entry) => entry.isHighlight || entry.isFavorite)
+          .length,
+      checklistItemCount: trips.fold<int>(
+        0,
+        (sum, trip) => sum + trip.checklistItems.length,
+      ),
+      checklistCompletedCount: trips.fold<int>(
+        0,
+        (sum, trip) => sum + trip.checklistCompletedCount,
+      ),
       nextTripReadiness: nextTrip == null ? 0 : _readinessScore(nextTrip),
       insights: List.unmodifiable(insights.take(8)),
       nextTrip: nextTrip,
@@ -57,13 +73,14 @@ class TravelAssistantAnalyzer {
   void _addUpcomingInsights(
     List<Trip> trips,
     List<TravelAssistantInsight> target,
+    DateTime today,
   ) {
-    final today = _dateOnly(DateTime.now());
-
     for (final trip in trips.take(3)) {
+      final tripLabel = _tripLabel(trip);
       final daysUntil = _dateOnly(trip.startDate).difference(today).inDays;
-      final documentsWithoutFile =
-          trip.documents.where((document) => !document.hasFile).length;
+      final documentsWithoutFile = trip.documents
+          .where((document) => !document.hasFile)
+          .length;
 
       if (trip.documents.isEmpty) {
         target.add(
@@ -73,12 +90,12 @@ class TravelAssistantAnalyzer {
             priority: daysUntil <= 30
                 ? TravelAssistantPriority.high
                 : TravelAssistantPriority.medium,
-            title: 'Unterlagen für ${trip.destination} fehlen',
+            title: 'Unterlagen für $tripLabel fehlen',
             message: daysUntil <= 0
-                ? 'Die Reise beginnt heute oder läuft bereits. Hinterlege Tickets, '
-                    'Buchungen oder Reisedokumente.'
+                ? 'Die Reise beginnt heute oder läuft bereits. Hinterlege '
+                      'Tickets, Buchungen oder Reisedokumente.'
                 : 'Noch $daysUntil Tage. Hinterlege Tickets, Buchungen oder '
-                    'Reisedokumente im Travel Vault.',
+                      'Reisedokumente im Travel Vault.',
             tripId: trip.id,
           ),
         );
@@ -88,11 +105,11 @@ class TravelAssistantAnalyzer {
             id: 'files-${trip.id}',
             kind: TravelAssistantInsightKind.documents,
             priority: TravelAssistantPriority.medium,
-            title: 'Dateien für ${trip.destination} ergänzen',
+            title: 'Dateien für $tripLabel ergänzen',
             message: documentsWithoutFile == 1
                 ? 'Ein Dokumenteintrag hat noch keine gespeicherte Datei.'
                 : '$documentsWithoutFile Dokumenteinträge haben noch keine '
-                    'gespeicherte Datei.',
+                      'gespeicherte Datei.',
             tripId: trip.id,
           ),
         );
@@ -104,9 +121,10 @@ class TravelAssistantAnalyzer {
             id: 'notes-${trip.id}',
             kind: TravelAssistantInsightKind.preparation,
             priority: TravelAssistantPriority.low,
-            title: 'Plan für ${trip.destination} ergänzen',
-            message: 'Notiere Adresse, Treffpunkte oder wichtige Aufgaben, damit '
-                'alles an einem Ort bleibt.',
+            title: 'Plan für $tripLabel ergänzen',
+            message:
+                'Notiere Adresse, Treffpunkte oder wichtige Aufgaben, '
+                'damit alles an einem Ort bleibt.',
             tripId: trip.id,
           ),
         );
@@ -122,26 +140,34 @@ class TravelAssistantAnalyzer {
       ..sort((a, b) => b.endDate.compareTo(a.endDate));
 
     for (final trip in newestFirst.take(3)) {
+      final tripLabel = _tripLabel(trip);
+      final hasNotableMoment = trip.albumEntries.any(
+        (entry) => entry.isHighlight || entry.isFavorite,
+      );
+
       if (trip.photoCount > 0 && trip.albumEntries.isEmpty) {
         target.add(
           TravelAssistantInsight(
             id: 'album-${trip.id}',
             kind: TravelAssistantInsightKind.memories,
             priority: TravelAssistantPriority.medium,
-            title: 'Fotos von ${trip.destination} erzählen noch keine Geschichte',
-            message: '${trip.photoCount} Fotos sind erfasst. Ergänze eine Notiz '
-                'oder Erinnerung für das Reisealbum.',
+            title: 'Fotos von $tripLabel erzählen noch keine Geschichte',
+            message:
+                '${trip.photoCount} Fotos sind erfasst. Ergänze eine '
+                'Notiz oder Erinnerung für das Reisealbum.',
             tripId: trip.id,
           ),
         );
-      } else if (trip.albumEntries.isNotEmpty && trip.highlightCount == 0) {
+      } else if (trip.albumEntries.isNotEmpty && !hasNotableMoment) {
         target.add(
           TravelAssistantInsight(
             id: 'highlight-${trip.id}',
             kind: TravelAssistantInsightKind.highlights,
             priority: TravelAssistantPriority.low,
-            title: 'Lieblingsmoment aus ${trip.destination} markieren',
-            message: 'Die Reise hat Album-Einträge, aber noch kein Highlight.',
+            title: 'Lieblingsmoment aus $tripLabel markieren',
+            message:
+                'Die Reise hat Album-Einträge, aber noch kein Highlight '
+                'oder keinen Favoriten.',
             tripId: trip.id,
           ),
         );
@@ -151,8 +177,9 @@ class TravelAssistantAnalyzer {
             id: 'memory-${trip.id}',
             kind: TravelAssistantInsightKind.memories,
             priority: TravelAssistantPriority.low,
-            title: '${trip.destination} kurz festhalten',
-            message: 'Eine kleine Erinnerung macht die Reise später leichter '
+            title: '$tripLabel kurz festhalten',
+            message:
+                'Eine kleine Erinnerung macht die Reise später leichter '
                 'wiedererlebbar.',
             tripId: trip.id,
           ),
@@ -182,9 +209,15 @@ class TravelAssistantAnalyzer {
       return;
     }
 
-    final top = countryCounts.entries.reduce(
-      (a, b) => a.value >= b.value ? a : b,
-    );
+    final sorted = countryCounts.entries.toList()
+      ..sort((a, b) {
+        final countComparison = b.value.compareTo(a.value);
+        if (countComparison != 0) {
+          return countComparison;
+        }
+        return a.key.compareTo(b.key);
+      });
+    final top = sorted.first;
     if (top.value < 2) {
       return;
     }
@@ -195,8 +228,9 @@ class TravelAssistantAnalyzer {
         kind: TravelAssistantInsightKind.overview,
         priority: TravelAssistantPriority.low,
         title: '${countryLabels[top.key]} ist dein häufigstes Reiseland',
-        message: '${top.value} Reisen führen dorthin. In der Statistik findest du '
-            'weitere Reise-Rekorde.',
+        message:
+            '${top.value} Reisen führen dorthin. In der Statistik findest '
+            'du weitere Reise-Rekorde.',
       ),
     );
   }
@@ -238,6 +272,22 @@ class TravelAssistantAnalyzer {
       TravelAssistantPriority.medium => 2,
       TravelAssistantPriority.low => 1,
     };
+  }
+
+  static bool _isPast(Trip trip, DateTime today) {
+    return _dateOnly(trip.endDate).isBefore(today);
+  }
+
+  static String _tripLabel(Trip trip) {
+    final destination = trip.destination.trim();
+    if (destination.isNotEmpty) {
+      return destination;
+    }
+    final title = trip.title.trim();
+    if (title.isNotEmpty) {
+      return title;
+    }
+    return 'Reise ohne Zielangabe';
   }
 
   static DateTime _dateOnly(DateTime date) {

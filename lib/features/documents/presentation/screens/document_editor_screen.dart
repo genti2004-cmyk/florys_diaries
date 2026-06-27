@@ -17,11 +17,7 @@ class DocumentEditorResult {
 }
 
 class DocumentEditorScreen extends StatefulWidget {
-  const DocumentEditorScreen({
-    required this.tripId,
-    this.document,
-    super.key,
-  });
+  const DocumentEditorScreen({required this.tripId, this.document, super.key});
 
   final String tripId;
   final TravelDocument? document;
@@ -177,9 +173,9 @@ class _DocumentEditorScreenState extends State<DocumentEditorScreen> {
     if (!mounted) {
       return;
     }
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -212,18 +208,24 @@ class _DocumentEditorScreenState extends State<DocumentEditorScreen> {
                   labelText: 'Kategorie',
                   prefixIcon: Icon(Icons.folder_outlined),
                 ),
-                items: DocumentCategories.values.map((category) {
-                  return DropdownMenuItem<String>(
-                    value: category.id,
-                    child: Row(
-                      children: [
-                        Icon(category.icon, size: 20, color: AppColors.primary),
-                        const SizedBox(width: 10),
-                        Text(category.label),
-                      ],
-                    ),
-                  );
-                }).toList(growable: false),
+                items: DocumentCategories.values
+                    .map((category) {
+                      return DropdownMenuItem<String>(
+                        value: category.id,
+                        child: Row(
+                          children: [
+                            Icon(
+                              category.icon,
+                              size: 20,
+                              color: AppColors.primary,
+                            ),
+                            const SizedBox(width: 10),
+                            Text(category.label),
+                          ],
+                        ),
+                      );
+                    })
+                    .toList(growable: false),
                 onChanged: _isSaving
                     ? null
                     : (value) {
@@ -346,9 +348,9 @@ class _FilePickerCard extends StatelessWidget {
                   Text(
                     hasFile ? 'Ausgewählte Datei' : 'Datei anhängen',
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          color: AppColors.text,
-                          fontWeight: FontWeight.w900,
-                        ),
+                      color: AppColors.text,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                   const SizedBox(height: 3),
                   Text(

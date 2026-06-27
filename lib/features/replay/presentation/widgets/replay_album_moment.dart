@@ -45,7 +45,8 @@ class ReplayAlbumMoment extends StatelessWidget {
                       Expanded(
                         child: Text(
                           type.label,
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(
                                 color: AppColors.text,
                                 fontWeight: FontWeight.w900,
                               ),
@@ -64,9 +65,9 @@ class ReplayAlbumMoment extends StatelessWidget {
                     Text(
                       entry.description,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: AppColors.textMuted,
-                            height: 1.4,
-                          ),
+                        color: AppColors.textMuted,
+                        height: 1.4,
+                      ),
                     ),
                   ],
                   if (entry.location.trim().isNotEmpty) ...[
@@ -115,7 +116,8 @@ class ReplayPhotoSummary extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         child: ReplayMemoryInfoLine(
           icon: Icons.photo_library_outlined,
-          text: '$photoCount Fotos sind für diese Reise erfasst. '
+          text:
+              '$photoCount Fotos sind für diese Reise erfasst. '
               'Gespeicherte Bilddateien erscheinen einzeln im Replay.',
         ),
       ),

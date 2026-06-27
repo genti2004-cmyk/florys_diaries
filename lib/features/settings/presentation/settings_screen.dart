@@ -181,8 +181,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         return;
       }
 
-      if (result.status ==
-          AutomaticGoogleDriveBackupStatus.signInRequired) {
+      if (result.status == AutomaticGoogleDriveBackupStatus.signInRequired) {
         setState(() {
           _statusText = 'Google-Drive-Anmeldung wurde abgebrochen.';
         });
@@ -207,7 +206,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         _statusText = result.deletedCount == 0
             ? 'Automatisches Cloud-Backup wurde gespeichert.'
             : 'Automatisches Cloud-Backup wurde gespeichert. '
-                '${result.deletedCount} ältere automatische Sicherungen wurden entfernt.';
+                  '${result.deletedCount} ältere automatische Sicherungen wurden entfernt.';
       });
       await _loadGoogleDriveBackups(showErrors: false);
       if (!mounted) {
@@ -374,7 +373,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
         return;
       }
       setState(() {
-        _statusText = 'Lokal gesichert: ${entry.fileName} · '
+        _statusText =
+            'Lokal gesichert: ${entry.fileName} · '
             '${_formatBytes(entry.sizeBytes)}';
       });
       messenger.showSnackBar(
@@ -414,10 +414,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       return;
     } catch (_) {
       if (mounted) {
-        _showError(
-          messenger,
-          'Das Backup konnte nicht ausgewählt werden.',
-        );
+        _showError(messenger, 'Das Backup konnte nicht ausgewählt werden.');
       }
       return;
     }
@@ -442,9 +439,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  Future<void> _restoreGoogleDriveBackup(
-    GoogleDriveStoredBackup entry,
-  ) async {
+  Future<void> _restoreGoogleDriveBackup(GoogleDriveStoredBackup entry) async {
     if (_isBusy) {
       return;
     }
@@ -507,9 +502,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  Future<void> _deleteGoogleDriveBackup(
-    GoogleDriveStoredBackup entry,
-  ) async {
+  Future<void> _deleteGoogleDriveBackup(GoogleDriveStoredBackup entry) async {
     if (_isBusy) {
       return;
     }
@@ -586,10 +579,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _restoreLocalBackup(LocalBackupEntry entry) {
-    return _inspectAndRestore(
-      backupFile: entry.file,
-      fileName: entry.fileName,
-    );
+    return _inspectAndRestore(backupFile: entry.file, fileName: entry.fileName);
   }
 
   Future<void> _inspectAndRestore({
@@ -716,9 +706,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final message =
         '${provider.displayName} ist vorbereitet, aber noch nicht verbunden.';
     setState(() => _statusText = message);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   Future<void> _deleteLocalBackup(LocalBackupEntry entry) async {
@@ -769,7 +759,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
       }
     } catch (_) {
       if (mounted) {
-        _showError(messenger, 'Das lokale Backup konnte nicht gelöscht werden.');
+        _showError(
+          messenger,
+          'Das lokale Backup konnte nicht gelöscht werden.',
+        );
       }
     } finally {
       if (mounted) {
@@ -879,7 +872,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             icon: Icons.info_outline,
             title: 'Version',
             subtitle:
-                'FlorysDiaries v0.17.6 – automatische Google-Drive-Sicherung mit Änderungsprüfung.',
+                'FlorysDiaries v0.18.2 – Reise-Checkliste und intelligente Vorbereitung.',
           ),
         ],
       ),

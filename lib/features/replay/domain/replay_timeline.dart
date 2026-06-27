@@ -2,7 +2,7 @@ import 'replay_event.dart';
 
 class ReplayTimeline {
   ReplayTimeline({required List<ReplayEvent> events})
-      : events = List<ReplayEvent>.unmodifiable(_sortEvents(events));
+    : events = List<ReplayEvent>.unmodifiable(_sortEvents(events));
 
   final List<ReplayEvent> events;
 
@@ -32,7 +32,9 @@ class ReplayTimeline {
         return dateCompare;
       }
 
-      final typeCompare = _typeOrder(left.type).compareTo(_typeOrder(right.type));
+      final typeCompare = _typeOrder(
+        left.type,
+      ).compareTo(_typeOrder(right.type));
       if (typeCompare != 0) {
         return typeCompare;
       }

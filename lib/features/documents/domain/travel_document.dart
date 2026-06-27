@@ -71,7 +71,8 @@ class TravelDocument {
     return TravelDocument(
       id: (json['id'] as String?) ?? '',
       title: (json['title'] as String?) ?? '',
-      categoryId: (json['categoryId'] as String?) ?? DocumentCategories.other.id,
+      categoryId:
+          (json['categoryId'] as String?) ?? DocumentCategories.other.id,
       createdAt: _parseDate(json['createdAt']) ?? DateTime.now(),
       description: (json['description'] as String?) ?? '',
       fileName: (json['fileName'] as String?) ?? '',

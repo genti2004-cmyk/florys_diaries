@@ -32,17 +32,13 @@ class _FlorysDiariesAppState extends State<FlorysDiariesApp> {
     await _tripStore.load();
 
     try {
-      await _localBackupService.createAutomaticBackupIfDue(
-        _tripStore.trips,
-      );
+      await _localBackupService.createAutomaticBackupIfDue(_tripStore.trips);
     } catch (error) {
       debugPrint('Automatisches lokales Backup fehlgeschlagen: $error');
     }
 
     try {
-      await _automaticGoogleDriveBackupService.runIfDue(
-        _tripStore.trips,
-      );
+      await _automaticGoogleDriveBackupService.runIfDue(_tripStore.trips);
     } catch (error) {
       debugPrint('Automatisches Google-Drive-Backup fehlgeschlagen: $error');
     }

@@ -6,8 +6,7 @@ import 'package:florys_diaries/features/backup/domain/backup_provider.dart';
 class GoogleDriveBackupProvider implements BackupProvider {
   const GoogleDriveBackupProvider();
 
-  static final GoogleDriveAppDataService _service =
-      GoogleDriveAppDataService();
+  static final GoogleDriveAppDataService _service = GoogleDriveAppDataService();
 
   @override
   BackupProviderId get id => BackupProviderId.googleDrive;
@@ -44,8 +43,7 @@ class GoogleDriveBackupProvider implements BackupProvider {
 
     return BackupProviderSelection(
       file: result.file,
-      displayName:
-          '${result.backup.name} · ${result.accountEmail}',
+      displayName: '${result.backup.name} · ${result.accountEmail}',
       deleteAfterUse: true,
     );
   }

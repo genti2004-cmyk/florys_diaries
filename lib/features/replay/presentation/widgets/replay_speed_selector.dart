@@ -31,9 +31,9 @@ class ReplaySpeedSelector extends StatelessWidget {
             Text(
               'Geschwindigkeit',
               style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    color: AppColors.text,
-                    fontWeight: FontWeight.w800,
-                  ),
+                color: AppColors.text,
+                fontWeight: FontWeight.w800,
+              ),
             ),
           ],
         ),

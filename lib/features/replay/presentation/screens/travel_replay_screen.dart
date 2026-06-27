@@ -41,9 +41,7 @@ class _TravelReplayScreenState extends State<TravelReplayScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Travel Replay'),
-      ),
+      appBar: AppBar(title: const Text('Travel Replay')),
       body: SafeArea(
         child: AnimatedBuilder(
           animation: _controller,
@@ -120,9 +118,9 @@ class _TravelReplayScreenState extends State<TravelReplayScreen> {
                   Text(
                     'Reise-Timeline',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: AppColors.text,
-                          fontWeight: FontWeight.w900,
-                        ),
+                      color: AppColors.text,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                   const SizedBox(height: 10),
                   ReplayTimelineView(
@@ -177,9 +175,9 @@ class _ReplayHeader extends StatelessWidget {
                       Text(
                         trip.title,
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              color: AppColors.text,
-                              fontWeight: FontWeight.w900,
-                            ),
+                          color: AppColors.text,
+                          fontWeight: FontWeight.w900,
+                        ),
                       ),
                       const SizedBox(height: 4),
                       Text(
@@ -226,10 +224,7 @@ class _CurrentEventCard extends StatelessWidget {
           gradient: const LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              AppColors.primarySoft,
-              AppColors.surface,
-            ],
+            colors: [AppColors.primarySoft, AppColors.surface],
           ),
         ),
         child: Column(
@@ -241,37 +236,42 @@ class _CurrentEventCard extends StatelessWidget {
                   child: Text(
                     event.typeLabel,
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.w900,
-                        ),
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                 ),
-                if (event.badge.trim().isNotEmpty) _ReplayChip(label: event.badge),
+                if (event.badge.trim().isNotEmpty)
+                  _ReplayChip(label: event.badge),
               ],
             ),
             const SizedBox(height: 10),
             Text(
               event.title,
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    color: AppColors.text,
-                    fontWeight: FontWeight.w900,
-                  ),
+                color: AppColors.text,
+                fontWeight: FontWeight.w900,
+              ),
             ),
             if (event.subtitle.trim().isNotEmpty) ...[
               const SizedBox(height: 6),
               Text(
                 event.subtitle,
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: AppColors.textMuted,
-                      fontWeight: FontWeight.w700,
-                    ),
+                  color: AppColors.textMuted,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ],
             if (event.location.trim().isNotEmpty) ...[
               const SizedBox(height: 12),
               Row(
                 children: [
-                  const Icon(Icons.place_outlined, color: AppColors.primary, size: 18),
+                  const Icon(
+                    Icons.place_outlined,
+                    color: AppColors.primary,
+                    size: 18,
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -287,9 +287,9 @@ class _CurrentEventCard extends StatelessWidget {
               Text(
                 event.description,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.text,
-                      height: 1.35,
-                    ),
+                  color: AppColors.text,
+                  height: 1.35,
+                ),
               ),
             ],
           ],
@@ -316,9 +316,9 @@ class _ReplayChip extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: AppColors.text,
-              fontWeight: FontWeight.w800,
-            ),
+          color: AppColors.text,
+          fontWeight: FontWeight.w800,
+        ),
       ),
     );
   }

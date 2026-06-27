@@ -1,11 +1,6 @@
 import 'dart:io';
 
-enum BackupProviderId {
-  device,
-  googleDrive,
-  oneDrive,
-  dropbox,
-}
+enum BackupProviderId { device, googleDrive, oneDrive, dropbox }
 
 abstract interface class BackupProvider {
   const BackupProvider();

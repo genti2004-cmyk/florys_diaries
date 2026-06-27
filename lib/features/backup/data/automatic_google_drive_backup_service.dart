@@ -16,13 +16,13 @@ class AutomaticGoogleDriveBackupService {
     BackupContentFingerprintService? fingerprintService,
     GoogleDriveAuthService? authService,
     GoogleDriveRestClient? restClient,
-  })  : backupService = backupService ?? const AppBackupService(),
-        settingsService =
-            settingsService ?? const AutomaticCloudBackupSettingsService(),
-        fingerprintService =
-            fingerprintService ?? const BackupContentFingerprintService(),
-        authService = authService ?? GoogleDriveAuthService.instance,
-        restClient = restClient ?? GoogleDriveRestClient();
+  }) : backupService = backupService ?? const AppBackupService(),
+       settingsService =
+           settingsService ?? const AutomaticCloudBackupSettingsService(),
+       fingerprintService =
+           fingerprintService ?? const BackupContentFingerprintService(),
+       authService = authService ?? GoogleDriveAuthService.instance,
+       restClient = restClient ?? GoogleDriveRestClient();
 
   final AppBackupService backupService;
   final AutomaticCloudBackupSettingsService settingsService;
@@ -30,9 +30,7 @@ class AutomaticGoogleDriveBackupService {
   final GoogleDriveAuthService authService;
   final GoogleDriveRestClient restClient;
 
-  Future<AutomaticGoogleDriveBackupResult> runIfDue(
-    List<Trip> trips,
-  ) async {
+  Future<AutomaticGoogleDriveBackupResult> runIfDue(List<Trip> trips) async {
     final settings = await settingsService.load();
     if (!settings.enabled) {
       return AutomaticGoogleDriveBackupResult.disabled(settings);
@@ -41,22 +39,12 @@ class AutomaticGoogleDriveBackupService {
       return AutomaticGoogleDriveBackupResult.notDue(settings);
     }
 
-    return _run(
-      trips,
-      settings: settings,
-      interactiveAuthentication: false,
-    );
+    return _run(trips, settings: settings, interactiveAuthentication: false);
   }
 
-  Future<AutomaticGoogleDriveBackupResult> runNow(
-    List<Trip> trips,
-  ) async {
+  Future<AutomaticGoogleDriveBackupResult> runNow(List<Trip> trips) async {
     final settings = await settingsService.load();
-    return _run(
-      trips,
-      settings: settings,
-      interactiveAuthentication: true,
-    );
+    return _run(trips, settings: settings, interactiveAuthentication: true);
   }
 
   Future<AutomaticGoogleDriveBackupResult> _run(

@@ -47,7 +47,10 @@ class DocumentFileViewerScreen extends StatelessWidget {
             return _PdfViewer(file: file);
           }
 
-          return _ExternalOnlyView(document: document, onOpen: () => _openExternal(context));
+          return _ExternalOnlyView(
+            document: document,
+            onOpen: () => _openExternal(context),
+          );
         },
       ),
     );
@@ -73,7 +76,10 @@ class DocumentFileViewerScreen extends StatelessWidget {
 
   static bool _isImage(String extension) {
     final value = extension.toLowerCase().trim();
-    return value == 'jpg' || value == 'jpeg' || value == 'png' || value == 'webp';
+    return value == 'jpg' ||
+        value == 'jpeg' ||
+        value == 'png' ||
+        value == 'webp';
   }
 
   static bool _isPdf(String extension) {
@@ -156,10 +162,14 @@ class _PdfViewerState extends State<_PdfViewer> {
       controller: _controller,
       builders: PdfViewPinchBuilders<DefaultBuilderOptions>(
         options: const DefaultBuilderOptions(),
-        documentLoaderBuilder: (_) => const Center(child: CircularProgressIndicator()),
-        pageLoaderBuilder: (_) => const Center(child: CircularProgressIndicator()),
+        documentLoaderBuilder: (_) =>
+            const Center(child: CircularProgressIndicator()),
+        pageLoaderBuilder: (_) =>
+            const Center(child: CircularProgressIndicator()),
         errorBuilder: (_, error) {
-          return _ViewerError(message: 'PDF konnte nicht angezeigt werden. $error');
+          return _ViewerError(
+            message: 'PDF konnte nicht angezeigt werden. $error',
+          );
         },
       ),
     );
@@ -235,9 +245,9 @@ class _ExternalOnlyView extends StatelessWidget {
               'Keine integrierte Vorschau',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: AppColors.text,
-                    fontWeight: FontWeight.w900,
-                  ),
+                color: AppColors.text,
+                fontWeight: FontWeight.w900,
+              ),
             ),
             const SizedBox(height: 8),
             Text(
@@ -280,9 +290,9 @@ class _MissingFileView extends StatelessWidget {
               'Datei nicht gefunden',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: textColor,
-                    fontWeight: FontWeight.w900,
-                  ),
+                color: textColor,
+                fontWeight: FontWeight.w900,
+              ),
             ),
             const SizedBox(height: 8),
             Text(

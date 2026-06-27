@@ -60,9 +60,15 @@ class _ProfessionalWorldMapState extends State<ProfessionalWorldMap> {
       decoration: BoxDecoration(
         color: dark ? AppColors.primary : AppColors.surface,
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: dark ? Colors.white.withValues(alpha: 0.18) : AppColors.border),
+        border: Border.all(
+          color: dark ? Colors.white.withValues(alpha: 0.18) : AppColors.border,
+        ),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.07), blurRadius: 22, offset: const Offset(0, 12)),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.07),
+            blurRadius: 22,
+            offset: const Offset(0, 12),
+          ),
         ],
       ),
       child: Column(
@@ -81,12 +87,16 @@ class _ProfessionalWorldMapState extends State<ProfessionalWorldMap> {
                   minZoom: 2,
                   maxZoom: 12,
                   interactionOptions: const InteractionOptions(
-                    flags: InteractiveFlag.drag | InteractiveFlag.pinchZoom | InteractiveFlag.doubleTapZoom,
+                    flags:
+                        InteractiveFlag.drag |
+                        InteractiveFlag.pinchZoom |
+                        InteractiveFlag.doubleTapZoom,
                   ),
                 ),
                 children: [
                   TileLayer(
-                    urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    urlTemplate:
+                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                     userAgentPackageName: 'com.florysdiaries.travel',
                     tileBuilder: _tileBuilder,
                   ),
@@ -95,26 +105,41 @@ class _ProfessionalWorldMapState extends State<ProfessionalWorldMap> {
                   if (_showCountries) MarkerLayer(markers: _countryMarkers()),
                   if (_showCities) MarkerLayer(markers: _cityMarkers()),
                   RichAttributionWidget(
-                    attributions: [TextSourceAttribution('OpenStreetMap', onTap: () {})],
+                    attributions: [
+                      TextSourceAttribution('OpenStreetMap', onTap: () {}),
+                    ],
                   ),
                 ],
               ),
             ),
           ),
-          AnimatedSwitcher(duration: const Duration(milliseconds: 220), child: _activeInfo),
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 220),
+            child: _activeInfo,
+          ),
         ],
       ),
     );
   }
 
-  bool get _showCountries => widget.layer == WorldMapLayer.all || widget.layer == WorldMapLayer.countries;
-  bool get _showCities => widget.layer == WorldMapLayer.all || widget.layer == WorldMapLayer.cities;
-  bool get _showRoutes => widget.layer == WorldMapLayer.all || widget.layer == WorldMapLayer.routes;
+  bool get _showCountries =>
+      widget.layer == WorldMapLayer.all ||
+      widget.layer == WorldMapLayer.countries;
+  bool get _showCities =>
+      widget.layer == WorldMapLayer.all || widget.layer == WorldMapLayer.cities;
+  bool get _showRoutes =>
+      widget.layer == WorldMapLayer.all || widget.layer == WorldMapLayer.routes;
 
   Widget get _activeInfo {
-    if (_selectedRoute != null) return _SelectedRouteCard(route: _selectedRoute!);
-    if (_selectedCity != null) return _SelectedCityCard(city: _selectedCity!);
-    if (_selectedCountry != null) return _SelectedCountryCard(country: _selectedCountry!);
+    if (_selectedRoute != null) {
+      return _SelectedRouteCard(route: _selectedRoute!);
+    }
+    if (_selectedCity != null) {
+      return _SelectedCityCard(city: _selectedCity!);
+    }
+    if (_selectedCountry != null) {
+      return _SelectedCountryCard(country: _selectedCountry!);
+    }
     return _MapHintBar(layer: widget.layer);
   }
 
@@ -124,16 +149,35 @@ class _ProfessionalWorldMapState extends State<ProfessionalWorldMap> {
     if (widget.style == WorldMapStyle.dark) {
       return ColorFiltered(
         colorFilter: const ColorFilter.matrix(<double>[
-          -0.55, -0.55, -0.55, 0, 245,
-          -0.55, -0.55, -0.55, 0, 245,
-          -0.55, -0.55, -0.55, 0, 245,
-          0, 0, 0, 1, 0,
+          -0.55,
+          -0.55,
+          -0.55,
+          0,
+          245,
+          -0.55,
+          -0.55,
+          -0.55,
+          0,
+          245,
+          -0.55,
+          -0.55,
+          -0.55,
+          0,
+          245,
+          0,
+          0,
+          0,
+          1,
+          0,
         ]),
         child: tileWidget,
       );
     }
     return ColorFiltered(
-      colorFilter: ColorFilter.mode(AppColors.primary.withValues(alpha: 0.07), BlendMode.srcATop),
+      colorFilter: ColorFilter.mode(
+        AppColors.primary.withValues(alpha: 0.07),
+        BlendMode.srcATop,
+      ),
       child: tileWidget,
     );
   }
@@ -147,74 +191,88 @@ class _ProfessionalWorldMapState extends State<ProfessionalWorldMap> {
   }
 
   List<Polyline> _routeLines() {
-    return widget.routes.map((route) {
-      final isSelected = _selectedRoute?.id == route.id || widget.focusedRouteId == route.id;
-      return Polyline(
-        points: [route.fromPosition, route.toPosition],
-        color: isSelected ? AppColors.sand : AppColors.primary.withValues(alpha: 0.55),
-        strokeWidth: isSelected ? 5.0 : 2.8,
-        borderColor: Colors.white.withValues(alpha: 0.86),
-        borderStrokeWidth: 1.4,
-      );
-    }).toList(growable: false);
+    return widget.routes
+        .map((route) {
+          final isSelected =
+              _selectedRoute?.id == route.id ||
+              widget.focusedRouteId == route.id;
+          return Polyline(
+            points: [route.fromPosition, route.toPosition],
+            color: isSelected
+                ? AppColors.sand
+                : AppColors.primary.withValues(alpha: 0.55),
+            strokeWidth: isSelected ? 5.0 : 2.8,
+            borderColor: Colors.white.withValues(alpha: 0.86),
+            borderStrokeWidth: 1.4,
+          );
+        })
+        .toList(growable: false);
   }
 
   List<Marker> _routeMarkers() {
-    return widget.routes.map((route) {
-      final selected = _selectedRoute?.id == route.id || widget.focusedRouteId == route.id;
-      return Marker(
-        point: route.midpoint,
-        width: 48,
-        height: 48,
-        child: GestureDetector(
-          onTap: () => setState(() {
-            _selectedRoute = route;
-            _selectedCity = null;
-            _selectedCountry = null;
-            widget.onRouteSelected?.call(route.id);
-          }),
-          child: _RouteMarker(isSelected: selected),
-        ),
-      );
-    }).toList(growable: false);
+    return widget.routes
+        .map((route) {
+          final selected =
+              _selectedRoute?.id == route.id ||
+              widget.focusedRouteId == route.id;
+          return Marker(
+            point: route.midpoint,
+            width: 48,
+            height: 48,
+            child: GestureDetector(
+              onTap: () => setState(() {
+                _selectedRoute = route;
+                _selectedCity = null;
+                _selectedCountry = null;
+                widget.onRouteSelected?.call(route.id);
+              }),
+              child: _RouteMarker(isSelected: selected),
+            ),
+          );
+        })
+        .toList(growable: false);
   }
 
   List<Marker> _countryMarkers() {
-    return widget.countries.map((country) {
-      return Marker(
-        point: country.position,
-        width: 52,
-        height: 52,
-        child: GestureDetector(
-          onTap: () => setState(() {
-            _selectedCountry = country;
-            _selectedCity = null;
-            _selectedRoute = null;
-            widget.onRouteSelected?.call(null);
-          }),
-          child: _CountryMarker(country: country),
-        ),
-      );
-    }).toList(growable: false);
+    return widget.countries
+        .map((country) {
+          return Marker(
+            point: country.position,
+            width: 52,
+            height: 52,
+            child: GestureDetector(
+              onTap: () => setState(() {
+                _selectedCountry = country;
+                _selectedCity = null;
+                _selectedRoute = null;
+                widget.onRouteSelected?.call(null);
+              }),
+              child: _CountryMarker(country: country),
+            ),
+          );
+        })
+        .toList(growable: false);
   }
 
   List<Marker> _cityMarkers() {
-    return widget.cities.map((city) {
-      return Marker(
-        point: city.position,
-        width: 42,
-        height: 42,
-        child: GestureDetector(
-          onTap: () => setState(() {
-            _selectedCity = city;
-            _selectedCountry = null;
-            _selectedRoute = null;
-            widget.onRouteSelected?.call(null);
-          }),
-          child: _CityMarker(city: city),
-        ),
-      );
-    }).toList(growable: false);
+    return widget.cities
+        .map((city) {
+          return Marker(
+            point: city.position,
+            width: 42,
+            height: 42,
+            child: GestureDetector(
+              onTap: () => setState(() {
+                _selectedCity = city;
+                _selectedCountry = null;
+                _selectedRoute = null;
+                widget.onRouteSelected?.call(null);
+              }),
+              child: _CityMarker(city: city),
+            ),
+          );
+        })
+        .toList(growable: false);
   }
 }
 
@@ -236,12 +294,18 @@ class _MapHeader extends StatelessWidget {
           Expanded(
             child: Text(
               'Professional World Map',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(color: textColor, fontWeight: FontWeight.w900),
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: textColor,
+                fontWeight: FontWeight.w900,
+              ),
             ),
           ),
           Icon(Icons.layers_outlined, color: mutedColor, size: 18),
           const SizedBox(width: 6),
-          Text('${layer.label} · ${style.label}', style: TextStyle(color: mutedColor, fontWeight: FontWeight.w700)),
+          Text(
+            '${layer.label} · ${style.label}',
+            style: TextStyle(color: mutedColor, fontWeight: FontWeight.w700),
+          ),
         ],
       ),
     );
@@ -256,7 +320,10 @@ class _CountryMarker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DecoratedBox(
-      decoration: BoxDecoration(color: AppColors.sage.withValues(alpha: 0.28), shape: BoxShape.circle),
+      decoration: BoxDecoration(
+        color: AppColors.sage.withValues(alpha: 0.28),
+        shape: BoxShape.circle,
+      ),
       child: Center(
         child: Container(
           width: 26,
@@ -265,12 +332,21 @@ class _CountryMarker extends StatelessWidget {
             color: AppColors.sage,
             shape: BoxShape.circle,
             border: Border.all(color: Colors.white, width: 3),
-            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.18), blurRadius: 10)],
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.18),
+                blurRadius: 10,
+              ),
+            ],
           ),
           alignment: Alignment.center,
           child: Text(
             country.tripCount.toString(),
-            style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w900),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 11,
+              fontWeight: FontWeight.w900,
+            ),
           ),
         ),
       ),
@@ -301,9 +377,18 @@ class _RouteMarker extends StatelessWidget {
         color: isSelected ? AppColors.sand : AppColors.surface,
         shape: BoxShape.circle,
         border: Border.all(color: Colors.white, width: 2.4),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.18), blurRadius: 12)],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.18),
+            blurRadius: 12,
+          ),
+        ],
       ),
-      child: Icon(Icons.flight_takeoff_rounded, color: isSelected ? AppColors.text : AppColors.primary, size: 21),
+      child: Icon(
+        Icons.flight_takeoff_rounded,
+        color: isSelected ? AppColors.text : AppColors.primary,
+        size: 21,
+      ),
     );
   }
 }
@@ -324,7 +409,10 @@ class _MapHintBar extends StatelessWidget {
           Expanded(
             child: Text(
               'Aktive Ansicht: ${layer.label}. Tippe auf Marker oder Routen für Details.',
-              style: const TextStyle(color: AppColors.textMuted, fontWeight: FontWeight.w700),
+              style: const TextStyle(
+                color: AppColors.textMuted,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         ],
@@ -398,7 +486,11 @@ class _SelectedRouteCard extends StatelessWidget {
 }
 
 class _InfoCard extends StatelessWidget {
-  const _InfoCard({required this.title, required this.subtitle, required this.values});
+  const _InfoCard({
+    required this.title,
+    required this.subtitle,
+    required this.values,
+  });
 
   final String title;
   final String subtitle;
@@ -410,23 +502,36 @@ class _InfoCard extends StatelessWidget {
       key: ValueKey('$title$subtitle'),
       margin: const EdgeInsets.only(top: 14),
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(color: AppColors.primarySoft, borderRadius: BorderRadius.circular(20)),
+      decoration: BoxDecoration(
+        color: AppColors.primarySoft,
+        borderRadius: BorderRadius.circular(20),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             title,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppColors.primary, fontWeight: FontWeight.w900),
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: AppColors.primary,
+              fontWeight: FontWeight.w900,
+            ),
           ),
           const SizedBox(height: 4),
           Text(
             subtitle,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(color: AppColors.textMuted, fontWeight: FontWeight.w700),
+            style: const TextStyle(
+              color: AppColors.textMuted,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 12),
-          Row(children: values.map((value) => Expanded(child: _InfoStat(value: value))).toList(growable: false)),
+          Row(
+            children: values
+                .map((value) => Expanded(child: _InfoStat(value: value)))
+                .toList(growable: false),
+          ),
         ],
       ),
     );
@@ -443,8 +548,22 @@ class _InfoStat extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(value.value, style: const TextStyle(color: AppColors.text, fontWeight: FontWeight.w900, fontSize: 16)),
-        Text(value.label, style: const TextStyle(color: AppColors.textMuted, fontWeight: FontWeight.w700, fontSize: 11)),
+        Text(
+          value.value,
+          style: const TextStyle(
+            color: AppColors.text,
+            fontWeight: FontWeight.w900,
+            fontSize: 16,
+          ),
+        ),
+        Text(
+          value.label,
+          style: const TextStyle(
+            color: AppColors.textMuted,
+            fontWeight: FontWeight.w700,
+            fontSize: 11,
+          ),
+        ),
       ],
     );
   }

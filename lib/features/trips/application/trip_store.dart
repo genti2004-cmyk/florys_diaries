@@ -9,7 +9,7 @@ import '../domain/trip.dart';
 
 class TripStore extends ChangeNotifier {
   TripStore({TripStorageService storageService = const TripStorageService()})
-      : _storageService = storageService;
+    : _storageService = storageService;
 
   final TripStorageService _storageService;
   final List<Trip> _trips = [];
@@ -102,7 +102,8 @@ class TripStore extends ChangeNotifier {
             date: DateTime(now.year, now.month + 1, 12),
             title: 'Ankunft in Paris',
             location: 'Paris',
-            description: 'Eiffelturm und Abendspaziergang als erstes Highlight planen.',
+            description:
+                'Eiffelturm und Abendspaziergang als erstes Highlight planen.',
           ),
           TripAlbumEntry(
             id: 'sample-paris-highlight',
@@ -110,7 +111,8 @@ class TripStore extends ChangeNotifier {
             date: DateTime(now.year, now.month + 1, 14),
             title: 'Lieblingsmoment vormerken',
             location: 'Montmartre',
-            description: 'Hier später den schönsten Moment der Reise festhalten.',
+            description:
+                'Hier später den schönsten Moment der Reise festhalten.',
             isFavorite: true,
           ),
         ],
@@ -149,7 +151,8 @@ class TripStore extends ChangeNotifier {
             date: DateTime(now.year - 1, 9, 7),
             title: 'Sonnenuntergang am Kolosseum',
             location: 'Rom',
-            description: 'Warmer Abend, gute Fotos und Spaziergang Richtung Trastevere.',
+            description:
+                'Warmer Abend, gute Fotos und Spaziergang Richtung Trastevere.',
             isFavorite: true,
           ),
           TripAlbumEntry(

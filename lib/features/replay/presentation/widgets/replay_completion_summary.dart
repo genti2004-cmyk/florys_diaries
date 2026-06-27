@@ -63,18 +63,18 @@ class ReplayCompletionSummary extends StatelessWidget {
               'Reise noch einmal erlebt',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    color: AppColors.text,
-                    fontWeight: FontWeight.w900,
-                  ),
+                color: AppColors.text,
+                fontWeight: FontWeight.w900,
+              ),
             ),
             const SizedBox(height: 6),
             Text(
               '${trip.destination}, ${trip.country}',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: AppColors.textMuted,
-                    fontWeight: FontWeight.w700,
-                  ),
+                color: AppColors.textMuted,
+                fontWeight: FontWeight.w700,
+              ),
             ),
             const SizedBox(height: 18),
             GridView.count(
@@ -180,18 +180,18 @@ class _SummaryMetric extends StatelessWidget {
                 Text(
                   value,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: AppColors.text,
-                        fontWeight: FontWeight.w900,
-                      ),
+                    color: AppColors.text,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
                 Text(
                   label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: AppColors.textMuted,
-                        fontWeight: FontWeight.w700,
-                      ),
+                    color: AppColors.textMuted,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ],
             ),

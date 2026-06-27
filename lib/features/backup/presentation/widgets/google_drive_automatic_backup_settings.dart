@@ -54,7 +54,8 @@ class GoogleDriveAutomaticBackupSettings extends StatelessWidget {
                     children: [
                       Text(
                         'Automatische Google-Drive-Sicherung',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(
                               fontWeight: FontWeight.w800,
                               color: AppColors.text,
                             ),
@@ -63,8 +64,8 @@ class GoogleDriveAutomaticBackupSettings extends StatelessWidget {
                       Text(
                         'Beim App-Start wird geprüft, ob das eingestellte Intervall erreicht ist.',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: AppColors.textMuted,
-                            ),
+                          color: AppColors.textMuted,
+                        ),
                       ),
                     ],
                   ),
@@ -121,15 +122,15 @@ class GoogleDriveAutomaticBackupSettings extends StatelessWidget {
                                   onRetentionChanged(value);
                                 }
                               },
-                        items:
-                            AutomaticCloudBackupSettings.allowedRetentionLimits
-                                .map(
-                                  (count) => DropdownMenuItem<int>(
-                                    value: count,
-                                    child: Text('$count Backups'),
-                                  ),
-                                )
-                                .toList(growable: false),
+                        items: AutomaticCloudBackupSettings
+                            .allowedRetentionLimits
+                            .map(
+                              (count) => DropdownMenuItem<int>(
+                                value: count,
+                                child: Text('$count Backups'),
+                              ),
+                            )
+                            .toList(growable: false),
                       ),
                     ),
                   ),
@@ -145,9 +146,9 @@ class GoogleDriveAutomaticBackupSettings extends StatelessWidget {
                 ),
                 child: Text(
                   _statusText(settings),
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.textMuted,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: AppColors.textMuted),
                 ),
               ),
               const SizedBox(height: 12),
@@ -159,9 +160,9 @@ class GoogleDriveAutomaticBackupSettings extends StatelessWidget {
               const SizedBox(height: 10),
               Text(
                 'Nur automatisch erzeugte Cloud-Backups werden nach der gewählten Grenze bereinigt. Manuelle Sicherungen bleiben erhalten.',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.textMuted,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: AppColors.textMuted),
               ),
             ],
           ],
@@ -202,10 +203,7 @@ class GoogleDriveAutomaticBackupSettings extends StatelessWidget {
 }
 
 class _SettingField extends StatelessWidget {
-  const _SettingField({
-    required this.label,
-    required this.child,
-  });
+  const _SettingField({required this.label, required this.child});
 
   final String label;
   final Widget child;
@@ -224,9 +222,9 @@ class _SettingField extends StatelessWidget {
           Text(
             label,
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: AppColors.textMuted,
-                  fontWeight: FontWeight.w700,
-                ),
+              color: AppColors.textMuted,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           child,
         ],

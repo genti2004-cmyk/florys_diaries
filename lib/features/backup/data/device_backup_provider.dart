@@ -72,9 +72,7 @@ class DeviceBackupProvider implements BackupProvider {
     }
 
     final fallbackName = _lastPathSegment(fallbackPath);
-    return fallbackName.isEmpty
-        ? 'FlorysDiaries_Backup.zip'
-        : fallbackName;
+    return fallbackName.isEmpty ? 'FlorysDiaries_Backup.zip' : fallbackName;
   }
 
   static String _lastPathSegment(String path) {

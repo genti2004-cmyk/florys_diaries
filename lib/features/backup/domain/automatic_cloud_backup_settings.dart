@@ -15,10 +15,10 @@ class AutomaticCloudBackupSettings {
 
   static const AutomaticCloudBackupSettings defaults =
       AutomaticCloudBackupSettings(
-    enabled: false,
-    intervalDays: defaultIntervalDays,
-    retentionLimit: defaultRetentionLimit,
-  );
+        enabled: false,
+        intervalDays: defaultIntervalDays,
+        retentionLimit: defaultRetentionLimit,
+      );
 
   final bool enabled;
   final int intervalDays;
@@ -67,14 +67,13 @@ class AutomaticCloudBackupSettings {
     return AutomaticCloudBackupSettings(
       enabled: enabled ?? this.enabled,
       intervalDays: _validInterval(intervalDays ?? this.intervalDays),
-      retentionLimit: _validRetention(
-        retentionLimit ?? this.retentionLimit,
-      ),
+      retentionLimit: _validRetention(retentionLimit ?? this.retentionLimit),
       lastSuccessfulBackupAt: clearLastSuccessfulBackupAt
           ? null
           : lastSuccessfulBackupAt ?? this.lastSuccessfulBackupAt,
-      lastCheckedAt:
-          clearLastCheckedAt ? null : lastCheckedAt ?? this.lastCheckedAt,
+      lastCheckedAt: clearLastCheckedAt
+          ? null
+          : lastCheckedAt ?? this.lastCheckedAt,
       lastContentFingerprint: clearLastContentFingerprint
           ? null
           : lastContentFingerprint ?? this.lastContentFingerprint,
@@ -86,16 +85,15 @@ class AutomaticCloudBackupSettings {
       'enabled': enabled,
       'intervalDays': intervalDays,
       'retentionLimit': retentionLimit,
-      'lastSuccessfulBackupAt':
-          lastSuccessfulBackupAt?.toUtc().toIso8601String(),
+      'lastSuccessfulBackupAt': lastSuccessfulBackupAt
+          ?.toUtc()
+          .toIso8601String(),
       'lastCheckedAt': lastCheckedAt?.toUtc().toIso8601String(),
       'lastContentFingerprint': lastContentFingerprint,
     };
   }
 
-  factory AutomaticCloudBackupSettings.fromJson(
-    Map<String, dynamic> json,
-  ) {
+  factory AutomaticCloudBackupSettings.fromJson(Map<String, dynamic> json) {
     final fingerprint = json['lastContentFingerprint']?.toString().trim();
     return AutomaticCloudBackupSettings(
       enabled: json['enabled'] == true,
@@ -110,18 +108,15 @@ class AutomaticCloudBackupSettings {
       lastSuccessfulBackupAt: DateTime.tryParse(
         json['lastSuccessfulBackupAt']?.toString() ?? '',
       ),
-      lastCheckedAt: DateTime.tryParse(
-        json['lastCheckedAt']?.toString() ?? '',
-      ),
-      lastContentFingerprint:
-          fingerprint == null || fingerprint.isEmpty ? null : fingerprint,
+      lastCheckedAt: DateTime.tryParse(json['lastCheckedAt']?.toString() ?? ''),
+      lastContentFingerprint: fingerprint == null || fingerprint.isEmpty
+          ? null
+          : fingerprint,
     );
   }
 
   static int _validInterval(int value) {
-    return allowedIntervalDays.contains(value)
-        ? value
-        : defaultIntervalDays;
+    return allowedIntervalDays.contains(value) ? value : defaultIntervalDays;
   }
 
   static int _validRetention(int value) {

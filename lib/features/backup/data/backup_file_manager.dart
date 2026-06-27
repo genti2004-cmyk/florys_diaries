@@ -47,10 +47,7 @@ class BackupFileManager {
       }
     }
 
-    return BackupCopySummary(
-      fileCount: fileCount,
-      totalBytes: totalBytes,
-    );
+    return BackupCopySummary(fileCount: fileCount, totalBytes: totalBytes);
   }
 
   Future<void> replaceLocalData({

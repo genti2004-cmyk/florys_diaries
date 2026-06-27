@@ -54,7 +54,8 @@ class GoogleDriveBackupHistory extends StatelessWidget {
                     children: [
                       Text(
                         'Google-Drive-Backup-Historie',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(
                               fontWeight: FontWeight.w800,
                               color: AppColors.text,
                             ),
@@ -65,8 +66,8 @@ class GoogleDriveBackupHistory extends StatelessWidget {
                             ? 'Mehrere Sicherungsstände getrennt verwalten.'
                             : 'Konto: $accountEmail',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: AppColors.textMuted,
-                            ),
+                          color: AppColors.textMuted,
+                        ),
                       ),
                     ],
                   ),
@@ -100,17 +101,16 @@ class GoogleDriveBackupHistory extends StatelessWidget {
                       onRestore: () => onRestore(entry),
                       onDelete: () => onDelete(entry),
                     ),
-                    if (index != entries.length - 1)
-                      const Divider(height: 1),
+                    if (index != entries.length - 1) const Divider(height: 1),
                   ],
                 );
               }),
             const SizedBox(height: 12),
             Text(
               'Manuelle Cloud-Backups bleiben erhalten. Nur automatische Sicherungen werden nach der eingestellten Aufbewahrungsgrenze bereinigt.',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.textMuted,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColors.textMuted),
             ),
           ],
         ),
@@ -141,9 +141,9 @@ class _EmptyCloudHistory extends StatelessWidget {
             'Noch keine Cloud-Sicherung geladen.',
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.text,
-                  fontWeight: FontWeight.w700,
-                ),
+              color: AppColors.text,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 8),
           OutlinedButton.icon(
@@ -158,10 +158,7 @@ class _EmptyCloudHistory extends StatelessWidget {
 }
 
 class _HistoryBadge extends StatelessWidget {
-  const _HistoryBadge({
-    required this.label,
-    required this.emphasized,
-  });
+  const _HistoryBadge({required this.label, required this.emphasized});
 
   final String label;
   final bool emphasized;
@@ -177,9 +174,9 @@ class _HistoryBadge extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: emphasized ? AppColors.primary : AppColors.textMuted,
-              fontWeight: FontWeight.w700,
-            ),
+          color: emphasized ? AppColors.primary : AppColors.textMuted,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
@@ -208,10 +205,10 @@ class _CloudBackupTile extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           CircleAvatar(
-            backgroundColor:
-                isNewest ? AppColors.primarySoft : AppColors.surfaceSoft,
-            foregroundColor:
-                isNewest ? AppColors.primary : AppColors.textMuted,
+            backgroundColor: isNewest
+                ? AppColors.primarySoft
+                : AppColors.surfaceSoft,
+            foregroundColor: isNewest ? AppColors.primary : AppColors.textMuted,
             child: Icon(isNewest ? Icons.cloud_done : Icons.cloud_outlined),
           ),
           const SizedBox(width: 12),
@@ -225,9 +222,9 @@ class _CloudBackupTile extends StatelessWidget {
                       child: Text(
                         _formatDateTime(entry.createdAt.toLocal()),
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                              color: AppColors.text,
-                              fontWeight: FontWeight.w700,
-                            ),
+                          color: AppColors.text,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
                     Wrap(
@@ -253,9 +250,9 @@ class _CloudBackupTile extends StatelessWidget {
                   '${_formatBytes(entry.sizeBytes)} · ${entry.name}',
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.textMuted,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: AppColors.textMuted),
                 ),
                 const SizedBox(height: 8),
                 Wrap(

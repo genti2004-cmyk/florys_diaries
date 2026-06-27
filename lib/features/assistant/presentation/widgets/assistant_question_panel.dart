@@ -20,6 +20,7 @@ class AssistantQuestionPanel extends StatelessWidget {
   final VoidCallback? onOpenAnswerTrip;
 
   static const _quickQuestions = [
+    'Was ist noch vorzubereiten?',
     'Was steht als Nächstes an?',
     'Wo fehlen Dokumente?',
     'Zeig meine Highlights',

@@ -64,7 +64,9 @@ class _ReplayTimelineTile extends StatelessWidget {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: isActive ? AppColors.primarySoft : AppColors.surfaceSoft,
+                    color: isActive
+                        ? AppColors.primarySoft
+                        : AppColors.surfaceSoft,
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
                       color: isActive ? AppColors.primary : AppColors.border,
@@ -73,11 +75,7 @@ class _ReplayTimelineTile extends StatelessWidget {
                   child: Icon(_iconFor(event.type), size: 20, color: iconColor),
                 ),
                 if (!isLast)
-                  Container(
-                    width: 2,
-                    height: 34,
-                    color: AppColors.border,
-                  ),
+                  Container(width: 2, height: 34, color: AppColors.border),
               ],
             ),
             const SizedBox(width: 12),
@@ -99,7 +97,8 @@ class _ReplayTimelineTile extends StatelessWidget {
                         Expanded(
                           child: Text(
                             event.title,
-                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            style: Theme.of(context).textTheme.titleSmall
+                                ?.copyWith(
                                   color: AppColors.text,
                                   fontWeight: FontWeight.w900,
                                 ),
@@ -107,7 +106,8 @@ class _ReplayTimelineTile extends StatelessWidget {
                         ),
                         Text(
                           _formatDate(event.date),
-                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(
                                 color: AppColors.textMuted,
                                 fontWeight: FontWeight.w700,
                               ),

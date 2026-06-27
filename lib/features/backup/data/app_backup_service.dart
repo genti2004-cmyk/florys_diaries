@@ -142,7 +142,7 @@ class AppBackupService {
       encoder.convert({
         'format': BackupArchiveReader.formatId,
         'schemaVersion': BackupArchiveReader.schemaVersion,
-        'appVersion': '0.17.6',
+        'appVersion': '0.18.2',
         'createdAt': createdAt.toUtc().toIso8601String(),
         'tripCount': tripCount,
         'fileCount': fileCount,

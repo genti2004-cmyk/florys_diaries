@@ -42,7 +42,9 @@ class _AlbumEntryEditorScreenState extends State<AlbumEntryEditorScreen> {
     final entry = widget.entry;
     _titleController = TextEditingController(text: entry?.title ?? '');
     _locationController = TextEditingController(text: entry?.location ?? '');
-    _descriptionController = TextEditingController(text: entry?.description ?? '');
+    _descriptionController = TextEditingController(
+      text: entry?.description ?? '',
+    );
     _date = entry?.date ?? widget.tripStartDate;
     _typeId = entry?.typeId ?? TripAlbumEntryTypes.note.id;
     _isFavorite = entry?.isFavorite ?? false;
@@ -145,12 +147,14 @@ class _AlbumEntryEditorScreenState extends State<AlbumEntryEditorScreen> {
                   labelText: 'Art des Eintrags',
                   prefixIcon: Icon(Icons.auto_stories_outlined),
                 ),
-                items: TripAlbumEntryTypes.values.map((type) {
-                  return DropdownMenuItem<String>(
-                    value: type.id,
-                    child: Text(type.label),
-                  );
-                }).toList(growable: false),
+                items: TripAlbumEntryTypes.values
+                    .map((type) {
+                      return DropdownMenuItem<String>(
+                        value: type.id,
+                        child: Text(type.label),
+                      );
+                    })
+                    .toList(growable: false),
                 onChanged: (value) {
                   if (value == null) {
                     return;
@@ -209,9 +213,13 @@ class _AlbumEntryEditorScreenState extends State<AlbumEntryEditorScreen> {
                 value: _isFavorite,
                 onChanged: (value) => setState(() => _isFavorite = value),
                 title: const Text('Als Lieblingsmoment markieren'),
-                subtitle: const Text('Wird im Reisealbum besonders hervorgehoben.'),
+                subtitle: const Text(
+                  'Wird im Reisealbum besonders hervorgehoben.',
+                ),
                 secondary: Icon(
-                  _isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                  _isFavorite
+                      ? Icons.favorite_rounded
+                      : Icons.favorite_border_rounded,
                   color: AppColors.primary,
                 ),
               ),
