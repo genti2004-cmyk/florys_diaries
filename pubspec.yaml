@@ -1,0 +1,30 @@
+name: florys_diaries
+description: A simple travel diary and document vault app.
+publish_to: 'none'
+version: 0.17.6+2
+
+environment:
+  sdk: ^3.8.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  file_picker: ^10.3.3
+  path_provider: ^2.1.5
+  open_filex: ^4.7.0
+  pdfx: ^2.9.2
+  share_plus: ^12.0.2
+  archive: ^3.6.1
+  flutter_map: ^8.2.1
+  latlong2: ^0.9.1
+  google_sign_in: ^7.2.0
+  http: ^1.6.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true

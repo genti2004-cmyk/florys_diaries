@@ -1,0 +1,13 @@
+lib/app/florys_diaries_app.dart
+lib/app/theme/app_colors.dart
+lib/app/theme/app_theme.dart
+lib/core/widgets/app_info_card.dart
+lib/core/widgets/app_section_card.dart
+lib/core/widgets/app_section_title.dart
+lib/features/map/presentation/world_map_screen.dart
+lib/features/settings/presentation/settings_screen.dart
+lib/features/shell/presentation/main_shell_screen.dart
+lib/features/statistics/presentation/statistics_screen.dart
+lib/features/trips/presentation/screens/past_trips_screen.dart
+lib/features/trips/presentation/screens/upcoming_trips_screen.dart
+lib/main.dart
