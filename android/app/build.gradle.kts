@@ -1,8 +1,28 @@
+import java.io.FileInputStream
+import java.util.Properties
+import org.gradle.api.GradleException
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+}
+
+val keystorePropertiesFile = rootProject.file("key.properties")
+val keystoreProperties = Properties()
+val releaseTaskRequested = gradle.startParameter.taskNames.any { taskName ->
+    taskName.contains("Release", ignoreCase = true)
+}
+
+if (keystorePropertiesFile.exists()) {
+    FileInputStream(keystorePropertiesFile).use { input ->
+        keystoreProperties.load(input)
+    }
+} else if (releaseTaskRequested) {
+    throw GradleException(
+        "Release-Signierung fehlt: android/key.properties wurde nicht gefunden.",
+    )
 }
 
 android {
@@ -27,10 +47,43 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        if (keystorePropertiesFile.exists()) {
+            create("release") {
+                val storePasswordValue =
+                    keystoreProperties.getProperty("storePassword")
+                        ?: throw GradleException(
+                            "storePassword fehlt in android/key.properties.",
+                        )
+                val keyPasswordValue =
+                    keystoreProperties.getProperty("keyPassword")
+                        ?: throw GradleException(
+                            "keyPassword fehlt in android/key.properties.",
+                        )
+                val keyAliasValue =
+                    keystoreProperties.getProperty("keyAlias")
+                        ?: throw GradleException(
+                            "keyAlias fehlt in android/key.properties.",
+                        )
+                val storeFileValue =
+                    keystoreProperties.getProperty("storeFile")
+                        ?: throw GradleException(
+                            "storeFile fehlt in android/key.properties.",
+                        )
+
+                storePassword = storePasswordValue
+                keyPassword = keyPasswordValue
+                keyAlias = keyAliasValue
+                storeFile = file(storeFileValue)
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // Temporary: release builds still use the debug key until a release keystore is configured.
-            signingConfig = signingConfigs.getByName("debug")
+            if (keystorePropertiesFile.exists()) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
 }
