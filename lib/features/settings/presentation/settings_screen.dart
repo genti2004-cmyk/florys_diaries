@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 
-import 'package:florys_diaries/core/widgets/app_section_card.dart';
 import 'package:florys_diaries/features/backup/data/app_backup_service.dart';
 import 'package:florys_diaries/features/backup/data/automatic_cloud_backup_settings_service.dart';
 import 'package:florys_diaries/features/backup/data/automatic_google_drive_backup_service.dart';
@@ -15,11 +14,9 @@ import 'package:florys_diaries/features/backup/domain/automatic_cloud_backup_set
 import 'package:florys_diaries/features/backup/domain/backup_provider.dart';
 import 'package:florys_diaries/features/backup/domain/google_drive_backup_models.dart';
 import 'package:florys_diaries/features/backup/domain/local_backup_entry.dart';
-import 'package:florys_diaries/features/backup/presentation/widgets/backup_panel.dart';
-import 'package:florys_diaries/features/backup/presentation/widgets/backup_provider_selector.dart';
-import 'package:florys_diaries/features/backup/presentation/widgets/google_drive_automatic_backup_settings.dart';
-import 'package:florys_diaries/features/backup/presentation/widgets/google_drive_backup_history.dart';
-import 'package:florys_diaries/features/backup/presentation/widgets/local_backup_history.dart';
+import 'package:florys_diaries/features/settings/presentation/settings_backup_formatter.dart';
+import 'package:florys_diaries/features/settings/presentation/widgets/settings_backup_dialogs.dart';
+import 'package:florys_diaries/features/settings/presentation/widgets/settings_content.dart';
 import 'package:florys_diaries/features/trips/application/trip_store_scope.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -312,7 +309,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       }
 
       setState(() {
-        _statusText = _savedBackupSummary(
+        _statusText = SettingsBackupFormatter.savedBackupSummary(
           created,
           saved.displayName,
           provider.displayName,
@@ -375,7 +372,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       setState(() {
         _statusText =
             'Lokal gesichert: ${entry.fileName} · '
-            '${_formatBytes(entry.sizeBytes)}';
+            '${SettingsBackupFormatter.formatBytes(entry.sizeBytes)}';
       });
       messenger.showSnackBar(
         const SnackBar(content: Text('Lokale Sicherung wurde erstellt.')),
@@ -507,31 +504,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       return;
     }
 
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('Cloud-Backup löschen?'),
-          content: Text(
-            '${entry.name}\n\n'
-            'Sicherung vom ${_formatDateTime(entry.createdAt.toLocal())}.\n'
-            'Dieser Cloud-Stand wird dauerhaft entfernt.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: const Text('Abbrechen'),
-            ),
-            FilledButton.icon(
-              onPressed: () => Navigator.of(dialogContext).pop(true),
-              icon: const Icon(Icons.delete_outline),
-              label: const Text('Dauerhaft löschen'),
-            ),
-          ],
-        );
-      },
-    );
-    if (!mounted || confirmed != true) {
+    final confirmed = await showGoogleDriveBackupDeleteDialog(context, entry);
+    if (!mounted || !confirmed) {
       return;
     }
 
@@ -629,7 +603,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
 
     setState(() {
-      _statusText = _selectedBackupSummary(fileName, inspection);
+      _statusText = SettingsBackupFormatter.selectedBackupSummary(
+        fileName,
+        inspection,
+      );
     });
 
     final confirmed = await _confirmRestore(
@@ -654,7 +631,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       }
 
       setState(() {
-        _statusText = _restoreSummary(result);
+        _statusText = SettingsBackupFormatter.restoreSummary(result);
       });
       messenger.showSnackBar(
         SnackBar(
@@ -716,29 +693,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       return;
     }
 
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('Lokales Backup löschen?'),
-          content: Text(
-            '${entry.fileName}\n\nDiese Sicherung wird dauerhaft vom Gerät entfernt.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: const Text('Abbrechen'),
-            ),
-            FilledButton.icon(
-              onPressed: () => Navigator.of(dialogContext).pop(true),
-              icon: const Icon(Icons.delete_outline),
-              label: const Text('Löschen'),
-            ),
-          ],
-        );
-      },
-    );
-    if (!mounted || confirmed != true) {
+    final confirmed = await showLocalBackupDeleteDialog(context, entry);
+    if (!mounted || !confirmed) {
       return;
     }
 
@@ -775,32 +731,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required String fileName,
     required AppBackupInspectionResult inspection,
   }) {
-    return showDialog<bool>(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('Dieses Backup wiederherstellen?'),
-          content: Text(
-            'Datei: $fileName\n'
-            'Erstellt: ${_formatDateTime(inspection.backupCreatedAt.toLocal())}\n'
-            'Inhalt: ${inspection.tripCount} Reisen, '
-            '${inspection.fileCount} Dateien, '
-            '${_formatBytes(inspection.sizeBytes)}\n\n'
-            'Alle aktuell gespeicherten Reisen und lokalen Dokumentdateien werden durch genau dieses Backup ersetzt.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: const Text('Abbrechen'),
-            ),
-            FilledButton.icon(
-              onPressed: () => Navigator.of(dialogContext).pop(true),
-              icon: const Icon(Icons.restore),
-              label: const Text('Wiederherstellen'),
-            ),
-          ],
-        );
-      },
+    return showBackupRestoreConfirmationDialog(
+      context,
+      fileName: fileName,
+      inspection: inspection,
     );
   }
 
@@ -811,112 +745,33 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          const AppSectionCard(
-            icon: Icons.lock_outline,
-            title: 'Sicherheit',
-            subtitle: 'PIN, Biometrie und verschlüsselte Ablage folgen später.',
-          ),
-          const SizedBox(height: 12),
-          BackupProviderSelector(
-            providers: _providerRegistry.providers,
-            selectedId: _selectedProviderId,
-            isBusy: _isBusy,
-            onSelected: _selectProvider,
-            onUnavailableSelected: _showUnavailableProvider,
-          ),
-          const SizedBox(height: 12),
-          BackupPanel(
-            providerName: _selectedProvider.displayName,
-            isBusy: _isBusy,
-            statusText: _statusText,
-            onCreateBackup: _createBackup,
-            onRestoreBackup: _restoreBackup,
-          ),
-          if (_selectedProviderId == BackupProviderId.googleDrive) ...[
-            const SizedBox(height: 12),
-            GoogleDriveBackupHistory(
-              entries: _cloudBackups,
-              accountEmail: _cloudAccountEmail,
-              isLoading: _isCloudHistoryLoading,
-              isBusy: _isBusy,
-              onRefresh: _loadGoogleDriveBackups,
-              onRestore: _restoreGoogleDriveBackup,
-              onDelete: _deleteGoogleDriveBackup,
-            ),
-            const SizedBox(height: 12),
-            GoogleDriveAutomaticBackupSettings(
-              settings: _automaticCloudSettings,
-              isLoading: _isAutomaticCloudSettingsLoading,
-              isBusy: _isBusy,
-              onEnabledChanged: _setAutomaticCloudEnabled,
-              onIntervalChanged: _setAutomaticCloudInterval,
-              onRetentionChanged: _setAutomaticCloudRetention,
-              onRunNow: _runAutomaticCloudBackupNow,
-            ),
-          ],
-          const SizedBox(height: 12),
-          LocalBackupHistory(
-            entries: _localBackups,
-            isLoading: _isHistoryLoading,
-            isBusy: _isBusy,
-            onCreateLocalBackup: _createLocalBackup,
-            onRestore: _restoreLocalBackup,
-            onDelete: _deleteLocalBackup,
-          ),
-          const SizedBox(height: 12),
-          const AppSectionCard(
-            icon: Icons.info_outline,
-            title: 'Version',
-            subtitle:
-                'FlorysDiaries v0.18.2 – Reise-Checkliste und intelligente Vorbereitung.',
-          ),
-        ],
-      ),
+    return SettingsContent(
+      providers: _providerRegistry.providers,
+      selectedProviderId: _selectedProviderId,
+      selectedProviderName: _selectedProvider.displayName,
+      isBusy: _isBusy,
+      statusText: _statusText,
+      localBackups: _localBackups,
+      isLocalHistoryLoading: _isHistoryLoading,
+      cloudBackups: _cloudBackups,
+      cloudAccountEmail: _cloudAccountEmail,
+      isCloudHistoryLoading: _isCloudHistoryLoading,
+      automaticCloudSettings: _automaticCloudSettings,
+      isAutomaticCloudSettingsLoading: _isAutomaticCloudSettingsLoading,
+      onProviderSelected: _selectProvider,
+      onUnavailableProviderSelected: _showUnavailableProvider,
+      onCreateBackup: _createBackup,
+      onRestoreBackup: _restoreBackup,
+      onRefreshCloudBackups: () => _loadGoogleDriveBackups(),
+      onRestoreCloudBackup: _restoreGoogleDriveBackup,
+      onDeleteCloudBackup: _deleteGoogleDriveBackup,
+      onAutomaticCloudEnabledChanged: _setAutomaticCloudEnabled,
+      onAutomaticCloudIntervalChanged: _setAutomaticCloudInterval,
+      onAutomaticCloudRetentionChanged: _setAutomaticCloudRetention,
+      onRunAutomaticCloudBackup: _runAutomaticCloudBackupNow,
+      onCreateLocalBackup: _createLocalBackup,
+      onRestoreLocalBackup: _restoreLocalBackup,
+      onDeleteLocalBackup: _deleteLocalBackup,
     );
-  }
-
-  static String _savedBackupSummary(
-    AppBackupCreateResult result,
-    String savedName,
-    String providerName,
-  ) {
-    return 'Gespeichert auf $providerName: $savedName · '
-        '${result.tripCount} Reisen, ${result.fileCount} Dateien, '
-        '${_formatBytes(result.sizeBytes)}';
-  }
-
-  static String _selectedBackupSummary(
-    String fileName,
-    AppBackupInspectionResult inspection,
-  ) {
-    return 'Ausgewählt: $fileName · Backup vom '
-        '${_formatDateTime(inspection.backupCreatedAt.toLocal())} · '
-        '${inspection.tripCount} Reisen';
-  }
-
-  static String _restoreSummary(AppBackupRestoreResult result) {
-    return 'Wiederhergestellt: ${result.tripCount} Reisen und '
-        '${result.fileCount} Dateien · Backup vom '
-        '${_formatDateTime(result.backupCreatedAt.toLocal())}';
-  }
-
-  static String _formatBytes(int bytes) {
-    if (bytes < 1024) {
-      return '$bytes B';
-    }
-    if (bytes < 1024 * 1024) {
-      return '${(bytes / 1024).toStringAsFixed(1)} KB';
-    }
-    return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
-  }
-
-  static String _formatDateTime(DateTime value) {
-    String two(int number) => number.toString().padLeft(2, '0');
-    return '${two(value.day)}.${two(value.month)}.${value.year}, '
-        '${two(value.hour)}:${two(value.minute)}';
   }
 }

@@ -4,6 +4,9 @@ import 'package:florys_diaries/features/documents/data/travel_file_service.dart'
 import 'package:florys_diaries/features/trips/data/trip_storage_service.dart';
 import 'package:florys_diaries/features/trips/domain/trip.dart';
 
+typedef BackupDirectoryRenamer =
+    Future<Directory> Function(Directory source, String targetPath);
+
 class BackupCopySummary {
   const BackupCopySummary({required this.fileCount, required this.totalBytes});
 
@@ -15,10 +18,12 @@ class BackupFileManager {
   const BackupFileManager({
     this.fileService = const TravelFileService(),
     this.storageService = const TripStorageService(),
+    this.directoryRenamer,
   });
 
   final TravelFileService fileService;
   final TripStorageService storageService;
+  final BackupDirectoryRenamer? directoryRenamer;
 
   Future<BackupCopySummary> copyDirectoryContents(
     Directory source,
@@ -55,10 +60,20 @@ class BackupFileManager {
     required Directory stagedFiles,
     required int stamp,
   }) async {
+    if (!await stagedFiles.exists()) {
+      throw const FileSystemException(
+        'Die vorbereiteten Backup-Dateien wurden nicht gefunden.',
+      );
+    }
+
     final currentTrips = await storageService.loadTrips();
     final localRoot = await fileService.rootDirectory();
     final safetyRoot = Directory('${localRoot.path}.restore_safety_$stamp');
-    var movedExistingRoot = false;
+    final hadExistingRoot = await localRoot.exists();
+
+    var originalRootMoved = false;
+    var replacementRootCreated = false;
+    var restoredTripsSaveStarted = false;
 
     if (!await localRoot.parent.exists()) {
       await localRoot.parent.create(recursive: true);
@@ -68,32 +83,80 @@ class BackupFileManager {
     }
 
     try {
-      if (await localRoot.exists()) {
-        await localRoot.rename(safetyRoot.path);
-        movedExistingRoot = true;
+      if (hadExistingRoot) {
+        await _renameDirectory(localRoot, safetyRoot.path);
+        originalRootMoved = true;
       }
 
       await localRoot.create(recursive: true);
+      replacementRootCreated = true;
       await copyDirectoryContents(stagedFiles, localRoot);
+
+      restoredTripsSaveStarted = true;
       await storageService.saveTrips(restoredTrips);
 
       if (await safetyRoot.exists()) {
         await safetyRoot.delete(recursive: true);
       }
-    } catch (_) {
-      if (await localRoot.exists()) {
-        await localRoot.delete(recursive: true);
+    } catch (error, stackTrace) {
+      final rollbackFailures = <Object>[];
+
+      if (replacementRootCreated) {
+        try {
+          if (await localRoot.exists()) {
+            await localRoot.delete(recursive: true);
+          }
+        } catch (rollbackError) {
+          rollbackFailures.add(rollbackError);
+        }
       }
-      if (movedExistingRoot && await safetyRoot.exists()) {
-        await safetyRoot.rename(localRoot.path);
+
+      if (originalRootMoved) {
+        try {
+          if (await safetyRoot.exists()) {
+            await _renameDirectory(safetyRoot, localRoot.path);
+          } else {
+            rollbackFailures.add(
+              const FileSystemException(
+                'Der Sicherheitsordner des vorherigen Datenstands fehlt.',
+              ),
+            );
+          }
+        } catch (rollbackError) {
+          rollbackFailures.add(rollbackError);
+        }
       }
-      try {
-        await storageService.saveTrips(currentTrips);
-      } catch (_) {
-        // Der ursprüngliche Fehler bleibt maßgeblich.
+
+      if (restoredTripsSaveStarted) {
+        try {
+          await storageService.saveTrips(currentTrips);
+        } catch (rollbackError) {
+          rollbackFailures.add(rollbackError);
+        }
       }
-      rethrow;
+
+      if (rollbackFailures.isNotEmpty) {
+        Error.throwWithStackTrace(
+          const FileSystemException(
+            'Die Wiederherstellung ist fehlgeschlagen und der vorherige '
+            'Datenstand konnte nicht vollständig zurückgesetzt werden. '
+            'Bitte keine weiteren Änderungen vornehmen und ein vorhandenes '
+            'Backup prüfen.',
+          ),
+          stackTrace,
+        );
+      }
+
+      Error.throwWithStackTrace(error, stackTrace);
     }
+  }
+
+  Future<Directory> _renameDirectory(Directory source, String targetPath) {
+    final customRenamer = directoryRenamer;
+    if (customRenamer != null) {
+      return customRenamer(source, targetPath);
+    }
+    return source.rename(targetPath);
   }
 
   static String _baseName(String path) {

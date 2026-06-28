@@ -1,28 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 
-import 'package:florys_diaries/app/theme/app_colors.dart';
 import 'package:florys_diaries/core/widgets/app_section_card.dart';
-import 'package:florys_diaries/core/widgets/app_section_title.dart';
 import 'package:florys_diaries/features/album/presentation/widgets/trip_album_section.dart';
 import 'package:florys_diaries/features/checklist/presentation/widgets/trip_checklist_section.dart';
+import 'package:florys_diaries/features/documents/application/trip_document_query.dart';
 import 'package:florys_diaries/features/documents/data/travel_file_service.dart';
-import 'package:florys_diaries/features/documents/domain/document_category.dart';
 import 'package:florys_diaries/features/documents/domain/travel_document.dart';
 import 'package:florys_diaries/features/documents/presentation/screens/document_detail_screen.dart';
 import 'package:florys_diaries/features/documents/presentation/screens/document_editor_screen.dart';
-import 'package:florys_diaries/features/documents/presentation/widgets/travel_document_card.dart';
 import 'package:florys_diaries/features/replay/presentation/screens/travel_replay_screen.dart';
 import 'package:florys_diaries/features/trips/application/trip_store_scope.dart';
 import 'package:florys_diaries/features/trips/data/trip_export_service.dart';
 import 'package:florys_diaries/features/trips/domain/trip.dart';
+import 'package:florys_diaries/features/trips/presentation/widgets/trip_detail_hero_card.dart';
+import 'package:florys_diaries/features/trips/presentation/widgets/trip_vault_section.dart';
 
 import 'trip_editor_screen.dart';
 
 class TripDetailScreen extends StatefulWidget {
-  const TripDetailScreen({required this.trip, super.key});
+  const TripDetailScreen({
+    required this.trip,
+    this.fileService = const TravelFileService(),
+    this.exportService = const TripExportService(),
+    super.key,
+  });
 
   final Trip trip;
+  final TravelFileService fileService;
+  final TripExportService exportService;
 
   @override
   State<TripDetailScreen> createState() => _TripDetailScreenState();
@@ -30,12 +36,11 @@ class TripDetailScreen extends StatefulWidget {
 
 class _TripDetailScreenState extends State<TripDetailScreen> {
   final TextEditingController _searchController = TextEditingController();
-  String _query = '';
-  String _categoryId = _allCategoriesId;
-  _DocumentSortMode _sortMode = _DocumentSortMode.newest;
-  bool _favoritesOnly = false;
 
-  static const String _allCategoriesId = 'all';
+  TripDocumentQuery _documentQuery = const TripDocumentQuery();
+  List<TravelDocument>? _lastDocumentSource;
+  TripDocumentQuery? _lastAppliedQuery;
+  List<TravelDocument> _visibleDocuments = const <TravelDocument>[];
 
   @override
   void dispose() {
@@ -78,7 +83,6 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
 
     final documents = List<TravelDocument>.from(currentTrip.documents);
     if (result.delete) {
-      await const TravelFileService().deleteDocumentFile(result.document);
       documents.removeWhere((item) => item.id == result.document.id);
     } else {
       final index = documents.indexWhere(
@@ -91,7 +95,41 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
       }
     }
 
-    await store.updateTrip(currentTrip.copyWith(documents: documents));
+    try {
+      await store.updateTrip(currentTrip.copyWith(documents: documents));
+    } catch (_) {
+      if (!result.delete && _fileWasReplaced(document, result.document)) {
+        await _deleteDocumentFileSilently(result.document);
+      }
+      if (context.mounted) {
+        _showMessage(
+          context,
+          'Das Dokument konnte nicht sicher gespeichert werden.',
+        );
+      }
+      return;
+    }
+
+    if (result.delete) {
+      final cleaned = await _deleteDocumentFileSilently(result.document);
+      if (!cleaned && context.mounted) {
+        _showMessage(
+          context,
+          'Dokument entfernt. Die lokale Datei konnte nicht bereinigt werden.',
+        );
+      }
+      return;
+    }
+
+    if (_fileWasReplaced(document, result.document) && document != null) {
+      final cleaned = await _deleteDocumentFileSilently(document);
+      if (!cleaned && context.mounted) {
+        _showMessage(
+          context,
+          'Dokument gespeichert. Die vorherige Datei konnte nicht bereinigt werden.',
+        );
+      }
+    }
   }
 
   Future<void> _openDocumentDetail(
@@ -115,14 +153,24 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
       return;
     }
 
-    if (action == DocumentDetailAction.delete) {
-      final documents = List<TravelDocument>.from(currentTrip.documents)
-        ..removeWhere((item) => item.id == document.id);
-      await const TravelFileService().deleteDocumentFile(document);
-      if (!context.mounted) {
-        return;
-      }
+    final documents = List<TravelDocument>.from(currentTrip.documents)
+      ..removeWhere((item) => item.id == document.id);
+
+    try {
       await store.updateTrip(currentTrip.copyWith(documents: documents));
+    } catch (_) {
+      if (context.mounted) {
+        _showMessage(context, 'Das Dokument konnte nicht gelöscht werden.');
+      }
+      return;
+    }
+
+    final cleaned = await _deleteDocumentFileSilently(document);
+    if (!cleaned && context.mounted) {
+      _showMessage(
+        context,
+        'Dokument entfernt. Die lokale Datei konnte nicht bereinigt werden.',
+      );
     }
   }
 
@@ -139,7 +187,14 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
               : item,
         )
         .toList(growable: false);
-    await store.updateTrip(currentTrip.copyWith(documents: documents));
+
+    try {
+      await store.updateTrip(currentTrip.copyWith(documents: documents));
+    } catch (_) {
+      if (context.mounted) {
+        _showMessage(context, 'Der Favorit konnte nicht gespeichert werden.');
+      }
+    }
   }
 
   Future<void> _exportTrip(BuildContext context, Trip currentTrip) async {
@@ -150,36 +205,41 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
       const SnackBar(content: Text('Reise-Export wird vorbereitet ...')),
     );
 
-    final zipFile = await const TripExportService().exportTripAsZip(
-      currentTrip,
-    );
-    if (!context.mounted) {
-      return;
-    }
+    try {
+      final zipFile = await widget.exportService.exportTripAsZip(currentTrip);
+      if (!context.mounted) {
+        return;
+      }
 
-    final result = await SharePlus.instance.share(
-      ShareParams(
-        files: [XFile(zipFile.path)],
-        subject: 'FlorysDiaries Export: ${currentTrip.title}',
-        text: 'Reise-Export aus FlorysDiaries: ${currentTrip.title}',
-        sharePositionOrigin: box == null
-            ? null
-            : box.localToGlobal(Offset.zero) & box.size,
-      ),
-    );
-
-    if (result.status == ShareResultStatus.unavailable) {
-      messenger.showSnackBar(
-        const SnackBar(
-          content: Text('Teilen ist auf diesem Gerät nicht verfügbar.'),
+      final result = await SharePlus.instance.share(
+        ShareParams(
+          files: [XFile(zipFile.path)],
+          subject: 'FlorysDiaries Export: ${currentTrip.title}',
+          text: 'Reise-Export aus FlorysDiaries: ${currentTrip.title}',
+          sharePositionOrigin: box == null
+              ? null
+              : box.localToGlobal(Offset.zero) & box.size,
         ),
       );
+
+      if (result.status == ShareResultStatus.unavailable) {
+        messenger.showSnackBar(
+          const SnackBar(
+            content: Text('Teilen ist auf diesem Gerät nicht verfügbar.'),
+          ),
+        );
+      }
+    } catch (_) {
+      if (context.mounted) {
+        _showMessage(context, 'Der Reise-Export konnte nicht erstellt werden.');
+      }
     }
   }
 
   Future<void> _deleteTrip(BuildContext context, Trip currentTrip) async {
     final store = TripStoreScope.of(context);
     final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
@@ -206,12 +266,30 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
       return;
     }
 
-    await const TravelFileService().deleteTripFiles(currentTrip.id);
-    await store.deleteTrip(currentTrip.id);
+    try {
+      await store.deleteTrip(currentTrip.id);
+    } catch (_) {
+      if (context.mounted) {
+        _showMessage(context, 'Die Reise konnte nicht gelöscht werden.');
+      }
+      return;
+    }
+
+    final filesCleaned = await _deleteTripFilesSilently(currentTrip.id);
     if (!context.mounted) {
       return;
     }
+
     navigator.pop();
+    if (!filesCleaned) {
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Reise gelöscht. Einige lokale Dateien konnten nicht bereinigt werden.',
+          ),
+        ),
+      );
+    }
   }
 
   @override
@@ -221,13 +299,15 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
       (item) => item.id == widget.trip.id,
       orElse: () => widget.trip,
     );
-    final dateText =
-        '${_formatDate(currentTrip.startDate)} – ${_formatDate(currentTrip.endDate)}';
-    final visibleDocuments = _filteredDocuments(currentTrip.documents);
+    final visibleDocuments = _documentsFor(currentTrip.documents);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(currentTrip.title),
+        title: Text(
+          currentTrip.title,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
         actions: [
           IconButton(
             tooltip: 'Reise exportieren',
@@ -255,7 +335,7 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
           children: [
-            _TripHeroCard(currentTrip: currentTrip, dateText: dateText),
+            TripDetailHeroCard(trip: currentTrip),
             const SizedBox(height: 16),
             AppSectionCard(
               icon: Icons.play_circle_outline_rounded,
@@ -268,348 +348,93 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
             const SizedBox(height: 16),
             TripAlbumSection(trip: currentTrip),
             const SizedBox(height: 16),
-            const AppSectionTitle(
-              title: 'Travel Vault',
-              subtitle: 'Tickets, Buchungen, Screenshots und wichtige Notizen.',
+            TripVaultSection(
+              trip: currentTrip,
+              visibleDocuments: visibleDocuments,
+              searchController: _searchController,
+              query: _documentQuery,
+              onAddDocument: () => _openDocumentEditor(context, currentTrip),
+              onDocumentTap: (document) {
+                _openDocumentDetail(context, currentTrip, document);
+              },
+              onFavoriteToggle: (document) {
+                _toggleFavorite(context, currentTrip, document);
+              },
+              onSearchChanged: (value) {
+                _updateDocumentQuery(
+                  _documentQuery.copyWith(searchText: value),
+                );
+              },
+              onCategoryChanged: (value) {
+                _updateDocumentQuery(
+                  _documentQuery.copyWith(categoryId: value),
+                );
+              },
+              onSortChanged: (value) {
+                _updateDocumentQuery(_documentQuery.copyWith(sortMode: value));
+              },
+              onFavoritesChanged: (value) {
+                _updateDocumentQuery(
+                  _documentQuery.copyWith(favoritesOnly: value),
+                );
+              },
+              onResetFilters: _resetDocumentFilters,
             ),
-            Row(
-              children: [
-                Expanded(
-                  child: AppSectionCard(
-                    icon: Icons.description_outlined,
-                    title: '${currentTrip.documentCount} Dokumente',
-                    subtitle:
-                        '${_favoriteCount(currentTrip.documents)} Favoriten',
-                    onTap: () => _openDocumentEditor(context, currentTrip),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: AppSectionCard(
-                    icon: Icons.photo_library_outlined,
-                    title: '${currentTrip.photoCount} Fotos',
-                    subtitle: 'Galerie folgt im nächsten Ausbau.',
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            if (currentTrip.documents.isNotEmpty) ...[
-              _DocumentToolsCard(
-                controller: _searchController,
-                categoryId: _categoryId,
-                sortMode: _sortMode,
-                favoritesOnly: _favoritesOnly,
-                onSearchChanged: (value) => setState(() => _query = value),
-                onCategoryChanged: (value) {
-                  setState(() => _categoryId = value ?? _allCategoriesId);
-                },
-                onSortChanged: (value) {
-                  setState(() => _sortMode = value ?? _DocumentSortMode.newest);
-                },
-                onFavoritesChanged: (value) {
-                  setState(() => _favoritesOnly = value);
-                },
-              ),
-              const SizedBox(height: 12),
-            ],
-            if (currentTrip.documents.isEmpty)
-              AppSectionCard(
-                icon: Icons.add_circle_outline_rounded,
-                title: 'Noch keine Dokumente',
-                subtitle:
-                    'Lege Flugtickets, Hotelbuchungen, Bahnfahrten oder Notizen an.',
-                onTap: () => _openDocumentEditor(context, currentTrip),
-              )
-            else if (visibleDocuments.isEmpty)
-              AppSectionCard(
-                icon: Icons.search_off_rounded,
-                title: 'Keine passenden Dokumente',
-                subtitle: 'Ändere Suche, Kategorie oder Favoritenfilter.',
-                onTap: _resetDocumentFilters,
-              )
-            else
-              ...visibleDocuments.map(
-                (document) => Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: TravelDocumentCard(
-                    document: document,
-                    onTap: () =>
-                        _openDocumentDetail(context, currentTrip, document),
-                    onFavoriteToggle: () =>
-                        _toggleFavorite(context, currentTrip, document),
-                  ),
-                ),
-              ),
           ],
         ),
       ),
     );
   }
 
-  List<TravelDocument> _filteredDocuments(List<TravelDocument> documents) {
-    final lowerQuery = _query.trim().toLowerCase();
-    final filtered = documents.where((document) {
-      final matchesFavorite = !_favoritesOnly || document.isFavorite;
-      final matchesCategory =
-          _categoryId == _allCategoriesId || document.categoryId == _categoryId;
-      final searchableText = [
-        document.title,
-        document.category.label,
-        document.fileName,
-        document.fileExtension,
-        document.description,
-      ].join(' ').toLowerCase();
-      final matchesQuery =
-          lowerQuery.isEmpty || searchableText.contains(lowerQuery);
-      return matchesFavorite && matchesCategory && matchesQuery;
-    }).toList();
+  List<TravelDocument> _documentsFor(List<TravelDocument> documents) {
+    if (!identical(_lastDocumentSource, documents) ||
+        _lastAppliedQuery == null ||
+        !_lastAppliedQuery!.hasSameValues(_documentQuery)) {
+      _lastDocumentSource = documents;
+      _lastAppliedQuery = _documentQuery;
+      _visibleDocuments = _documentQuery.apply(documents);
+    }
+    return _visibleDocuments;
+  }
 
-    filtered.sort((left, right) {
-      switch (_sortMode) {
-        case _DocumentSortMode.newest:
-          return right.createdAt.compareTo(left.createdAt);
-        case _DocumentSortMode.oldest:
-          return left.createdAt.compareTo(right.createdAt);
-        case _DocumentSortMode.title:
-          return left.title.toLowerCase().compareTo(right.title.toLowerCase());
-        case _DocumentSortMode.category:
-          return left.category.label.compareTo(right.category.label);
-      }
-    });
-    return filtered;
+  void _updateDocumentQuery(TripDocumentQuery query) {
+    setState(() => _documentQuery = query);
   }
 
   void _resetDocumentFilters() {
-    setState(() {
-      _query = '';
-      _categoryId = _allCategoriesId;
-      _sortMode = _DocumentSortMode.newest;
-      _favoritesOnly = false;
-      _searchController.clear();
-    });
+    _searchController.clear();
+    _updateDocumentQuery(const TripDocumentQuery());
   }
 
-  static int _favoriteCount(List<TravelDocument> documents) {
-    return documents.where((document) => document.isFavorite).length;
+  bool _fileWasReplaced(TravelDocument? previous, TravelDocument current) {
+    final currentPath = current.relativePath.trim();
+    if (currentPath.isEmpty) {
+      return false;
+    }
+    return previous?.relativePath.trim() != currentPath;
   }
 
-  static String _formatDate(DateTime date) {
-    final day = date.day.toString().padLeft(2, '0');
-    final month = date.month.toString().padLeft(2, '0');
-    return '$day.$month.${date.year}';
+  Future<bool> _deleteDocumentFileSilently(TravelDocument document) async {
+    try {
+      await widget.fileService.deleteDocumentFile(document);
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
-}
 
-class _DocumentToolsCard extends StatelessWidget {
-  const _DocumentToolsCard({
-    required this.controller,
-    required this.categoryId,
-    required this.sortMode,
-    required this.favoritesOnly,
-    required this.onSearchChanged,
-    required this.onCategoryChanged,
-    required this.onSortChanged,
-    required this.onFavoritesChanged,
-  });
+  Future<bool> _deleteTripFilesSilently(String tripId) async {
+    try {
+      await widget.fileService.deleteTripFiles(tripId);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
 
-  final TextEditingController controller;
-  final String categoryId;
-  final _DocumentSortMode sortMode;
-  final bool favoritesOnly;
-  final ValueChanged<String> onSearchChanged;
-  final ValueChanged<String?> onCategoryChanged;
-  final ValueChanged<_DocumentSortMode?> onSortChanged;
-  final ValueChanged<bool> onFavoritesChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: EdgeInsets.zero,
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            TextField(
-              controller: controller,
-              onChanged: onSearchChanged,
-              decoration: const InputDecoration(
-                prefixIcon: Icon(Icons.search_rounded),
-                labelText: 'Dokumente suchen',
-                hintText: 'Titel, Datei, Kategorie oder Notiz',
-              ),
-            ),
-            const SizedBox(height: 12),
-            DropdownButtonFormField<String>(
-              initialValue: categoryId,
-              decoration: const InputDecoration(
-                labelText: 'Kategorie',
-                prefixIcon: Icon(Icons.category_outlined),
-              ),
-              items: [
-                const DropdownMenuItem(
-                  value: _TripDetailScreenState._allCategoriesId,
-                  child: Text('Alle Kategorien'),
-                ),
-                ...DocumentCategories.values.map(
-                  (category) => DropdownMenuItem(
-                    value: category.id,
-                    child: Text(category.label),
-                  ),
-                ),
-              ],
-              onChanged: onCategoryChanged,
-            ),
-            const SizedBox(height: 12),
-            DropdownButtonFormField<_DocumentSortMode>(
-              initialValue: sortMode,
-              decoration: const InputDecoration(
-                labelText: 'Sortierung',
-                prefixIcon: Icon(Icons.sort_rounded),
-              ),
-              items: const [
-                DropdownMenuItem(
-                  value: _DocumentSortMode.newest,
-                  child: Text('Neueste zuerst'),
-                ),
-                DropdownMenuItem(
-                  value: _DocumentSortMode.oldest,
-                  child: Text('Älteste zuerst'),
-                ),
-                DropdownMenuItem(
-                  value: _DocumentSortMode.title,
-                  child: Text('Titel A–Z'),
-                ),
-                DropdownMenuItem(
-                  value: _DocumentSortMode.category,
-                  child: Text('Kategorie A–Z'),
-                ),
-              ],
-              onChanged: onSortChanged,
-            ),
-            const SizedBox(height: 8),
-            SwitchListTile.adaptive(
-              contentPadding: EdgeInsets.zero,
-              value: favoritesOnly,
-              onChanged: onFavoritesChanged,
-              title: const Text('Nur Favoriten anzeigen'),
-              secondary: const Icon(Icons.star_border_rounded),
-            ),
-          ],
-        ),
-      ),
-    );
+  void _showMessage(BuildContext context, String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 }
-
-class _TripHeroCard extends StatelessWidget {
-  const _TripHeroCard({required this.currentTrip, required this.dateText});
-
-  final Trip currentTrip;
-  final String dateText;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: EdgeInsets.zero,
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 52,
-                  height: 52,
-                  decoration: BoxDecoration(
-                    color: AppColors.primarySoft,
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-                  child: Icon(
-                    currentTrip.isPast
-                        ? Icons.luggage_rounded
-                        : Icons.flight_takeoff_rounded,
-                    color: AppColors.primary,
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        currentTrip.title,
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: AppColors.text,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${currentTrip.destination}, ${currentTrip.country}',
-                        style: const TextStyle(color: AppColors.textMuted),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            _DetailChip(icon: Icons.calendar_today_outlined, label: dateText),
-            const SizedBox(height: 10),
-            _DetailChip(
-              icon: Icons.timelapse_rounded,
-              label: '${currentTrip.durationDays} Reisetage',
-            ),
-            const SizedBox(height: 16),
-            Text(
-              currentTrip.notes.trim().isEmpty
-                  ? 'Keine Notizen gespeichert.'
-                  : currentTrip.notes,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyLarge?.copyWith(color: AppColors.text),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _DetailChip extends StatelessWidget {
-  const _DetailChip({required this.icon, required this.label});
-
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceSoft,
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16, color: AppColors.primary),
-          const SizedBox(width: 8),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              color: AppColors.text,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-enum _DocumentSortMode { newest, oldest, title, category }

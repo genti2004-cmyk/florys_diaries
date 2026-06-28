@@ -110,10 +110,6 @@ class _DocumentEditorScreenState extends State<DocumentEditorScreen> {
           documentId: documentId,
         );
 
-        if (oldDocument != null && oldDocument.relativePath.trim().isNotEmpty) {
-          await _fileService.deleteDocumentFile(oldDocument);
-        }
-
         document = document.copyWith(
           fileName: copiedFile.fileName,
           relativePath: copiedFile.relativePath,

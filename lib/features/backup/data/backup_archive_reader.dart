@@ -33,7 +33,7 @@ class BackupArchiveReader {
       );
     }
 
-    final archive = ZipDecoder().decodeBytes(await backupFile.readAsBytes());
+    final archive = await _decodeArchive(backupFile);
     if (archive.files.length > _maxArchiveEntries) {
       throw const FormatException(
         'Das Backup enthält ungewöhnlich viele Dateien.',
@@ -52,7 +52,8 @@ class BackupArchiveReader {
         continue;
       }
 
-      if (!seenFilePaths.add(name)) {
+      final normalizedKey = name.toLowerCase();
+      if (!seenFilePaths.add(normalizedKey)) {
         throw FormatException('Doppelter Inhalt im Backup: $name');
       }
 
@@ -97,12 +98,13 @@ class BackupArchiveReader {
     }
 
     final trips = _decodeTrips(tripsEntry);
-    _validateDocumentPaths(trips);
+    _validateManifestCounts(manifest, trips: trips, fileEntries: fileEntries);
+    _validateDocumentPaths(trips, fileEntries: fileEntries);
 
     return BackupArchivePackage(
       createdAt: createdAt,
-      trips: trips,
-      fileEntries: fileEntries,
+      trips: List<Trip>.unmodifiable(trips),
+      fileEntries: List<ArchiveFile>.unmodifiable(fileEntries),
     );
   }
 
@@ -128,6 +130,26 @@ class BackupArchiveReader {
     }
 
     return count;
+  }
+
+  static Future<Archive> _decodeArchive(File backupFile) async {
+    try {
+      final length = await backupFile.length();
+      if (length <= 0) {
+        throw const FormatException('Die Backup-Datei ist leer.');
+      }
+
+      final bytes = await backupFile.readAsBytes();
+      return ZipDecoder().decodeBytes(bytes);
+    } on FileSystemException {
+      rethrow;
+    } on FormatException {
+      rethrow;
+    } catch (_) {
+      throw const FormatException(
+        'Die Backup-Datei ist beschädigt oder kein gültiges ZIP-Archiv.',
+      );
+    }
   }
 
   static List<Trip> _decodeTrips(ArchiveFile entry) {
@@ -171,7 +193,48 @@ class BackupArchiveReader {
     return trips;
   }
 
-  static void _validateDocumentPaths(List<Trip> trips) {
+  static void _validateManifestCounts(
+    Map<String, dynamic> manifest, {
+    required List<Trip> trips,
+    required List<ArchiveFile> fileEntries,
+  }) {
+    final declaredTripCount = (manifest['tripCount'] as num?)?.toInt();
+    if (declaredTripCount == null || declaredTripCount != trips.length) {
+      throw const FormatException(
+        'Die Reiseanzahl im Backup ist widersprüchlich.',
+      );
+    }
+
+    final declaredFileCount = (manifest['fileCount'] as num?)?.toInt();
+    if (declaredFileCount == null || declaredFileCount != fileEntries.length) {
+      throw const FormatException(
+        'Die Dateianzahl im Backup ist widersprüchlich.',
+      );
+    }
+
+    final actualContentBytes = fileEntries.fold<int>(
+      0,
+      (sum, entry) => sum + entry.size,
+    );
+    final declaredContentBytes = (manifest['contentBytes'] as num?)?.toInt();
+    if (declaredContentBytes == null ||
+        declaredContentBytes != actualContentBytes) {
+      throw const FormatException(
+        'Die Dateigröße im Backup ist widersprüchlich.',
+      );
+    }
+  }
+
+  static void _validateDocumentPaths(
+    List<Trip> trips, {
+    required List<ArchiveFile> fileEntries,
+  }) {
+    final archivedRelativePaths = fileEntries
+        .map((entry) => _normalizePath(entry.name))
+        .where((name) => name.startsWith('files/'))
+        .map((name) => name.substring('files/'.length))
+        .toSet();
+
     for (final trip in trips) {
       for (final document in trip.documents) {
         final path = _normalizePath(document.relativePath.trim());
@@ -181,6 +244,11 @@ class BackupArchiveReader {
         if (!_isSafePath(path) || !path.startsWith('Reisen/')) {
           throw const FormatException(
             'Ein Dokumentpfad im Backup ist ungültig.',
+          );
+        }
+        if (!archivedRelativePaths.contains(path)) {
+          throw const FormatException(
+            'Eine im Backup referenzierte Dokumentdatei fehlt.',
           );
         }
       }

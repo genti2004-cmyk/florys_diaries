@@ -30,6 +30,10 @@ class ProfessionalWorldMap extends StatefulWidget {
 }
 
 class _ProfessionalWorldMapState extends State<ProfessionalWorldMap> {
+  static const String _germanTileUrl =
+      'https://tile.openstreetmap.de/{z}/{x}/{y}.png';
+  static const String _userAgentPackageName = 'com.florysdiaries.app';
+
   CountryVisit? _selectedCountry;
   CityVisit? _selectedCity;
   TravelRoute? _selectedRoute;
@@ -95,9 +99,8 @@ class _ProfessionalWorldMapState extends State<ProfessionalWorldMap> {
                 ),
                 children: [
                   TileLayer(
-                    urlTemplate:
-                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                    userAgentPackageName: 'com.florysdiaries.travel',
+                    urlTemplate: _germanTileUrl,
+                    userAgentPackageName: _userAgentPackageName,
                     tileBuilder: _tileBuilder,
                   ),
                   if (_showRoutes) PolylineLayer(polylines: _routeLines()),
@@ -106,7 +109,10 @@ class _ProfessionalWorldMapState extends State<ProfessionalWorldMap> {
                   if (_showCities) MarkerLayer(markers: _cityMarkers()),
                   RichAttributionWidget(
                     attributions: [
-                      TextSourceAttribution('OpenStreetMap', onTap: () {}),
+                      TextSourceAttribution(
+                        '© OpenStreetMap-Mitwirkende · deutscher Kartenstil',
+                        onTap: () {},
+                      ),
                     ],
                   ),
                 ],
@@ -149,21 +155,21 @@ class _ProfessionalWorldMapState extends State<ProfessionalWorldMap> {
     if (widget.style == WorldMapStyle.dark) {
       return ColorFiltered(
         colorFilter: const ColorFilter.matrix(<double>[
-          -0.55,
-          -0.55,
-          -0.55,
+          -0.72,
           0,
-          245,
-          -0.55,
-          -0.55,
-          -0.55,
           0,
-          245,
-          -0.55,
-          -0.55,
-          -0.55,
           0,
-          245,
+          230,
+          0,
+          -0.72,
+          0,
+          0,
+          236,
+          0,
+          0,
+          -0.68,
+          0,
+          244,
           0,
           0,
           0,
@@ -173,6 +179,7 @@ class _ProfessionalWorldMapState extends State<ProfessionalWorldMap> {
         child: tileWidget,
       );
     }
+
     return ColorFiltered(
       colorFilter: ColorFilter.mode(
         AppColors.primary.withValues(alpha: 0.07),
@@ -196,13 +203,18 @@ class _ProfessionalWorldMapState extends State<ProfessionalWorldMap> {
           final isSelected =
               _selectedRoute?.id == route.id ||
               widget.focusedRouteId == route.id;
+          final dark = widget.style == WorldMapStyle.dark;
           return Polyline(
             points: [route.fromPosition, route.toPosition],
             color: isSelected
                 ? AppColors.sand
+                : dark
+                ? const Color(0xFF8BDCE3)
                 : AppColors.primary.withValues(alpha: 0.55),
             strokeWidth: isSelected ? 5.0 : 2.8,
-            borderColor: Colors.white.withValues(alpha: 0.86),
+            borderColor: dark
+                ? const Color(0xFF102A36).withValues(alpha: 0.92)
+                : Colors.white.withValues(alpha: 0.86),
             borderStrokeWidth: 1.4,
           );
         })
@@ -226,7 +238,10 @@ class _ProfessionalWorldMapState extends State<ProfessionalWorldMap> {
                 _selectedCountry = null;
                 widget.onRouteSelected?.call(route.id);
               }),
-              child: _RouteMarker(isSelected: selected),
+              child: _RouteMarker(
+                isSelected: selected,
+                dark: widget.style == WorldMapStyle.dark,
+              ),
             ),
           );
         })
@@ -247,7 +262,10 @@ class _ProfessionalWorldMapState extends State<ProfessionalWorldMap> {
                 _selectedRoute = null;
                 widget.onRouteSelected?.call(null);
               }),
-              child: _CountryMarker(country: country),
+              child: _CountryMarker(
+                country: country,
+                dark: widget.style == WorldMapStyle.dark,
+              ),
             ),
           );
         })
@@ -268,7 +286,10 @@ class _ProfessionalWorldMapState extends State<ProfessionalWorldMap> {
                 _selectedRoute = null;
                 widget.onRouteSelected?.call(null);
               }),
-              child: _CityMarker(city: city),
+              child: _CityMarker(
+                city: city,
+                dark: widget.style == WorldMapStyle.dark,
+              ),
             ),
           );
         })
@@ -313,15 +334,18 @@ class _MapHeader extends StatelessWidget {
 }
 
 class _CountryMarker extends StatelessWidget {
-  const _CountryMarker({required this.country});
+  const _CountryMarker({required this.country, required this.dark});
 
   final CountryVisit country;
+  final bool dark;
 
   @override
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: AppColors.sage.withValues(alpha: 0.28),
+        color: dark
+            ? Colors.white.withValues(alpha: 0.20)
+            : AppColors.sage.withValues(alpha: 0.28),
         shape: BoxShape.circle,
       ),
       child: Center(
@@ -329,7 +353,7 @@ class _CountryMarker extends StatelessWidget {
           width: 26,
           height: 26,
           decoration: BoxDecoration(
-            color: AppColors.sage,
+            color: dark ? const Color(0xFF9DD7A1) : AppColors.sage,
             shape: BoxShape.circle,
             border: Border.all(color: Colors.white, width: 3),
             boxShadow: [
@@ -355,26 +379,39 @@ class _CountryMarker extends StatelessWidget {
 }
 
 class _CityMarker extends StatelessWidget {
-  const _CityMarker({required this.city});
+  const _CityMarker({required this.city, required this.dark});
 
   final CityVisit city;
+  final bool dark;
 
   @override
   Widget build(BuildContext context) {
-    return const Icon(Icons.location_on, color: AppColors.primary, size: 34);
+    return Icon(
+      Icons.location_on,
+      color: dark ? AppColors.sand : AppColors.primary,
+      size: 34,
+      shadows: dark
+          ? const [Shadow(color: Color(0xCC102A36), blurRadius: 5)]
+          : null,
+    );
   }
 }
 
 class _RouteMarker extends StatelessWidget {
-  const _RouteMarker({required this.isSelected});
+  const _RouteMarker({required this.isSelected, required this.dark});
 
   final bool isSelected;
+  final bool dark;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: isSelected ? AppColors.sand : AppColors.surface,
+        color: isSelected
+            ? AppColors.sand
+            : dark
+            ? const Color(0xFF234957)
+            : AppColors.surface,
         shape: BoxShape.circle,
         border: Border.all(color: Colors.white, width: 2.4),
         boxShadow: [
@@ -386,7 +423,11 @@ class _RouteMarker extends StatelessWidget {
       ),
       child: Icon(
         Icons.flight_takeoff_rounded,
-        color: isSelected ? AppColors.text : AppColors.primary,
+        color: isSelected
+            ? AppColors.text
+            : dark
+            ? Colors.white
+            : AppColors.primary,
         size: 21,
       ),
     );

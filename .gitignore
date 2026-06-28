@@ -43,3 +43,17 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# FlorysDiaries: lokale Signierung und Geheimnisse
+**/key.properties
+**/*.jks
+**/*.keystore
+.env
+.env.*
+
+# FlorysDiaries: persönliche Sicherungen und lokale Exportarchive
+FlorysDiaries_Backup_*.zip
+FlorysDiaries_Lokal_*.zip
+FlorysDiaries_Auto_*.zip
+florysdiaries_current_safe.zip
+

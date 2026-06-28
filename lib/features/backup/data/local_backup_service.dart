@@ -3,16 +3,27 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 
 import 'package:florys_diaries/features/backup/data/app_backup_service.dart';
+import 'package:florys_diaries/features/backup/data/backup_content_fingerprint_service.dart';
 import 'package:florys_diaries/features/backup/domain/app_backup_result.dart';
 import 'package:florys_diaries/features/backup/domain/local_backup_entry.dart';
 import 'package:florys_diaries/features/trips/domain/trip.dart';
 
+typedef LocalBackupDirectoryProvider = Future<Directory> Function();
+
 class LocalBackupService {
-  const LocalBackupService({this.backupService = const AppBackupService()});
+  const LocalBackupService({
+    this.backupService = const AppBackupService(),
+    this.fingerprintService = const BackupContentFingerprintService(),
+    this.backupDirectoryProvider,
+    this.clock,
+  });
 
   final AppBackupService backupService;
+  final BackupContentFingerprintService fingerprintService;
+  final LocalBackupDirectoryProvider? backupDirectoryProvider;
+  final DateTime Function()? clock;
 
-  static const int maximumLocalBackups = 7;
+  static const int maximumAutomaticBackups = 7;
   static const Duration automaticBackupInterval = Duration(hours: 24);
   static const String _directoryName = 'FlorysDiariesLocalBackups';
 
@@ -23,20 +34,45 @@ class LocalBackupService {
         .toList(growable: false);
 
     if (automaticEntries.isNotEmpty) {
-      final elapsed = DateTime.now().difference(
-        automaticEntries.first.createdAt,
-      );
+      final elapsed = _now().difference(automaticEntries.first.createdAt);
       if (!elapsed.isNegative && elapsed < automaticBackupInterval) {
         return null;
       }
     }
 
-    return createLocalBackup(trips, automatic: true);
+    final contentFingerprint = await fingerprintService.calculate(trips);
+    if (automaticEntries.isNotEmpty &&
+        _fingerprintFromFileName(automaticEntries.first.fileName) ==
+            contentFingerprint.toLowerCase()) {
+      return null;
+    }
+
+    return _createLocalBackup(
+      trips,
+      automatic: true,
+      contentFingerprint: contentFingerprint,
+    );
   }
 
   Future<LocalBackupEntry> createLocalBackup(
     List<Trip> trips, {
     required bool automatic,
+  }) async {
+    final contentFingerprint = automatic
+        ? await fingerprintService.calculate(trips)
+        : null;
+
+    return _createLocalBackup(
+      trips,
+      automatic: automatic,
+      contentFingerprint: contentFingerprint,
+    );
+  }
+
+  Future<LocalBackupEntry> _createLocalBackup(
+    List<Trip> trips, {
+    required bool automatic,
+    required String? contentFingerprint,
   }) async {
     AppBackupCreateResult? created;
 
@@ -47,6 +83,7 @@ class LocalBackupService {
         directory,
         created.createdAt,
         automatic: automatic,
+        contentFingerprint: contentFingerprint,
       );
       final copied = await created.file.copy(target.path);
 
@@ -57,7 +94,9 @@ class LocalBackupService {
         isAutomatic: automatic,
       );
 
-      await _pruneOldBackups();
+      if (automatic) {
+        await _pruneOldAutomaticBackups();
+      }
       return entry;
     } finally {
       final temporaryFile = created?.file;
@@ -117,8 +156,15 @@ class LocalBackupService {
   }
 
   Future<Directory> _backupDirectory() async {
-    final supportDirectory = await getApplicationSupportDirectory();
-    final directory = Directory(_join(supportDirectory.path, _directoryName));
+    final suppliedDirectory = backupDirectoryProvider == null
+        ? null
+        : await backupDirectoryProvider!();
+    final directory =
+        suppliedDirectory ??
+        Directory(
+          _join((await getApplicationSupportDirectory()).path, _directoryName),
+        );
+
     if (!await directory.exists()) {
       await directory.create(recursive: true);
     }
@@ -129,9 +175,14 @@ class LocalBackupService {
     Directory directory,
     DateTime createdAt, {
     required bool automatic,
+    required String? contentFingerprint,
   }) async {
     final kind = automatic ? 'Auto' : 'Lokal';
-    final baseName = 'FlorysDiaries_${kind}_${_fileStamp(createdAt)}';
+    final fingerprintSuffix = automatic && contentFingerprint != null
+        ? '_F${_normalizeFingerprint(contentFingerprint)}'
+        : '';
+    final baseName =
+        'FlorysDiaries_${kind}_${_fileStamp(createdAt)}$fingerprintSuffix';
     var candidate = File(_join(directory.path, '$baseName.zip'));
     var suffix = 2;
 
@@ -142,13 +193,15 @@ class LocalBackupService {
     return candidate;
   }
 
-  Future<void> _pruneOldBackups() async {
-    final entries = await listBackups();
-    if (entries.length <= maximumLocalBackups) {
+  Future<void> _pruneOldAutomaticBackups() async {
+    final automaticEntries = (await listBackups())
+        .where((entry) => entry.isAutomatic)
+        .toList(growable: false);
+    if (automaticEntries.length <= maximumAutomaticBackups) {
       return;
     }
 
-    for (final entry in entries.skip(maximumLocalBackups)) {
+    for (final entry in automaticEntries.skip(maximumAutomaticBackups)) {
       try {
         if (await entry.file.exists()) {
           await entry.file.delete();
@@ -157,6 +210,28 @@ class LocalBackupService {
         // Eine einzelne nicht löschbare Datei blockiert neue Backups nicht.
       }
     }
+  }
+
+  DateTime _now() => clock?.call() ?? DateTime.now();
+
+  static String? _fingerprintFromFileName(String fileName) {
+    final match = RegExp(
+      r'_F([0-9a-f]{16,64})(?:_\d+)?\.zip$',
+      caseSensitive: false,
+    ).firstMatch(fileName);
+    return match?.group(1)?.toLowerCase();
+  }
+
+  static String _normalizeFingerprint(String value) {
+    final normalized = value.trim().toLowerCase();
+    if (!RegExp(r'^[0-9a-f]{16,64}$').hasMatch(normalized)) {
+      throw ArgumentError.value(
+        value,
+        'contentFingerprint',
+        'Der Backup-Fingerabdruck ist ungültig.',
+      );
+    }
+    return normalized;
   }
 
   static DateTime? _dateFromFileName(String fileName) {

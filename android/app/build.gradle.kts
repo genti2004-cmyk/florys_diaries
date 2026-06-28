@@ -45,6 +45,7 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        manifestPlaceholders["appLabel"] = "FlorysDiaries"
     }
 
     signingConfigs {
@@ -80,7 +81,14 @@ android {
     }
 
     buildTypes {
+        getByName("debug") {
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
+            manifestPlaceholders["appLabel"] = "FlorysDiaries DEV"
+        }
+
         release {
+            manifestPlaceholders["appLabel"] = "FlorysDiaries"
             if (keystorePropertiesFile.exists()) {
                 signingConfig = signingConfigs.getByName("release")
             }

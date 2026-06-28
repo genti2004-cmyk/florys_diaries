@@ -1,59 +1,65 @@
 import 'package:flutter/foundation.dart';
 
-import 'package:florys_diaries/features/album/domain/trip_album_entry.dart';
-import 'package:florys_diaries/features/documents/domain/document_category.dart';
-import 'package:florys_diaries/features/documents/domain/travel_document.dart';
-
 import '../data/trip_storage_service.dart';
 import '../domain/trip.dart';
 
+typedef TripStoreClock = DateTime Function();
+
 class TripStore extends ChangeNotifier {
-  TripStore({TripStorageService storageService = const TripStorageService()})
-    : _storageService = storageService;
+  TripStore({
+    TripStorageService storageService = const TripStorageService(),
+    TripStoreClock? now,
+  }) : _storageService = storageService,
+       _now = now ?? DateTime.now;
 
   final TripStorageService _storageService;
+  final TripStoreClock _now;
   final List<Trip> _trips = [];
+
+  List<Trip> _sortedTrips = const <Trip>[];
+  List<Trip> _upcomingTrips = const <Trip>[];
+  List<Trip> _pastTrips = const <Trip>[];
+  DateTime? _partitionDate;
   bool _isLoading = true;
 
   bool get isLoading => _isLoading;
 
-  List<Trip> get trips => List.unmodifiable(_sorted(_trips));
+  List<Trip> get trips => _sortedTrips;
 
   List<Trip> get upcomingTrips {
-    return trips.where((trip) => !trip.isPast).toList(growable: false);
+    _refreshDatePartitionsIfNeeded();
+    return _upcomingTrips;
   }
 
   List<Trip> get pastTrips {
-    return trips.where((trip) => trip.isPast).toList(growable: false);
+    _refreshDatePartitionsIfNeeded();
+    return _pastTrips;
   }
 
   Future<void> load() async {
-    final hasSavedTrips = await _storageService.hasSavedTrips();
-    final savedTrips = await _storageService.loadTrips();
-    _trips
-      ..clear()
-      ..addAll(hasSavedTrips ? savedTrips : _initialTrips());
-    _isLoading = false;
-    notifyListeners();
-
-    if (!hasSavedTrips) {
-      await _save();
+    try {
+      final savedTrips = await _storageService.loadTrips();
+      _replaceTrips(savedTrips);
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 
   Future<void> reloadFromStorage() async {
-    final savedTrips = await _storageService.loadTrips();
-    _trips
-      ..clear()
-      ..addAll(savedTrips);
-    _isLoading = false;
-    notifyListeners();
+    try {
+      final savedTrips = await _storageService.loadTrips();
+      _replaceTrips(savedTrips);
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 
-  Future<void> addTrip(Trip trip) async {
-    _trips.add(trip);
-    notifyListeners();
-    await _save();
+  Future<void> addTrip(Trip trip) {
+    return _persistMutation(() {
+      _trips.add(trip);
+    });
   }
 
   Future<void> updateTrip(Trip trip) async {
@@ -61,121 +67,83 @@ class TripStore extends ChangeNotifier {
     if (index == -1) {
       return;
     }
-    _trips[index] = trip;
-    notifyListeners();
-    await _save();
+
+    await _persistMutation(() {
+      _trips[index] = trip;
+    });
   }
 
   Future<void> deleteTrip(String id) async {
-    _trips.removeWhere((trip) => trip.id == id);
-    notifyListeners();
-    await _save();
+    final index = _trips.indexWhere((trip) => trip.id == id);
+    if (index == -1) {
+      return;
+    }
+
+    await _persistMutation(() {
+      _trips.removeAt(index);
+    });
   }
 
   String createId() => DateTime.now().microsecondsSinceEpoch.toString();
 
+  Future<void> _persistMutation(void Function() mutation) async {
+    final previousTrips = List<Trip>.from(_trips);
+    mutation();
+    _rebuildViews();
+
+    try {
+      await _save();
+    } catch (_) {
+      _replaceTrips(previousTrips);
+      rethrow;
+    }
+
+    notifyListeners();
+  }
+
   Future<void> _save() {
-    return _storageService.saveTrips(_sorted(_trips));
+    return _storageService.saveTrips(_sortedTrips);
   }
 
-  static List<Trip> _sorted(List<Trip> source) {
-    final items = List<Trip>.from(source);
-    items.sort((a, b) => a.startDate.compareTo(b.startDate));
-    return items;
+  void _replaceTrips(Iterable<Trip> trips) {
+    _trips
+      ..clear()
+      ..addAll(trips);
+    _rebuildViews();
   }
 
-  static List<Trip> _initialTrips() {
-    final now = DateTime.now();
-    return [
-      Trip(
-        id: 'sample-paris',
-        title: 'Sommer in Paris',
-        destination: 'Paris',
-        country: 'Frankreich',
-        startDate: DateTime(now.year, now.month + 1, 12),
-        endDate: DateTime(now.year, now.month + 1, 18),
-        notes: 'Hotel, Flugticket und Metro-Plan später hier ablegen.',
-        albumEntries: [
-          TripAlbumEntry(
-            id: 'sample-paris-note',
-            typeId: TripAlbumEntryTypes.note.id,
-            date: DateTime(now.year, now.month + 1, 12),
-            title: 'Ankunft in Paris',
-            location: 'Paris',
-            description:
-                'Eiffelturm und Abendspaziergang als erstes Highlight planen.',
-          ),
-          TripAlbumEntry(
-            id: 'sample-paris-highlight',
-            typeId: TripAlbumEntryTypes.highlight.id,
-            date: DateTime(now.year, now.month + 1, 14),
-            title: 'Lieblingsmoment vormerken',
-            location: 'Montmartre',
-            description:
-                'Hier später den schönsten Moment der Reise festhalten.',
-            isFavorite: true,
-          ),
-        ],
-        documents: [
-          TravelDocument(
-            id: 'sample-paris-flight',
-            title: 'Flugticket Lufthansa',
-            categoryId: DocumentCategories.flight.id,
-            createdAt: DateTime(now.year, now.month, now.day),
-            description: 'Frankfurt → Paris, Buchungsnummer später ergänzen.',
-            fileName: 'flugticket_paris.pdf',
-          ),
-          TravelDocument(
-            id: 'sample-paris-hotel',
-            title: 'Hotelbestätigung',
-            categoryId: DocumentCategories.hotel.id,
-            createdAt: DateTime(now.year, now.month, now.day),
-            description: 'Check-in Daten und Adresse sichern.',
-            fileName: 'hotel_paris.pdf',
-          ),
-        ],
-        photoCount: 0,
-      ),
-      Trip(
-        id: 'sample-rome',
-        title: 'Rom Wochenende',
-        destination: 'Rom',
-        country: 'Italien',
-        startDate: DateTime(now.year - 1, 9, 6),
-        endDate: DateTime(now.year - 1, 9, 10),
-        notes: 'Kolosseum, Trastevere und Vatikan besucht.',
-        albumEntries: [
-          TripAlbumEntry(
-            id: 'sample-rome-highlight',
-            typeId: TripAlbumEntryTypes.highlight.id,
-            date: DateTime(now.year - 1, 9, 7),
-            title: 'Sonnenuntergang am Kolosseum',
-            location: 'Rom',
-            description:
-                'Warmer Abend, gute Fotos und Spaziergang Richtung Trastevere.',
-            isFavorite: true,
-          ),
-          TripAlbumEntry(
-            id: 'sample-rome-food',
-            typeId: TripAlbumEntryTypes.food.id,
-            date: DateTime(now.year - 1, 9, 8),
-            title: 'Pasta in Trastevere',
-            location: 'Trastevere',
-            description: 'Restaurant später mit Namen ergänzen.',
-          ),
-        ],
-        documents: [
-          TravelDocument(
-            id: 'sample-rome-ticket',
-            title: 'Kolosseum Ticket',
-            categoryId: DocumentCategories.pdf.id,
-            createdAt: DateTime(now.year - 1, 9, 1),
-            description: 'Eintritt und Zeitfenster als PDF gesichert.',
-            fileName: 'kolosseum_ticket.pdf',
-          ),
-        ],
-        photoCount: 24,
-      ),
-    ];
+  void _rebuildViews() {
+    _trips.sort((a, b) => a.startDate.compareTo(b.startDate));
+    _sortedTrips = List<Trip>.unmodifiable(_trips);
+    _rebuildDatePartitions(_dateOnly(_now()));
+  }
+
+  void _refreshDatePartitionsIfNeeded() {
+    final today = _dateOnly(_now());
+    if (_partitionDate == today) {
+      return;
+    }
+    _rebuildDatePartitions(today);
+  }
+
+  void _rebuildDatePartitions(DateTime today) {
+    final upcoming = <Trip>[];
+    final past = <Trip>[];
+
+    for (final trip in _sortedTrips) {
+      if (_dateOnly(trip.endDate).isBefore(today)) {
+        past.add(trip);
+      } else {
+        upcoming.add(trip);
+      }
+    }
+
+    _upcomingTrips = List<Trip>.unmodifiable(upcoming);
+    _pastTrips = List<Trip>.unmodifiable(past);
+    _partitionDate = today;
+  }
+
+  static DateTime _dateOnly(DateTime date) {
+    return DateTime(date.year, date.month, date.day);
   }
 }

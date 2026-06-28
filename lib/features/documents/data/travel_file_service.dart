@@ -4,6 +4,8 @@ import 'package:path_provider/path_provider.dart';
 
 import '../domain/travel_document.dart';
 
+typedef TravelFileClock = DateTime Function();
+
 class TravelFileCopyResult {
   const TravelFileCopyResult({
     required this.fileName,
@@ -19,7 +21,9 @@ class TravelFileCopyResult {
 }
 
 class TravelFileService {
-  const TravelFileService();
+  const TravelFileService({TravelFileClock? now}) : _now = now;
+
+  final TravelFileClock? _now;
 
   Future<TravelFileCopyResult> copyFileToTrip({
     required String tripId,
@@ -40,7 +44,8 @@ class TravelFileService {
       await targetDirectory.create(recursive: true);
     }
 
-    final targetName = '${documentId}_$safeName';
+    final timestamp = (_now?.call() ?? DateTime.now()).microsecondsSinceEpoch;
+    final targetName = '${documentId}_${timestamp}_$safeName';
     final targetFile = File(_join(targetDirectory.path, targetName));
     await source.copy(targetFile.path);
 
