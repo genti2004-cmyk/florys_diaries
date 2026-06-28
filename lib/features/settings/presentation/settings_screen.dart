@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 
+import 'package:florys_diaries/features/backup/application/backup_sync_status_scope.dart';
 import 'package:florys_diaries/features/backup/data/app_backup_service.dart';
 import 'package:florys_diaries/features/backup/data/automatic_cloud_backup_settings_service.dart';
 import 'package:florys_diaries/features/backup/data/automatic_google_drive_backup_service.dart';
@@ -424,6 +425,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       await _inspectAndRestore(
         backupFile: selection.file,
         fileName: selection.displayName,
+        sourceLabel: _selectedProvider.displayName,
       );
     } finally {
       if (selection.deleteAfterUse && await selection.file.exists()) {
@@ -445,7 +447,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     GoogleDriveDownloadResult? result;
     setState(() {
       _isBusy = true;
-      _statusText = 'Cloud-Backup wird heruntergeladen ...';
+      _statusText =
+          'Cloud-Backup wird für die Inhaltsprüfung heruntergeladen ...';
     });
 
     try {
@@ -486,7 +489,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     try {
       await _inspectAndRestore(
         backupFile: downloaded.file,
-        fileName: '${downloaded.backup.name} · ${downloaded.accountEmail}',
+        fileName: downloaded.backup.name,
+        sourceLabel: 'Google Drive',
+        sourceDetail: 'Konto: ${downloaded.accountEmail}',
       );
     } finally {
       if (await downloaded.file.exists()) {
@@ -553,12 +558,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _restoreLocalBackup(LocalBackupEntry entry) {
-    return _inspectAndRestore(backupFile: entry.file, fileName: entry.fileName);
+    return _inspectAndRestore(
+      backupFile: entry.file,
+      fileName: entry.fileName,
+      sourceLabel: 'Lokales Backup',
+      sourceDetail: entry.isAutomatic
+          ? 'Automatisch erstellt'
+          : 'Manuell erstellt',
+    );
   }
 
   Future<void> _inspectAndRestore({
     required File backupFile,
     required String fileName,
+    required String sourceLabel,
+    String? sourceDetail,
   }) async {
     if (_isBusy) {
       return;
@@ -612,6 +626,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final confirmed = await _confirmRestore(
       fileName: fileName,
       inspection: inspection,
+      sourceLabel: sourceLabel,
+      sourceDetail: sourceDetail,
     );
     if (!mounted || confirmed != true) {
       return;
@@ -730,11 +746,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<bool?> _confirmRestore({
     required String fileName,
     required AppBackupInspectionResult inspection,
+    required String sourceLabel,
+    String? sourceDetail,
   }) {
     return showBackupRestoreConfirmationDialog(
       context,
       fileName: fileName,
       inspection: inspection,
+      sourceLabel: sourceLabel,
+      sourceDetail: sourceDetail,
     );
   }
 
@@ -745,7 +765,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final backupSyncStatus = BackupSyncStatusScope.of(context).status;
+
     return SettingsContent(
+      backupSyncStatus: backupSyncStatus,
       providers: _providerRegistry.providers,
       selectedProviderId: _selectedProviderId,
       selectedProviderName: _selectedProvider.displayName,

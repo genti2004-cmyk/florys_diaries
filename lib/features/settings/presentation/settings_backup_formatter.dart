@@ -15,9 +15,11 @@ abstract final class SettingsBackupFormatter {
     String fileName,
     AppBackupInspectionResult inspection,
   ) {
-    return 'Ausgewählt: $fileName · Backup vom '
+    return 'Geprüft: $fileName · Backup vom '
         '${formatDateTime(inspection.backupCreatedAt.toLocal())} · '
-        '${inspection.tripCount} Reisen';
+        '${inspection.tripCount} Reisen, '
+        '${inspection.countryCount} Länder, '
+        '${inspection.fileCount} Dateien';
   }
 
   static String restoreSummary(AppBackupRestoreResult result) {

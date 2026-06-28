@@ -60,7 +60,7 @@ class LocalBackupHistory extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Beim App-Start entsteht höchstens einmal in 24 Stunden ein automatisches Backup. Die 7 neuesten lokalen Sicherungen bleiben erhalten.',
+                        'Beim Start, nach Änderungen und beim Wechsel in den Hintergrund wird automatisch geprüft. Höchstens einmal in 24 Stunden entsteht ein neues Backup; die 7 neuesten automatischen Sicherungen bleiben erhalten.',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: AppColors.textMuted,
                         ),
@@ -175,7 +175,7 @@ class _LocalBackupTile extends StatelessWidget {
             child: ListTile(
               contentPadding: EdgeInsets.zero,
               leading: Icon(Icons.restore),
-              title: Text('Wiederherstellen'),
+              title: Text('Prüfen & wiederherstellen'),
             ),
           ),
           PopupMenuItem(

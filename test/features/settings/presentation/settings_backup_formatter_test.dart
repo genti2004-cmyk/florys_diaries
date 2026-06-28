@@ -25,6 +25,8 @@ void main() {
       tripCount: 3,
       fileCount: 5,
       sizeBytes: 1536,
+      appVersion: '0.19.0',
+      countryCount: 2,
     );
     final restore = AppBackupRestoreResult(
       backupCreatedAt: DateTime(2026, 6, 28, 10, 30),
@@ -42,7 +44,7 @@ void main() {
     );
     expect(
       SettingsBackupFormatter.selectedBackupSummary('backup.zip', inspection),
-      contains('3 Reisen'),
+      allOf(contains('3 Reisen'), contains('2 Länder'), contains('5 Dateien')),
     );
     expect(
       SettingsBackupFormatter.restoreSummary(restore),

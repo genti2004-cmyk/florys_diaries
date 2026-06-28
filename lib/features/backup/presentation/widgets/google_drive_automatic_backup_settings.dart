@@ -62,7 +62,7 @@ class GoogleDriveAutomaticBackupSettings extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Beim App-Start wird geprüft, ob das eingestellte Intervall erreicht ist.',
+                        'Beim Start, nach Änderungen und beim Wechsel in den Hintergrund wird geprüft, ob das eingestellte Intervall erreicht ist.',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: AppColors.textMuted,
                         ),
@@ -183,7 +183,7 @@ class GoogleDriveAutomaticBackupSettings extends StatelessWidget {
     final lastBackup = settings.lastSuccessfulBackupAt;
     final lastChecked = settings.lastCheckedAt;
     if (lastBackup == null) {
-      return 'Noch keine automatische Cloud-Sicherung. Der erste Lauf erfolgt beim nächsten App-Start oder über „Jetzt automatisch sichern“.';
+      return 'Noch keine automatische Cloud-Sicherung. Der erste Lauf erfolgt beim Start, nach einer Änderung oder über „Jetzt automatisch sichern“.';
     }
 
     final nextBackup = settings.nextBackupAt;

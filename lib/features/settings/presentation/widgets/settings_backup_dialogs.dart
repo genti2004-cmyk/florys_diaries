@@ -4,6 +4,7 @@ import 'package:florys_diaries/features/backup/domain/app_backup_result.dart';
 import 'package:florys_diaries/features/backup/domain/google_drive_backup_models.dart';
 import 'package:florys_diaries/features/backup/domain/local_backup_entry.dart';
 import 'package:florys_diaries/features/settings/presentation/settings_backup_formatter.dart';
+import 'package:florys_diaries/features/settings/presentation/widgets/backup_restore_preview.dart';
 
 Future<bool> showGoogleDriveBackupDeleteDialog(
   BuildContext context,
@@ -71,21 +72,24 @@ Future<bool?> showBackupRestoreConfirmationDialog(
   BuildContext context, {
   required String fileName,
   required AppBackupInspectionResult inspection,
+  required String sourceLabel,
+  String? sourceDetail,
 }) {
   return showDialog<bool>(
     context: context,
     builder: (dialogContext) {
       return AlertDialog(
-        title: const Text('Dieses Backup wiederherstellen?'),
-        content: Text(
-          'Datei: $fileName\n'
-          'Erstellt: '
-          '${SettingsBackupFormatter.formatDateTime(inspection.backupCreatedAt.toLocal())}\n'
-          'Inhalt: ${inspection.tripCount} Reisen, '
-          '${inspection.fileCount} Dateien, '
-          '${SettingsBackupFormatter.formatBytes(inspection.sizeBytes)}\n\n'
-          'Alle aktuell gespeicherten Reisen und lokalen Dokumentdateien '
-          'werden durch genau dieses Backup ersetzt.',
+        title: const Text('Backup-Inhalt prüfen'),
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 520),
+          child: SingleChildScrollView(
+            child: BackupRestorePreview(
+              fileName: fileName,
+              inspection: inspection,
+              sourceLabel: sourceLabel,
+              sourceDetail: sourceDetail,
+            ),
+          ),
         ),
         actions: [
           TextButton(
@@ -95,7 +99,7 @@ Future<bool?> showBackupRestoreConfirmationDialog(
           FilledButton.icon(
             onPressed: () => Navigator.of(dialogContext).pop(true),
             icon: const Icon(Icons.restore),
-            label: const Text('Wiederherstellen'),
+            label: const Text('Diesen Stand wiederherstellen'),
           ),
         ],
       );

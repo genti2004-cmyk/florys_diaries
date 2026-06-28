@@ -78,11 +78,12 @@ class AppBackupService {
 
   Future<AppBackupInspectionResult> inspectBackup(File backupFile) async {
     final package = await archiveReader.read(backupFile);
-    return AppBackupInspectionResult(
+    return AppBackupInspectionResult.fromTrips(
       backupCreatedAt: package.createdAt,
-      tripCount: package.trips.length,
+      trips: package.trips,
       fileCount: package.fileEntries.length,
       sizeBytes: await backupFile.length(),
+      appVersion: package.appVersion,
     );
   }
 

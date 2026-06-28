@@ -262,7 +262,7 @@ class _CloudBackupTile extends StatelessWidget {
                     OutlinedButton.icon(
                       onPressed: isBusy ? null : onRestore,
                       icon: const Icon(Icons.restore, size: 18),
-                      label: const Text('Wiederherstellen'),
+                      label: const Text('Prüfen & wiederherstellen'),
                     ),
                     TextButton.icon(
                       onPressed: isBusy ? null : onDelete,

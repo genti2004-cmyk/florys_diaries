@@ -9,11 +9,13 @@ import 'package:florys_diaries/features/trips/domain/trip.dart';
 class BackupArchivePackage {
   const BackupArchivePackage({
     required this.createdAt,
+    required this.appVersion,
     required this.trips,
     required this.fileEntries,
   });
 
   final DateTime createdAt;
+  final String appVersion;
   final List<Trip> trips;
   final List<ArchiveFile> fileEntries;
 }
@@ -101,8 +103,13 @@ class BackupArchiveReader {
     _validateManifestCounts(manifest, trips: trips, fileEntries: fileEntries);
     _validateDocumentPaths(trips, fileEntries: fileEntries);
 
+    final appVersion = manifest['appVersion']?.toString().trim();
+
     return BackupArchivePackage(
       createdAt: createdAt,
+      appVersion: appVersion == null || appVersion.isEmpty
+          ? 'Unbekannt'
+          : appVersion,
       trips: List<Trip>.unmodifiable(trips),
       fileEntries: List<ArchiveFile>.unmodifiable(fileEntries),
     );

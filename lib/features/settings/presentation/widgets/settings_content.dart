@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 
 import 'package:florys_diaries/core/widgets/app_section_card.dart';
 import 'package:florys_diaries/features/backup/domain/automatic_cloud_backup_settings.dart';
+import 'package:florys_diaries/features/backup/domain/backup_sync_status.dart';
 import 'package:florys_diaries/features/backup/domain/backup_provider.dart';
 import 'package:florys_diaries/features/backup/domain/google_drive_backup_models.dart';
 import 'package:florys_diaries/features/backup/domain/local_backup_entry.dart';
 import 'package:florys_diaries/features/backup/presentation/widgets/backup_panel.dart';
+import 'package:florys_diaries/features/backup/presentation/widgets/backup_sync_status_card.dart';
 import 'package:florys_diaries/features/backup/presentation/widgets/backup_provider_selector.dart';
 import 'package:florys_diaries/features/backup/presentation/widgets/google_drive_automatic_backup_settings.dart';
 import 'package:florys_diaries/features/backup/presentation/widgets/google_drive_backup_history.dart';
@@ -15,6 +17,7 @@ class SettingsContent extends StatelessWidget {
   const SettingsContent({
     super.key,
     required this.providers,
+    required this.backupSyncStatus,
     required this.selectedProviderId,
     required this.selectedProviderName,
     required this.isBusy,
@@ -43,6 +46,7 @@ class SettingsContent extends StatelessWidget {
   });
 
   final List<BackupProvider> providers;
+  final BackupSyncStatus backupSyncStatus;
   final BackupProviderId selectedProviderId;
   final String selectedProviderName;
   final bool isBusy;
@@ -96,6 +100,8 @@ class SettingsContent extends StatelessWidget {
             onCreateBackup: onCreateBackup,
             onRestoreBackup: onRestoreBackup,
           ),
+          const SizedBox(height: 12),
+          BackupSyncStatusCard(status: backupSyncStatus),
           if (selectedProviderId == BackupProviderId.googleDrive) ...[
             const SizedBox(height: 12),
             GoogleDriveBackupHistory(
@@ -132,7 +138,7 @@ class SettingsContent extends StatelessWidget {
             icon: Icons.info_outline,
             title: 'Version',
             subtitle:
-                'FlorysDiaries v0.19.0 – Stabilität, Performance und sichere Backups.',
+                'FlorysDiaries v0.19.1 – Backup-Synchronisierung und sichere Wiederherstellung.',
           ),
         ],
       ),

@@ -50,5 +50,5 @@ Sicherungen hinweg als Ersatz verwendet werden.
 
 ## Aktueller Meilenstein
 
-`v0.19.0+2` – Stabilisierung, Performance, Modularisierung und
-Backup-Sicherheit.
+`v0.19.1+3` – automatische Backup-Synchronisierung, sichtbarer Status
+und sichere, einheitliche Wiederherstellung.
