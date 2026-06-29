@@ -193,6 +193,84 @@ void main() {
     expect(restored.checklistItems.single.isCompleted, isTrue);
     expect(restored.photoCount, 9);
   });
+  test('rejects a document path assigned to the wrong trip', () async {
+    final original = _tripWithDocument();
+    final wrongDocument = original.documents.single.copyWith(
+      relativePath: 'Reisen/trip-2/documents/ticket.pdf',
+    );
+    final trip = original.copyWith(documents: [wrongDocument]);
+    final backup = await _createBackup(
+      testRoot,
+      trips: [trip],
+      files: {
+        'Reisen/trip-2/documents/ticket.pdf': [1, 2, 3, 4],
+      },
+    );
+
+    await expectLater(
+      reader.read(backup),
+      throwsA(
+        isA<FormatException>().having(
+          (error) => error.message,
+          'message',
+          contains('gehört nicht'),
+        ),
+      ),
+    );
+  });
+
+  test('rejects a document file referenced more than once', () async {
+    final original = _tripWithDocument();
+    final duplicate = original.documents.single.copyWith(
+      id: 'document-2',
+      title: 'Zweites Ticket',
+    );
+    final trip = original.copyWith(
+      documents: [original.documents.single, duplicate],
+    );
+    final backup = await _createBackup(
+      testRoot,
+      trips: [trip],
+      files: {
+        'Reisen/trip-1/documents/ticket.pdf': [1, 2, 3, 4],
+      },
+    );
+
+    await expectLater(
+      reader.read(backup),
+      throwsA(
+        isA<FormatException>().having(
+          (error) => error.message,
+          'message',
+          contains('mehrfach referenziert'),
+        ),
+      ),
+    );
+  });
+
+  test('rejects contradictory document file sizes', () async {
+    final original = _tripWithDocument();
+    final wrongSize = original.documents.single.copyWith(fileSizeBytes: 99);
+    final trip = original.copyWith(documents: [wrongSize]);
+    final backup = await _createBackup(
+      testRoot,
+      trips: [trip],
+      files: {
+        'Reisen/trip-1/documents/ticket.pdf': [1, 2, 3, 4],
+      },
+    );
+
+    await expectLater(
+      reader.read(backup),
+      throwsA(
+        isA<FormatException>().having(
+          (error) => error.message,
+          'message',
+          contains('Dateigröße'),
+        ),
+      ),
+    );
+  });
 }
 
 Trip _tripWithDocument() {

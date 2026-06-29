@@ -20,9 +20,14 @@ class TripStore extends ChangeNotifier {
   List<Trip> _upcomingTrips = const <Trip>[];
   List<Trip> _pastTrips = const <Trip>[];
   DateTime? _partitionDate;
+  String? _loadErrorMessage;
   bool _isLoading = true;
 
   bool get isLoading => _isLoading;
+
+  bool get hasLoadError => _loadErrorMessage != null;
+
+  String? get loadErrorMessage => _loadErrorMessage;
 
   List<Trip> get trips => _sortedTrips;
 
@@ -36,33 +41,23 @@ class TripStore extends ChangeNotifier {
     return _pastTrips;
   }
 
-  Future<void> load() async {
-    try {
-      final savedTrips = await _storageService.loadTrips();
-      _replaceTrips(savedTrips);
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
+  Future<void> load() {
+    return _loadFromStorage();
   }
 
-  Future<void> reloadFromStorage() async {
-    try {
-      final savedTrips = await _storageService.loadTrips();
-      _replaceTrips(savedTrips);
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
+  Future<void> reloadFromStorage() {
+    return _loadFromStorage();
   }
 
   Future<void> addTrip(Trip trip) {
+    _ensureWritable();
     return _persistMutation(() {
       _trips.add(trip);
     });
   }
 
   Future<void> updateTrip(Trip trip) async {
+    _ensureWritable();
     final index = _trips.indexWhere((item) => item.id == trip.id);
     if (index == -1) {
       return;
@@ -74,6 +69,7 @@ class TripStore extends ChangeNotifier {
   }
 
   Future<void> deleteTrip(String id) async {
+    _ensureWritable();
     final index = _trips.indexWhere((trip) => trip.id == id);
     if (index == -1) {
       return;
@@ -85,6 +81,27 @@ class TripStore extends ChangeNotifier {
   }
 
   String createId() => DateTime.now().microsecondsSinceEpoch.toString();
+
+  Future<void> _loadFromStorage() async {
+    _isLoading = true;
+    _loadErrorMessage = null;
+    notifyListeners();
+
+    try {
+      final savedTrips = await _storageService.loadTrips();
+      _replaceTrips(savedTrips);
+    } on TripStorageException catch (error) {
+      _loadErrorMessage = error.message;
+    } catch (error) {
+      debugPrint('Lokale Reisedaten konnten nicht geladen werden: $error');
+      _loadErrorMessage =
+          'Die lokalen Reisedaten konnten nicht geladen werden. '
+          'Die vorhandenen Dateien wurden nicht überschrieben.';
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
 
   Future<void> _persistMutation(void Function() mutation) async {
     final previousTrips = List<Trip>.from(_trips);
@@ -103,6 +120,18 @@ class TripStore extends ChangeNotifier {
 
   Future<void> _save() {
     return _storageService.saveTrips(_sortedTrips);
+  }
+
+  void _ensureWritable() {
+    if (_isLoading) {
+      throw StateError('Die Reisedaten werden noch geladen.');
+    }
+    if (hasLoadError) {
+      throw StateError(
+        'Änderungen sind gesperrt, bis die lokalen Reisedaten sicher '
+        'geladen oder aus einem Backup wiederhergestellt wurden.',
+      );
+    }
   }
 
   void _replaceTrips(Iterable<Trip> trips) {

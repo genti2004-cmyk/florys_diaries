@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:florys_diaries/core/constants/app_metadata.dart';
 import 'package:florys_diaries/features/backup/data/app_backup_service.dart';
 import 'package:florys_diaries/features/backup/data/backup_content_fingerprint_service.dart';
 import 'package:florys_diaries/features/backup/data/local_backup_service.dart';
@@ -144,6 +145,68 @@ void main() {
       expect(fingerprintService.calculateCalls, 0);
     },
   );
+  test('validates the copied backup before returning it', () async {
+    final entry = await service.createLocalBackup(
+      const <Trip>[],
+      automatic: false,
+    );
+
+    expect(entry.isValid, isTrue);
+    expect(backupService.inspectCalls, 1);
+  });
+
+  test('removes the copied target when final validation fails', () async {
+    backupService.rejectAllInspections = true;
+
+    await expectLater(
+      service.createLocalBackup(const <Trip>[], automatic: false),
+      throwsA(isA<FormatException>()),
+    );
+
+    final remaining = await backupDirectory
+        .list()
+        .where((entity) => entity is File && entity.path.endsWith('.zip'))
+        .toList();
+    expect(remaining, isEmpty);
+  });
+
+  test('marks a damaged backup and still allows it to be deleted', () async {
+    final damaged = File(
+      '${backupDirectory.path}${Platform.pathSeparator}'
+      'FlorysDiaries_Lokal_20260628_080000.zip',
+    );
+    await damaged.writeAsBytes([1, 2, 3], flush: true);
+    backupService.invalidFileNames.add(
+      'FlorysDiaries_Lokal_20260628_080000.zip',
+    );
+
+    final entries = await service.listBackups();
+
+    expect(entries, hasLength(1));
+    expect(entries.single.isValid, isFalse);
+    expect(entries.single.canRestore, isFalse);
+    expect(entries.single.validationError, contains('beschädigt'));
+
+    await service.deleteBackup(entries.single);
+    expect(await damaged.exists(), isFalse);
+  });
+
+  test('a damaged automatic backup does not block a new backup', () async {
+    final damaged = File(
+      '${backupDirectory.path}${Platform.pathSeparator}'
+      'FlorysDiaries_Auto_20260628_080000_F1111111111111111.zip',
+    );
+    await damaged.writeAsBytes([1, 2, 3], flush: true);
+    backupService.invalidFileNames.add(
+      'FlorysDiaries_Auto_20260628_080000_F1111111111111111.zip',
+    );
+
+    final created = await service.createAutomaticBackupIfDue(const <Trip>[]);
+
+    expect(created, isNotNull);
+    expect(created!.isValid, isTrue);
+    expect(backupService.createCalls, 1);
+  });
 }
 
 class _FakeAppBackupService extends AppBackupService {
@@ -155,6 +218,9 @@ class _FakeAppBackupService extends AppBackupService {
   final Directory temporaryDirectory;
   final DateTime Function() clock;
   int createCalls = 0;
+  int inspectCalls = 0;
+  bool rejectAllInspections = false;
+  final Set<String> invalidFileNames = <String>{};
 
   @override
   Future<AppBackupCreateResult> createBackup(
@@ -175,6 +241,26 @@ class _FakeAppBackupService extends AppBackupService {
       tripCount: trips.length,
       fileCount: 0,
       sizeBytes: await file.length(),
+    );
+  }
+
+  @override
+  Future<AppBackupInspectionResult> inspectBackup(File backupFile) async {
+    inspectCalls++;
+    final fileName = backupFile.path.replaceAll('\\', '/').split('/').last;
+
+    if (rejectAllInspections || invalidFileNames.contains(fileName)) {
+      throw const FormatException(
+        'Die lokale Sicherung ist beschädigt oder unvollständig.',
+      );
+    }
+
+    return AppBackupInspectionResult(
+      backupCreatedAt: clock(),
+      tripCount: 0,
+      fileCount: 0,
+      sizeBytes: await backupFile.length(),
+      appVersion: AppMetadata.version,
     );
   }
 }

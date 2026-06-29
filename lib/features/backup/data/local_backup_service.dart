@@ -30,7 +30,7 @@ class LocalBackupService {
   Future<LocalBackupEntry?> createAutomaticBackupIfDue(List<Trip> trips) async {
     final entries = await listBackups();
     final automaticEntries = entries
-        .where((entry) => entry.isAutomatic)
+        .where((entry) => entry.isAutomatic && entry.isValid)
         .toList(growable: false);
 
     if (automaticEntries.isNotEmpty) {
@@ -75,6 +75,7 @@ class LocalBackupService {
     required String? contentFingerprint,
   }) async {
     AppBackupCreateResult? created;
+    File? copiedTarget;
 
     try {
       created = await backupService.createBackup(trips);
@@ -85,12 +86,16 @@ class LocalBackupService {
         automatic: automatic,
         contentFingerprint: contentFingerprint,
       );
-      final copied = await created.file.copy(target.path);
+      copiedTarget = await created.file.copy(target.path);
+
+      // Auch die endgültig abgelegte Datei wird geprüft. Erst danach wird sie
+      // in die lokale Historie aufgenommen.
+      await backupService.inspectBackup(copiedTarget);
 
       final entry = LocalBackupEntry(
-        file: copied,
+        file: copiedTarget,
         createdAt: created.createdAt,
-        sizeBytes: await copied.length(),
+        sizeBytes: await copiedTarget.length(),
         isAutomatic: automatic,
       );
 
@@ -98,14 +103,15 @@ class LocalBackupService {
         await _pruneOldAutomaticBackups();
       }
       return entry;
+    } catch (error, stackTrace) {
+      if (copiedTarget != null) {
+        await _deleteBestEffort(copiedTarget);
+      }
+      Error.throwWithStackTrace(error, stackTrace);
     } finally {
       final temporaryFile = created?.file;
-      if (temporaryFile != null && await temporaryFile.exists()) {
-        try {
-          await temporaryFile.delete();
-        } on FileSystemException {
-          // Das temporäre Arbeitsbackup wird vom Betriebssystem bereinigt.
-        }
+      if (temporaryFile != null) {
+        await _deleteBestEffort(temporaryFile);
       }
     }
   }
@@ -122,12 +128,16 @@ class LocalBackupService {
       try {
         final stat = await entity.stat();
         final fileName = _baseName(entity.path);
+        final validationError = await _validationErrorFor(entity);
+
         entries.add(
           LocalBackupEntry(
             file: entity,
             createdAt: _dateFromFileName(fileName) ?? stat.modified,
             sizeBytes: stat.size,
             isAutomatic: fileName.contains('_Auto_'),
+            isValid: validationError == null,
+            validationError: validationError,
           ),
         );
       } on FileSystemException {
@@ -136,22 +146,39 @@ class LocalBackupService {
     }
 
     entries.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-    return entries;
+    return List<LocalBackupEntry>.unmodifiable(entries);
   }
 
   Future<void> deleteBackup(LocalBackupEntry entry) async {
-    final allowedEntries = await listBackups();
-    final isManagedFile = allowedEntries.any(
-      (candidate) => candidate.file.absolute.path == entry.file.absolute.path,
-    );
-    if (!isManagedFile) {
+    final directory = await _backupDirectory();
+    final file = entry.file.absolute;
+
+    if (!_isInsideDirectory(directory.absolute, file) ||
+        !_isZipFile(file.path)) {
       throw const FileSystemException(
         'Diese Datei gehört nicht zur lokalen Backup-Historie.',
       );
     }
 
-    if (await entry.file.exists()) {
-      await entry.file.delete();
+    if (await file.exists()) {
+      await file.delete();
+    }
+  }
+
+  Future<String?> _validationErrorFor(File file) async {
+    try {
+      await backupService.inspectBackup(file);
+      return null;
+    } on FormatException catch (error) {
+      return error.message.trim().isEmpty
+          ? 'Die Sicherung ist beschädigt oder unvollständig.'
+          : error.message;
+    } on FileSystemException catch (error) {
+      return error.message.trim().isEmpty
+          ? 'Die Sicherung konnte nicht gelesen werden.'
+          : error.message;
+    } catch (_) {
+      return 'Die Sicherung konnte nicht sicher geprüft werden.';
     }
   }
 
@@ -195,7 +222,7 @@ class LocalBackupService {
 
   Future<void> _pruneOldAutomaticBackups() async {
     final automaticEntries = (await listBackups())
-        .where((entry) => entry.isAutomatic)
+        .where((entry) => entry.isAutomatic && entry.isValid)
         .toList(growable: false);
     if (automaticEntries.length <= maximumAutomaticBackups) {
       return;
@@ -213,6 +240,31 @@ class LocalBackupService {
   }
 
   DateTime _now() => clock?.call() ?? DateTime.now();
+
+  static bool _isInsideDirectory(Directory directory, File file) {
+    var directoryPath = directory.path;
+    var filePath = file.path;
+
+    if (Platform.isWindows) {
+      directoryPath = directoryPath.toLowerCase();
+      filePath = filePath.toLowerCase();
+    }
+
+    final prefix = directoryPath.endsWith(Platform.pathSeparator)
+        ? directoryPath
+        : '$directoryPath${Platform.pathSeparator}';
+    return filePath.startsWith(prefix);
+  }
+
+  static Future<void> _deleteBestEffort(File file) async {
+    try {
+      if (await file.exists()) {
+        await file.delete();
+      }
+    } catch (_) {
+      // Der ursprüngliche Fehler wird weitergereicht.
+    }
+  }
 
   static String? _fingerprintFromFileName(String fileName) {
     final match = RegExp(

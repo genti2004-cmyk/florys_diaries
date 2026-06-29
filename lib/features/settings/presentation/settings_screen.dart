@@ -557,8 +557,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  Future<void> _restoreLocalBackup(LocalBackupEntry entry) {
-    return _inspectAndRestore(
+  Future<void> _restoreLocalBackup(LocalBackupEntry entry) async {
+    if (!entry.canRestore) {
+      final message =
+          entry.validationError ??
+          'Diese lokale Sicherung ist beschädigt und kann nicht '
+              'wiederhergestellt werden.';
+      _showError(ScaffoldMessenger.of(context), message);
+      return;
+    }
+
+    await _inspectAndRestore(
       backupFile: entry.file,
       fileName: entry.fileName,
       sourceLabel: 'Lokales Backup',

@@ -10,21 +10,25 @@ import 'package:florys_diaries/features/backup/data/backup_manifest.dart';
 import 'package:florys_diaries/features/backup/domain/app_backup_result.dart';
 import 'package:florys_diaries/features/trips/domain/trip.dart';
 
+typedef BackupTemporaryDirectoryProvider = Future<Directory> Function();
+
 class AppBackupService {
   const AppBackupService({
     this.archiveReader = const BackupArchiveReader(),
     this.fileManager = const BackupFileManager(),
+    this.temporaryDirectoryProvider,
   });
 
   final BackupArchiveReader archiveReader;
   final BackupFileManager fileManager;
+  final BackupTemporaryDirectoryProvider? temporaryDirectoryProvider;
 
   Future<AppBackupCreateResult> createBackup(
     List<Trip> trips, {
     String fileNamePrefix = 'FlorysDiaries_Backup',
   }) async {
     final now = DateTime.now();
-    final temp = await getTemporaryDirectory();
+    final temp = await _temporaryDirectory();
     final workspace = Directory(
       _joinMany([
         temp.path,
@@ -32,6 +36,7 @@ class AppBackupService {
       ]),
     );
     final filesDirectory = Directory(_join(workspace.path, 'files'));
+    File? target;
 
     await filesDirectory.create(recursive: true);
 
@@ -50,26 +55,37 @@ class AppBackupService {
         contentBytes: copied.totalBytes,
       );
 
-      final target = await _targetBackupFile(
+      final backupTarget = await _targetBackupFile(
         now,
         fileNamePrefix: fileNamePrefix,
       );
-      if (await target.exists()) {
-        await target.delete();
+      target = backupTarget;
+      if (await backupTarget.exists()) {
+        await backupTarget.delete();
       }
 
       final encoder = ZipFileEncoder();
-      encoder.create(target.path);
+      encoder.create(backupTarget.path);
       await encoder.addDirectory(workspace, includeDirName: false);
       encoder.closeSync();
 
+      // Ein Backup wird erst als erfolgreich gemeldet, wenn es mit genau
+      // demselben Leser vollständig geprüft wurde, der später für Vorschau
+      // und Wiederherstellung verwendet wird.
+      await archiveReader.read(backupTarget);
+
       return AppBackupCreateResult(
-        file: target,
+        file: backupTarget,
         createdAt: now,
         tripCount: trips.length,
         fileCount: copied.fileCount,
-        sizeBytes: await target.length(),
+        sizeBytes: await backupTarget.length(),
       );
+    } catch (error, stackTrace) {
+      if (target != null) {
+        await _deleteBestEffort(target);
+      }
+      Error.throwWithStackTrace(error, stackTrace);
     } finally {
       if (await workspace.exists()) {
         await workspace.delete(recursive: true);
@@ -90,7 +106,7 @@ class AppBackupService {
 
   Future<AppBackupRestoreResult> restoreBackup(File backupFile) async {
     final package = await archiveReader.read(backupFile);
-    final temp = await getTemporaryDirectory();
+    final temp = await _temporaryDirectory();
     final stamp = DateTime.now().microsecondsSinceEpoch;
     final stagingRoot = Directory(
       _joinMany([temp.path, 'florys_diaries_restore_$stamp']),
@@ -157,7 +173,7 @@ class AppBackupService {
     DateTime createdAt, {
     required String fileNamePrefix,
   }) async {
-    final temp = await getTemporaryDirectory();
+    final temp = await _temporaryDirectory();
     final output = Directory(_join(temp.path, 'florys_diaries_backups'));
     await output.create(recursive: true);
 
@@ -167,6 +183,21 @@ class AppBackupService {
         '${_safePrefix(fileNamePrefix)}_${_fileStamp(createdAt)}.zip',
       ),
     );
+  }
+
+  Future<Directory> _temporaryDirectory() {
+    final provider = temporaryDirectoryProvider;
+    return provider == null ? getTemporaryDirectory() : provider();
+  }
+
+  static Future<void> _deleteBestEffort(File file) async {
+    try {
+      if (await file.exists()) {
+        await file.delete();
+      }
+    } catch (_) {
+      // Der ursprüngliche Erstellungs- oder Prüfungsfehler wird weitergereicht.
+    }
   }
 
   static String _safePrefix(String value) {

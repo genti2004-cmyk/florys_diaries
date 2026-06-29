@@ -143,6 +143,44 @@ void main() {
       expect(notifications, 0);
     });
 
+    test('keeps a load failure visible and blocks unsafe mutations', () async {
+      final storage = _FakeTripStorageService(
+        loadError: const TripStorageException('Lokale Daten beschädigt.'),
+      );
+      final store = TripStore(storageService: storage, now: () => today);
+
+      await store.load();
+
+      expect(store.isLoading, isFalse);
+      expect(store.hasLoadError, isTrue);
+      expect(store.loadErrorMessage, 'Lokale Daten beschädigt.');
+      expect(store.trips, isEmpty);
+      expect(
+        () => store.addTrip(_trip(id: 'blocked')),
+        throwsA(isA<StateError>()),
+      );
+      expect(storage.saveCalls, 0);
+    });
+
+    test('clears the load error after a successful retry', () async {
+      final storage = _FakeTripStorageService(
+        initialTrips: [_trip(id: 'recovered')],
+        loadError: const TripStorageException('Vorübergehender Lesefehler.'),
+      );
+      final store = TripStore(storageService: storage, now: () => today);
+
+      await store.load();
+      expect(store.hasLoadError, isTrue);
+
+      storage.loadError = null;
+      await store.reloadFromStorage();
+
+      expect(store.hasLoadError, isFalse);
+      expect(store.loadErrorMessage, isNull);
+      expect(store.trips.single.id, 'recovered');
+      expect(storage.loadCalls, 2);
+    });
+
     test('ignores updates and deletes for unknown IDs', () async {
       final storage = _FakeTripStorageService(
         initialTrips: [_trip(id: 'existing')],
@@ -160,10 +198,13 @@ void main() {
 }
 
 class _FakeTripStorageService extends TripStorageService {
-  _FakeTripStorageService({List<Trip> initialTrips = const <Trip>[]})
-    : _storedTrips = List<Trip>.from(initialTrips);
+  _FakeTripStorageService({
+    List<Trip> initialTrips = const <Trip>[],
+    this.loadError,
+  }) : _storedTrips = List<Trip>.from(initialTrips);
 
   List<Trip> _storedTrips;
+  Object? loadError;
   int loadCalls = 0;
   int saveCalls = 0;
   bool failNextSave = false;
@@ -173,6 +214,10 @@ class _FakeTripStorageService extends TripStorageService {
   @override
   Future<List<Trip>> loadTrips() async {
     loadCalls++;
+    final error = loadError;
+    if (error != null) {
+      throw error;
+    }
     return List<Trip>.from(_storedTrips);
   }
 

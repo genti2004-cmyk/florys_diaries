@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:archive/archive_io.dart';
 
+import 'package:florys_diaries/features/documents/data/travel_document_path_policy.dart';
 import 'package:florys_diaries/features/trips/domain/trip.dart';
 
 class BackupArchivePackage {
@@ -167,6 +168,7 @@ class BackupArchiveReader {
 
     final trips = <Trip>[];
     final ids = <String>{};
+    final tripFolderKeys = <String>{};
 
     for (final value in decoded) {
       if (value is! Map<String, dynamic>) {
@@ -181,6 +183,16 @@ class BackupArchiveReader {
           'Eine Reise-ID im Backup ist ungültig oder doppelt.',
         );
       }
+
+      final folderKey = TravelDocumentPathPolicy.safeTripFolderName(
+        id,
+      ).toLowerCase();
+      if (!tripFolderKeys.add(folderKey)) {
+        throw const FormatException(
+          'Zwei Reisen im Backup würden denselben Dateiordner verwenden.',
+        );
+      }
+
       if (startDate is! String || DateTime.tryParse(startDate) == null) {
         throw const FormatException('Ein Startdatum im Backup ist ungültig.');
       }
@@ -208,7 +220,29 @@ class BackupArchiveReader {
       label: 'Dokument',
       validate: (entry, ids) {
         _requireUniqueId(entry, ids, label: 'Dokument');
+
+        final title = entry['title'];
+        if (title is! String || title.trim().isEmpty) {
+          throw const FormatException(
+            'Ein Dokumenttitel im Backup ist ungültig.',
+          );
+        }
+
         _requireValidDate(entry['createdAt'], label: 'Dokumentdatum');
+
+        final sizeValue = entry['fileSizeBytes'];
+        if (sizeValue != null && (sizeValue is! num || sizeValue.toInt() < 0)) {
+          throw const FormatException(
+            'Eine Dokumentgröße im Backup ist ungültig.',
+          );
+        }
+
+        final pathValue = entry['relativePath'];
+        if (pathValue != null && pathValue is! String) {
+          throw const FormatException(
+            'Ein Dokumentpfad im Backup ist ungültig.',
+          );
+        }
       },
     );
     _validateNestedList(
@@ -317,26 +351,42 @@ class BackupArchiveReader {
     List<Trip> trips, {
     required List<ArchiveFile> fileEntries,
   }) {
-    final archivedRelativePaths = fileEntries
-        .map((entry) => _normalizePath(entry.name))
-        .where((name) => name.startsWith('files/'))
-        .map((name) => name.substring('files/'.length))
-        .toSet();
+    final archivedEntries = <String, ArchiveFile>{
+      for (final entry in fileEntries)
+        _normalizePath(entry.name).substring('files/'.length): entry,
+    };
+    final referencedPathKeys = <String>{};
 
     for (final trip in trips) {
       for (final document in trip.documents) {
-        final path = _normalizePath(document.relativePath.trim());
+        final path = TravelDocumentPathPolicy.normalize(document.relativePath);
         if (path.isEmpty) {
           continue;
         }
-        if (!_isSafePath(path) || !path.startsWith('Reisen/')) {
+
+        if (!TravelDocumentPathPolicy.isDocumentPathForTrip(path, trip.id)) {
           throw const FormatException(
-            'Ein Dokumentpfad im Backup ist ungültig.',
+            'Ein Dokumentpfad im Backup gehört nicht zur angegebenen Reise.',
           );
         }
-        if (!archivedRelativePaths.contains(path)) {
+
+        if (!referencedPathKeys.add(path.toLowerCase())) {
+          throw const FormatException(
+            'Eine Dokumentdatei im Backup wird mehrfach referenziert.',
+          );
+        }
+
+        final archivedEntry = archivedEntries[path];
+        if (archivedEntry == null) {
           throw const FormatException(
             'Eine im Backup referenzierte Dokumentdatei fehlt.',
+          );
+        }
+
+        if (document.fileSizeBytes > 0 &&
+            document.fileSizeBytes != archivedEntry.size) {
+          throw const FormatException(
+            'Die Dateigröße eines Dokuments im Backup ist widersprüchlich.',
           );
         }
       }

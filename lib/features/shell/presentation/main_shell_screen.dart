@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'package:florys_diaries/app/theme/app_colors.dart';
@@ -5,6 +7,8 @@ import 'package:florys_diaries/features/assistant/presentation/travel_assistant_
 import 'package:florys_diaries/features/map/presentation/world_map_screen.dart';
 import 'package:florys_diaries/features/settings/presentation/settings_screen.dart';
 import 'package:florys_diaries/features/statistics/presentation/statistics_screen.dart';
+
+import 'package:florys_diaries/features/trips/application/trip_store_scope.dart';
 import 'package:florys_diaries/features/trips/presentation/screens/past_trips_screen.dart';
 import 'package:florys_diaries/features/trips/presentation/screens/trip_editor_screen.dart';
 import 'package:florys_diaries/features/trips/presentation/screens/upcoming_trips_screen.dart';
@@ -55,6 +59,12 @@ class _MainShellScreenState extends State<MainShellScreen> {
     ).push(MaterialPageRoute<void>(builder: (_) => const TripEditorScreen()));
   }
 
+  Future<void> _openBackupSettings() {
+    return Navigator.of(
+      context,
+    ).push(MaterialPageRoute<void>(builder: (_) => const SettingsScreen()));
+  }
+
   void _selectDestination(int value) {
     if (value == _index) {
       return;
@@ -71,6 +81,21 @@ class _MainShellScreenState extends State<MainShellScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final tripStore = TripStoreScope.of(context);
+
+    if (tripStore.isLoading) {
+      return const _TripStartupLoadingScreen();
+    }
+    if (tripStore.hasLoadError) {
+      return _TripStorageErrorScreen(
+        message:
+            tripStore.loadErrorMessage ??
+            'Die lokalen Reisedaten konnten nicht sicher geladen werden.',
+        onRetry: () => unawaited(tripStore.reloadFromStorage()),
+        onOpenBackups: () => unawaited(_openBackupSettings()),
+      );
+    }
+
     final showNewTripAction = _index == 0;
 
     return PopScope<void>(
@@ -143,6 +168,149 @@ class _MainShellScreenState extends State<MainShellScreen> {
                 ),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TripStartupLoadingScreen extends StatelessWidget {
+  const _TripStartupLoadingScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const _ShellTitle(
+          title: 'FlorysDiaries',
+          subtitle: 'Reisedaten werden geprüft',
+        ),
+      ),
+      body: const ColoredBox(
+        color: AppColors.background,
+        child: Center(child: CircularProgressIndicator()),
+      ),
+    );
+  }
+}
+
+class _TripStorageErrorScreen extends StatelessWidget {
+  const _TripStorageErrorScreen({
+    required this.message,
+    required this.onRetry,
+    required this.onOpenBackups,
+  });
+
+  final String message;
+  final VoidCallback onRetry;
+  final VoidCallback onOpenBackups;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const _ShellTitle(
+          title: 'FlorysDiaries',
+          subtitle: 'Datensicherheit',
+        ),
+      ),
+      body: ColoredBox(
+        color: AppColors.background,
+        child: SafeArea(
+          child: ListView(
+            padding: const EdgeInsets.all(20),
+            children: [
+              Container(
+                padding: const EdgeInsets.fromLTRB(22, 26, 22, 22),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: Column(
+                  children: [
+                    Container(
+                      width: 72,
+                      height: 72,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFECE8),
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      child: const Icon(
+                        Icons.shield_outlined,
+                        size: 38,
+                        color: Color(0xFFB42318),
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    Text(
+                      'Reisedaten nicht freigeben',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: AppColors.text,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      message,
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppColors.textMuted,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(13),
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceSoft,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: const Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            Icons.lock_outline_rounded,
+                            size: 20,
+                            color: AppColors.primary,
+                          ),
+                          SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              'Es wurden keine leeren Daten gespeichert und '
+                              'kein automatisches Backup mit einem unsicheren '
+                              'Datenstand gestartet.',
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton.icon(
+                        key: const ValueKey<String>('trip-storage-retry'),
+                        onPressed: onRetry,
+                        icon: const Icon(Icons.refresh_rounded),
+                        label: const Text('Erneut prüfen'),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        key: const ValueKey<String>('trip-storage-backups'),
+                        onPressed: onOpenBackups,
+                        icon: const Icon(Icons.backup_outlined),
+                        label: const Text('Backups öffnen'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
       ),

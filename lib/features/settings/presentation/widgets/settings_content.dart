@@ -176,7 +176,8 @@ class SettingsContent extends StatelessWidget {
             title: 'Version',
             subtitle:
                 '${AppMetadata.name} ${AppMetadata.displayVersion} – '
-                'überarbeitete Oberfläche und responsive Ansichten.',
+                'Release Candidate mit gehärteter Daten-, Dokument- und '
+                'Backup-Sicherheit.',
           ),
         ],
       ),

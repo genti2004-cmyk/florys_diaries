@@ -23,6 +23,8 @@ class LocalBackupHistory extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final invalidCount = entries.where((entry) => !entry.isValid).length;
+
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
@@ -70,6 +72,28 @@ class LocalBackupHistory extends StatelessWidget {
                 ),
               ],
             ),
+            if (invalidCount > 0) ...[
+              const SizedBox(height: 12),
+              Container(
+                key: const ValueKey<String>('local-backup-warning'),
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF1F0),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFFECACA)),
+                ),
+                child: Text(
+                  invalidCount == 1
+                      ? 'Eine lokale Sicherung ist beschädigt und wurde für die Wiederherstellung gesperrt.'
+                      : '$invalidCount lokale Sicherungen sind beschädigt und wurden für die Wiederherstellung gesperrt.',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: const Color(0xFFB42318),
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
             const SizedBox(height: 14),
             OutlinedButton.icon(
               onPressed: isBusy ? null : onCreateLocalBackup,
@@ -136,14 +160,32 @@ class _LocalBackupTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final label = entry.isAutomatic ? 'Automatisch' : 'Manuell';
+    final label = !entry.isValid
+        ? 'Beschädigt'
+        : entry.isAutomatic
+        ? 'Automatisch'
+        : 'Manuell';
+    final subtitle = !entry.isValid
+        ? '${entry.validationError ?? 'Die Sicherung ist ungültig.'}\n'
+              '${_formatBytes(entry.sizeBytes)} · ${entry.fileName}'
+        : '${_formatBytes(entry.sizeBytes)} · ${entry.fileName}';
+
     return ListTile(
+      key: ValueKey<String>('local-backup-${entry.fileName}'),
       contentPadding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
       leading: CircleAvatar(
-        backgroundColor: AppColors.primarySoft,
-        foregroundColor: AppColors.primary,
+        backgroundColor: entry.isValid
+            ? AppColors.primarySoft
+            : const Color(0xFFFFF1F0),
+        foregroundColor: entry.isValid
+            ? AppColors.primary
+            : const Color(0xFFB42318),
         child: Icon(
-          entry.isAutomatic ? Icons.autorenew_outlined : Icons.save_outlined,
+          !entry.isValid
+              ? Icons.warning_amber_rounded
+              : entry.isAutomatic
+              ? Icons.autorenew_outlined
+              : Icons.save_outlined,
         ),
       ),
       title: Text(
@@ -152,8 +194,8 @@ class _LocalBackupTile extends StatelessWidget {
         overflow: TextOverflow.ellipsis,
       ),
       subtitle: Text(
-        '${_formatBytes(entry.sizeBytes)} · ${entry.fileName}',
-        maxLines: 2,
+        subtitle,
+        maxLines: entry.isValid ? 2 : 3,
         overflow: TextOverflow.ellipsis,
       ),
       trailing: PopupMenuButton<_LocalBackupAction>(
@@ -169,16 +211,17 @@ class _LocalBackupTile extends StatelessWidget {
               break;
           }
         },
-        itemBuilder: (context) => const [
-          PopupMenuItem(
-            value: _LocalBackupAction.restore,
-            child: ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: Icon(Icons.restore),
-              title: Text('Prüfen & wiederherstellen'),
+        itemBuilder: (context) => [
+          if (entry.canRestore)
+            const PopupMenuItem(
+              value: _LocalBackupAction.restore,
+              child: ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Icon(Icons.restore),
+                title: Text('Prüfen & wiederherstellen'),
+              ),
             ),
-          ),
-          PopupMenuItem(
+          const PopupMenuItem(
             value: _LocalBackupAction.delete,
             child: ListTile(
               contentPadding: EdgeInsets.zero,

@@ -1,8 +1,7 @@
 name: florys_diaries
 description: A simple travel diary and document vault app.
 publish_to: 'none'
-version: 0.19.3+5
-
+version: 0.19.4+6
 environment:
   sdk: ^3.8.1
 

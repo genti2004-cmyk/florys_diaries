@@ -74,4 +74,46 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.text('Prüfen & wiederherstellen'), findsOneWidget);
   });
+  testWidgets('beschädigtes lokales Backup kann nur gelöscht werden', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: LocalBackupHistory(
+            entries: [
+              LocalBackupEntry(
+                file: File('C:/temp/FlorysDiaries_Backup_Beschaedigt.zip'),
+                createdAt: DateTime(2026, 6, 28, 12),
+                sizeBytes: 512,
+                isAutomatic: true,
+                isValid: false,
+                validationError:
+                    'Die Sicherung ist beschädigt oder unvollständig.',
+              ),
+            ],
+            isLoading: false,
+            isBusy: false,
+            onCreateLocalBackup: () {},
+            onRestore: (_) async {},
+            onDelete: (_) async {},
+          ),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Beschädigt ·'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey<String>('local-backup-warning')),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.byTooltip('Backup-Aktionen'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Prüfen & wiederherstellen'), findsNothing);
+    expect(find.text('Löschen'), findsOneWidget);
+  });
 }

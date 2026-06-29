@@ -6,12 +6,18 @@ class LocalBackupEntry {
     required this.createdAt,
     required this.sizeBytes,
     required this.isAutomatic,
+    this.isValid = true,
+    this.validationError,
   });
 
   final File file;
   final DateTime createdAt;
   final int sizeBytes;
   final bool isAutomatic;
+  final bool isValid;
+  final String? validationError;
+
+  bool get canRestore => isValid;
 
   String get fileName {
     final normalized = file.path.replaceAll('\\', '/');

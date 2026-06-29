@@ -3,8 +3,10 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 
 import '../domain/travel_document.dart';
+import 'travel_document_path_policy.dart';
 
 typedef TravelFileClock = DateTime Function();
+typedef TravelFileRootDirectoryProvider = Future<Directory> Function();
 
 class TravelFileCopyResult {
   const TravelFileCopyResult({
@@ -21,9 +23,11 @@ class TravelFileCopyResult {
 }
 
 class TravelFileService {
-  const TravelFileService({TravelFileClock? now}) : _now = now;
+  const TravelFileService({TravelFileClock? now, this.rootDirectoryProvider})
+    : _now = now;
 
   final TravelFileClock? _now;
+  final TravelFileRootDirectoryProvider? rootDirectoryProvider;
 
   Future<TravelFileCopyResult> copyFileToTrip({
     required String tripId,
@@ -32,46 +36,58 @@ class TravelFileService {
   }) async {
     final source = File(sourcePath);
     if (!await source.exists()) {
-      throw FileSystemException('Datei wurde nicht gefunden.');
+      throw FileSystemException('Datei wurde nicht gefunden.', sourcePath);
     }
 
     final fileName = _fileNameFromPath(sourcePath);
     final extension = _extensionFromName(fileName);
-    final safeName = _safeFileName(fileName);
-    final targetDirectory = await _tripDocumentsDirectory(tripId);
-
-    if (!await targetDirectory.exists()) {
-      await targetDirectory.create(recursive: true);
-    }
-
+    final safeName = TravelDocumentPathPolicy.safeFileName(fileName);
+    final safeDocumentId = TravelDocumentPathPolicy.safeDocumentIdPart(
+      documentId,
+    );
     final timestamp = (_now?.call() ?? DateTime.now()).microsecondsSinceEpoch;
-    final targetName = '${documentId}_${timestamp}_$safeName';
-    final targetFile = File(_join(targetDirectory.path, targetName));
-    await source.copy(targetFile.path);
+    final targetName = '${safeDocumentId}_${timestamp}_$safeName';
+    final relativePath = TravelDocumentPathPolicy.relativeDocumentPath(
+      tripId,
+      targetName,
+    );
+    final targetFile = await _managedFile(relativePath);
+
+    await targetFile.parent.create(recursive: true);
+
+    try {
+      await source.copy(targetFile.path);
+    } catch (error, stackTrace) {
+      await _deleteBestEffort(targetFile);
+      Error.throwWithStackTrace(error, stackTrace);
+    }
 
     final size = await targetFile.length();
     return TravelFileCopyResult(
       fileName: fileName,
-      relativePath: _relativeDocumentPath(tripId, targetName),
+      relativePath: relativePath,
       fileSizeBytes: size,
       fileExtension: extension,
     );
   }
 
   Future<File?> resolveDocumentFile(TravelDocument document) async {
-    final relativePath = document.relativePath.trim();
+    final relativePath = TravelDocumentPathPolicy.normalize(
+      document.relativePath,
+    );
     if (relativePath.isEmpty) {
       return null;
     }
+    if (!TravelDocumentPathPolicy.isManagedDocumentPath(relativePath)) {
+      return null;
+    }
 
-    final root = await _rootDirectory();
-    final file = File(_join(root.path, relativePath));
-    return file;
+    return _managedFile(relativePath);
   }
 
   Future<bool> documentFileExists(TravelDocument document) async {
     final file = await resolveDocumentFile(document);
-    return file != null && file.existsSync();
+    return file != null && await file.exists();
   }
 
   Future<Directory> rootDirectory() {
@@ -80,57 +96,95 @@ class TravelFileService {
 
   Future<Directory> tripDirectory(String tripId) async {
     final root = await _rootDirectory();
-    return Directory(_join(root.path, _relativeTripPath(tripId)));
+    final relativePath = TravelDocumentPathPolicy.relativeTripPath(tripId);
+    return Directory(_joinRelative(root.path, relativePath));
   }
 
   Future<Directory> tripExportDirectory(String tripId) async {
-    final root = await _rootDirectory();
-    return Directory(
-      _join(root.path, _joinMany([_relativeTripPath(tripId), 'export'])),
-    );
+    final tripRoot = await tripDirectory(tripId);
+    return Directory(_join(tripRoot.path, 'export'));
   }
 
   Future<void> deleteTripFiles(String tripId) async {
-    final root = await _rootDirectory();
-    final directory = Directory(_join(root.path, _relativeTripPath(tripId)));
+    final directory = await tripDirectory(tripId);
     if (await directory.exists()) {
       await directory.delete(recursive: true);
     }
   }
 
   Future<void> deleteDocumentFile(TravelDocument document) async {
-    final relativePath = document.relativePath.trim();
+    final relativePath = TravelDocumentPathPolicy.normalize(
+      document.relativePath,
+    );
     if (relativePath.isEmpty) {
       return;
     }
+    if (!TravelDocumentPathPolicy.isManagedDocumentPath(relativePath)) {
+      throw FileSystemException(
+        'Der Dokumentpfad ist ungültig und wurde nicht gelöscht.',
+        document.relativePath,
+      );
+    }
 
-    final root = await _rootDirectory();
-    final file = File(_join(root.path, relativePath));
+    final file = await _managedFile(relativePath);
     if (await file.exists()) {
       await file.delete();
     }
   }
 
   Future<Directory> _rootDirectory() async {
+    final provider = rootDirectoryProvider;
+    if (provider != null) {
+      return provider();
+    }
+
     final directory = await getApplicationDocumentsDirectory();
     return Directory(_join(directory.path, 'FlorysDiaries'));
   }
 
-  Future<Directory> _tripDocumentsDirectory(String tripId) async {
+  Future<File> _managedFile(String relativePath) async {
+    final normalized = TravelDocumentPathPolicy.normalize(relativePath);
+    if (!TravelDocumentPathPolicy.isManagedDocumentPath(normalized)) {
+      throw FileSystemException(
+        'Der Dokumentpfad liegt außerhalb des geschützten App-Bereichs.',
+        relativePath,
+      );
+    }
+
     final root = await _rootDirectory();
-    return Directory(_join(root.path, _relativeTripDocumentsPath(tripId)));
+    final file = File(_joinRelative(root.path, normalized));
+    if (!_isInsideRoot(root, file)) {
+      throw FileSystemException(
+        'Der Dokumentpfad liegt außerhalb des geschützten App-Bereichs.',
+        relativePath,
+      );
+    }
+    return file;
   }
 
-  static String _relativeTripPath(String tripId) {
-    return _joinMany(['Reisen', _safeFolderName(tripId)]);
+  static bool _isInsideRoot(Directory root, File file) {
+    var rootPath = root.absolute.path;
+    var filePath = file.absolute.path;
+
+    if (Platform.isWindows) {
+      rootPath = rootPath.toLowerCase();
+      filePath = filePath.toLowerCase();
+    }
+
+    final prefix = rootPath.endsWith(Platform.pathSeparator)
+        ? rootPath
+        : '$rootPath${Platform.pathSeparator}';
+    return filePath.startsWith(prefix);
   }
 
-  static String _relativeTripDocumentsPath(String tripId) {
-    return _joinMany([_relativeTripPath(tripId), 'documents']);
-  }
-
-  static String _relativeDocumentPath(String tripId, String fileName) {
-    return _joinMany([_relativeTripDocumentsPath(tripId), fileName]);
+  static Future<void> _deleteBestEffort(File file) async {
+    try {
+      if (await file.exists()) {
+        await file.delete();
+      }
+    } catch (_) {
+      // Der ursprüngliche Kopierfehler wird weitergereicht.
+    }
   }
 
   static String _fileNameFromPath(String path) {
@@ -146,23 +200,14 @@ class TravelFileService {
     return parts.last.toLowerCase();
   }
 
-  static String _safeFileName(String value) {
-    final cleaned = value.trim().replaceAll(RegExp(r'[^a-zA-Z0-9._-]+'), '_');
-    return cleaned.isEmpty ? 'datei' : cleaned;
-  }
-
-  static String _safeFolderName(String value) {
-    final cleaned = value.trim().replaceAll(RegExp(r'[^a-zA-Z0-9_-]+'), '_');
-    return cleaned.isEmpty ? 'reise' : cleaned;
-  }
-
   static String _join(String left, String right) {
     return '$left${Platform.pathSeparator}$right';
   }
 
-  static String _joinMany(List<String> parts) {
-    return parts
-        .where((part) => part.trim().isNotEmpty)
-        .join(Platform.pathSeparator);
+  static String _joinRelative(String root, String relativePath) {
+    return [
+      root,
+      ...TravelDocumentPathPolicy.normalize(relativePath).split('/'),
+    ].join(Platform.pathSeparator);
   }
 }

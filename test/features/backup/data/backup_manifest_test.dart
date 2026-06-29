@@ -37,9 +37,9 @@ void main() {
 
   test('central metadata exposes the installed build consistently', () {
     expect(AppMetadata.name, 'FlorysDiaries');
-    expect(AppMetadata.version, '0.19.3');
-    expect(AppMetadata.buildNumber, 5);
-    expect(AppMetadata.displayVersion, 'v0.19.3');
-    expect(AppMetadata.fullVersion, '0.19.3+5');
+    expect(AppMetadata.version, '0.19.4');
+    expect(AppMetadata.buildNumber, 6);
+    expect(AppMetadata.displayVersion, 'v0.19.4');
+    expect(AppMetadata.fullVersion, '0.19.4+6');
   });
 }

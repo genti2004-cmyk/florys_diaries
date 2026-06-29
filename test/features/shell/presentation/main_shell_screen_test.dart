@@ -12,7 +12,7 @@ import 'package:florys_diaries/features/trips/domain/trip.dart';
 void main() {
   testWidgets('back from another tab returns to Reisen first', (tester) async {
     final tripStore = TripStore(
-      storageService: _EmptyTripStorageService(),
+      storageService: _RecoverableTripStorageService(),
       now: () => DateTime(2026, 6, 29),
     );
     final backupStore = BackupSyncStatusStore();
@@ -22,13 +22,7 @@ void main() {
     addTearDown(backupStore.dispose);
 
     await tester.pumpWidget(
-      BackupSyncStatusScope(
-        store: backupStore,
-        child: TripStoreScope(
-          store: tripStore,
-          child: const MaterialApp(home: MainShellScreen()),
-        ),
-      ),
+      _TestShell(tripStore: tripStore, backupStore: backupStore),
     );
     await tester.pump();
 
@@ -52,9 +46,77 @@ void main() {
     expect(navigationBar.selectedIndex, 0);
     expect(find.text('FlorysDiaries'), findsOneWidget);
   });
+
+  testWidgets('blocks the normal app shell until local data is safe', (
+    tester,
+  ) async {
+    final storage = _RecoverableTripStorageService(failLoading: true);
+    final tripStore = TripStore(
+      storageService: storage,
+      now: () => DateTime(2026, 6, 29),
+    );
+    final backupStore = BackupSyncStatusStore();
+    await tripStore.load();
+
+    addTearDown(tripStore.dispose);
+    addTearDown(backupStore.dispose);
+
+    await tester.pumpWidget(
+      _TestShell(tripStore: tripStore, backupStore: backupStore),
+    );
+    await tester.pump();
+
+    expect(find.text('Reisedaten nicht freigeben'), findsOneWidget);
+    expect(find.byType(NavigationBar), findsNothing);
+    expect(
+      find.byKey(const ValueKey<String>('trip-storage-retry')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey<String>('trip-storage-backups')),
+      findsOneWidget,
+    );
+
+    storage.failLoading = false;
+    await tester.tap(find.byKey(const ValueKey<String>('trip-storage-retry')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Reisedaten nicht freigeben'), findsNothing);
+    expect(find.byType(NavigationBar), findsOneWidget);
+    expect(tripStore.hasLoadError, isFalse);
+  });
 }
 
-class _EmptyTripStorageService extends TripStorageService {
+class _TestShell extends StatelessWidget {
+  const _TestShell({required this.tripStore, required this.backupStore});
+
+  final TripStore tripStore;
+  final BackupSyncStatusStore backupStore;
+
   @override
-  Future<List<Trip>> loadTrips() async => const [];
+  Widget build(BuildContext context) {
+    return BackupSyncStatusScope(
+      store: backupStore,
+      child: TripStoreScope(
+        store: tripStore,
+        child: const MaterialApp(home: MainShellScreen()),
+      ),
+    );
+  }
+}
+
+class _RecoverableTripStorageService extends TripStorageService {
+  _RecoverableTripStorageService({this.failLoading = false});
+
+  bool failLoading;
+
+  @override
+  Future<List<Trip>> loadTrips() async {
+    if (failLoading) {
+      throw const TripStorageException(
+        'Die lokalen Reisedaten konnten nicht sicher gelesen werden.',
+      );
+    }
+    return const [];
+  }
 }

@@ -65,27 +65,30 @@ class _FlorysDiariesAppState extends State<FlorysDiariesApp>
       },
     );
 
+    _tripStore.addListener(_handleTripStoreChanged);
+    _storeListenerAttached = true;
     _initializeStore();
   }
 
   Future<void> _initializeStore() async {
     await _tripStore.load();
-    if (_isDisposed) {
+    if (_isDisposed || _tripStore.hasLoadError) {
       return;
     }
 
-    _tripStore.addListener(_handleTripStoreChanged);
-    _storeListenerAttached = true;
     await _backupSyncCoordinator.flush(_tripStore.trips);
   }
 
   void _handleTripStoreChanged() {
+    if (_isDisposed || _tripStore.isLoading || _tripStore.hasLoadError) {
+      return;
+    }
     _backupSyncCoordinator.schedule(_tripStore.trips);
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (_isDisposed || _tripStore.isLoading) {
+    if (_isDisposed || _tripStore.isLoading || _tripStore.hasLoadError) {
       return;
     }
 
