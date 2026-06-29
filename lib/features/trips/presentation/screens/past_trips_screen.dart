@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
-import 'package:florys_diaries/core/widgets/app_section_card.dart';
-import 'package:florys_diaries/core/widgets/app_section_title.dart';
+import 'package:florys_diaries/app/theme/app_colors.dart';
 import 'package:florys_diaries/features/trips/application/trip_store_scope.dart';
 import 'package:florys_diaries/features/trips/domain/trip.dart';
+import 'package:florys_diaries/features/trips/presentation/widgets/archive_empty_state.dart';
+import 'package:florys_diaries/features/trips/presentation/widgets/archive_overview_card.dart';
+import 'package:florys_diaries/features/trips/presentation/widgets/archive_year_header.dart';
 import 'package:florys_diaries/features/trips/presentation/widgets/trip_card.dart';
 
 import 'trip_detail_screen.dart';
@@ -24,31 +26,28 @@ class PastTripsScreen extends StatelessWidget {
     final groupedTrips = _groupByYear(trips);
 
     return SafeArea(
+      top: false,
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        key: const PageStorageKey<String>('past-trips'),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
         children: [
-          const AppSectionTitle(
-            title: 'Vergangene Reisen',
-            subtitle: 'Abgeschlossene Trips werden automatisch hier angezeigt.',
+          Text('Reisearchiv', style: Theme.of(context).textTheme.headlineSmall),
+          const SizedBox(height: 5),
+          Text(
+            'Abgeschlossene Reisen, Unterlagen und Erinnerungen nach Jahr.',
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
           ),
-          if (trips.isEmpty)
-            const AppSectionCard(
-              icon: Icons.history_rounded,
-              title: 'Noch kein Archiv',
-              subtitle:
-                  'Wenn das Enddatum vorbei ist, erscheint die Reise hier.',
-            )
-          else
+          const SizedBox(height: 18),
+          if (store.isLoading)
+            const _ArchiveLoadingState()
+          else if (trips.isEmpty)
+            const ArchiveEmptyState()
+          else ...[
+            ArchiveOverviewCard(trips: trips),
             for (final entry in groupedTrips.entries) ...[
-              Padding(
-                padding: const EdgeInsets.only(top: 4, bottom: 10),
-                child: Text(
-                  entry.key.toString(),
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ),
+              ArchiveYearHeader(year: entry.key, trips: entry.value),
               ...entry.value.map(
                 (trip) => Padding(
                   padding: const EdgeInsets.only(bottom: 12),
@@ -59,6 +58,7 @@ class PastTripsScreen extends StatelessWidget {
                 ),
               ),
             ],
+          ],
         ],
       ),
     );
@@ -70,5 +70,30 @@ class PastTripsScreen extends StatelessWidget {
       groupedTrips.putIfAbsent(trip.endDate.year, () => []).add(trip);
     }
     return groupedTrips;
+  }
+}
+
+class _ArchiveLoadingState extends StatelessWidget {
+  const _ArchiveLoadingState();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 170,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: const Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CircularProgressIndicator(),
+          SizedBox(height: 14),
+          Text('Reisearchiv wird geladen …'),
+        ],
+      ),
+    );
   }
 }

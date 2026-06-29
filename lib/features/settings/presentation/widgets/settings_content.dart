@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:florys_diaries/app/theme/app_colors.dart';
 import 'package:florys_diaries/core/widgets/app_section_card.dart';
 import 'package:florys_diaries/features/backup/domain/automatic_cloud_backup_settings.dart';
 import 'package:florys_diaries/features/backup/domain/backup_sync_status.dart';
@@ -7,11 +8,13 @@ import 'package:florys_diaries/features/backup/domain/backup_provider.dart';
 import 'package:florys_diaries/features/backup/domain/google_drive_backup_models.dart';
 import 'package:florys_diaries/features/backup/domain/local_backup_entry.dart';
 import 'package:florys_diaries/features/backup/presentation/widgets/backup_panel.dart';
-import 'package:florys_diaries/features/backup/presentation/widgets/backup_sync_status_card.dart';
 import 'package:florys_diaries/features/backup/presentation/widgets/backup_provider_selector.dart';
+import 'package:florys_diaries/features/backup/presentation/widgets/backup_sync_status_card.dart';
 import 'package:florys_diaries/features/backup/presentation/widgets/google_drive_automatic_backup_settings.dart';
 import 'package:florys_diaries/features/backup/presentation/widgets/google_drive_backup_history.dart';
 import 'package:florys_diaries/features/backup/presentation/widgets/local_backup_history.dart';
+import 'package:florys_diaries/features/settings/presentation/widgets/settings_overview_card.dart';
+import 'package:florys_diaries/features/settings/presentation/widgets/settings_section_header.dart';
 
 class SettingsContent extends StatelessWidget {
   const SettingsContent({
@@ -76,15 +79,37 @@ class SettingsContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SafeArea(
+      top: false,
       child: ListView(
-        padding: const EdgeInsets.all(16),
+        key: const PageStorageKey<String>('settings-content'),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
         children: [
-          const AppSectionCard(
-            icon: Icons.lock_outline,
-            title: 'Sicherheit',
-            subtitle: 'PIN, Biometrie und verschlüsselte Ablage folgen später.',
+          Text(
+            'Sicherung & App',
+            style: Theme.of(context).textTheme.headlineSmall,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 5),
+          Text(
+            'Backups verwalten, Wiederherstellung prüfen und App-Informationen ansehen.',
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
+          ),
+          const SizedBox(height: 18),
+          SettingsOverviewCard(
+            providerName: selectedProviderName,
+            localBackupCount: localBackups.length,
+            cloudBackupCount: cloudBackups.length,
+            cloudAccountEmail: cloudAccountEmail,
+            automaticCloudEnabled: automaticCloudSettings.enabled,
+            syncStatus: backupSyncStatus,
+          ),
+          const SizedBox(height: 14),
+          const SettingsSectionHeader(
+            title: 'Backup & Synchronisierung',
+            subtitle:
+                'Sicherungsziel auswählen, neue Backups erstellen und bestehende Stände prüfen.',
+          ),
           BackupProviderSelector(
             providers: providers,
             selectedId: selectedProviderId,
@@ -133,12 +158,23 @@ class SettingsContent extends StatelessWidget {
             onRestore: onRestoreLocalBackup,
             onDelete: onDeleteLocalBackup,
           ),
+          const SizedBox(height: 14),
+          const SettingsSectionHeader(
+            title: 'App & Datenschutz',
+            subtitle: 'Lokale Speicherung, zukünftiger App-Schutz und Version.',
+          ),
+          const AppSectionCard(
+            icon: Icons.lock_outline_rounded,
+            title: 'Sicherheit',
+            subtitle:
+                'Reisedaten werden lokal auf diesem Gerät gespeichert. PIN und Biometrie sind für eine spätere Version vorgesehen.',
+          ),
           const SizedBox(height: 12),
           const AppSectionCard(
-            icon: Icons.info_outline,
+            icon: Icons.info_outline_rounded,
             title: 'Version',
             subtitle:
-                'FlorysDiaries v0.19.1 – Backup-Synchronisierung und sichere Wiederherstellung.',
+                'FlorysDiaries v0.19.2 – überarbeitete Oberfläche und responsive Ansichten.',
           ),
         ],
       ),

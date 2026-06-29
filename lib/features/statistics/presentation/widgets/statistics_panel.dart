@@ -10,7 +10,6 @@ class StatisticsPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: EdgeInsets.zero,
       child: Padding(padding: const EdgeInsets.all(16), child: child),
     );
   }
@@ -49,6 +48,8 @@ class StatisticsPanelHeader extends StatelessWidget {
             children: [
               Text(
                 title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   color: AppColors.text,
                   fontWeight: FontWeight.w900,
@@ -82,8 +83,10 @@ class StatisticsInfoRow extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
+            flex: 5,
             child: Text(
               label,
               style: const TextStyle(
@@ -92,11 +95,16 @@ class StatisticsInfoRow extends StatelessWidget {
               ),
             ),
           ),
-          Text(
-            value,
-            style: const TextStyle(
-              color: AppColors.text,
-              fontWeight: FontWeight.w900,
+          const SizedBox(width: 12),
+          Flexible(
+            flex: 4,
+            child: Text(
+              value,
+              textAlign: TextAlign.end,
+              style: const TextStyle(
+                color: AppColors.text,
+                fontWeight: FontWeight.w900,
+              ),
             ),
           ),
         ],

@@ -63,7 +63,7 @@ void main() {
     await tester.pump();
 
     expect(tester.takeException(), isNull);
-    expect(find.text('Sicherheit'), findsOneWidget);
+    expect(find.text('Sicherung & App'), findsOneWidget);
 
     final scrollable = find.byType(Scrollable).first;
 
@@ -77,6 +77,16 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.text('Automatische Backup-Synchronisierung'), findsOneWidget);
     expect(find.text('Google Drive'), findsWidgets);
+
+    await tester.scrollUntilVisible(
+      find.text('Sicherheit'),
+      350,
+      scrollable: scrollable,
+    );
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('Sicherheit'), findsOneWidget);
 
     await tester.scrollUntilVisible(
       find.text('Version'),

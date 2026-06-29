@@ -11,35 +11,44 @@ class StatisticsHeroGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GridView.count(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisCount: 2,
-      crossAxisSpacing: 12,
-      mainAxisSpacing: 12,
-      childAspectRatio: 1.18,
-      children: [
-        _StatTile(
-          icon: Icons.flight_takeoff_rounded,
-          label: 'Reisen',
-          value: statistics.tripCount.toString(),
-        ),
-        _StatTile(
-          icon: Icons.public_rounded,
-          label: 'Länder',
-          value: statistics.countryCount.toString(),
-        ),
-        _StatTile(
-          icon: Icons.location_city_rounded,
-          label: 'Städte',
-          value: statistics.cityCount.toString(),
-        ),
-        _StatTile(
-          icon: Icons.calendar_month_rounded,
-          label: 'Reisetage',
-          value: statistics.travelDays.toString(),
-        ),
-      ],
+    final tiles = [
+      _StatTile(
+        icon: Icons.flight_takeoff_rounded,
+        label: 'Reisen',
+        value: statistics.tripCount.toString(),
+      ),
+      _StatTile(
+        icon: Icons.public_rounded,
+        label: 'Länder',
+        value: statistics.countryCount.toString(),
+      ),
+      _StatTile(
+        icon: Icons.location_city_rounded,
+        label: 'Städte',
+        value: statistics.cityCount.toString(),
+      ),
+      _StatTile(
+        icon: Icons.calendar_month_rounded,
+        label: 'Reisetage',
+        value: statistics.travelDays.toString(),
+      ),
+    ];
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = constraints.maxWidth < 340 ? 1 : 2;
+        final spacing = 10.0;
+        final width =
+            (constraints.maxWidth - spacing * (columns - 1)) / columns;
+
+        return Wrap(
+          spacing: spacing,
+          runSpacing: spacing,
+          children: tiles
+              .map((tile) => SizedBox(width: width, child: tile))
+              .toList(growable: false),
+        );
+      },
     );
   }
 }
@@ -139,36 +148,46 @@ class _StatTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: EdgeInsets.zero,
-      child: Padding(
+      child: Container(
+        constraints: const BoxConstraints(minHeight: 116),
         padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.center,
+        child: Row(
           children: [
             Container(
-              width: 38,
-              height: 38,
+              width: 44,
+              height: 44,
               decoration: BoxDecoration(
                 color: AppColors.primarySoft,
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(15),
               ),
-              child: Icon(icon, color: AppColors.primary, size: 21),
+              child: Icon(icon, color: AppColors.primary, size: 22),
             ),
-            const SizedBox(height: 12),
-            Text(
-              value,
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                color: AppColors.primary,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColors.textMuted,
-                fontWeight: FontWeight.w700,
+            const SizedBox(width: 13),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    value,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppColors.textMuted,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],

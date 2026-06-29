@@ -1,7 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 
-import 'package:florys_diaries/core/widgets/app_section_card.dart';
 import 'package:florys_diaries/features/album/presentation/widgets/trip_album_section.dart';
 import 'package:florys_diaries/features/checklist/presentation/widgets/trip_checklist_section.dart';
 import 'package:florys_diaries/features/documents/application/trip_document_query.dart';
@@ -14,9 +15,12 @@ import 'package:florys_diaries/features/trips/application/trip_store_scope.dart'
 import 'package:florys_diaries/features/trips/data/trip_export_service.dart';
 import 'package:florys_diaries/features/trips/domain/trip.dart';
 import 'package:florys_diaries/features/trips/presentation/widgets/trip_detail_hero_card.dart';
+import 'package:florys_diaries/features/trips/presentation/widgets/trip_detail_quick_actions.dart';
 import 'package:florys_diaries/features/trips/presentation/widgets/trip_vault_section.dart';
 
 import 'trip_editor_screen.dart';
+
+enum _TripDetailMenuAction { edit, export, delete }
 
 class TripDetailScreen extends StatefulWidget {
   const TripDetailScreen({
@@ -309,21 +313,50 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
           overflow: TextOverflow.ellipsis,
         ),
         actions: [
-          IconButton(
-            tooltip: 'Reise exportieren',
-            onPressed: () => _exportTrip(context, currentTrip),
-            icon: const Icon(Icons.archive_outlined),
+          PopupMenuButton<_TripDetailMenuAction>(
+            tooltip: 'Weitere Reiseaktionen',
+            onSelected: (action) {
+              switch (action) {
+                case _TripDetailMenuAction.edit:
+                  unawaited(_editTrip(context, currentTrip));
+                  break;
+                case _TripDetailMenuAction.export:
+                  unawaited(_exportTrip(context, currentTrip));
+                  break;
+                case _TripDetailMenuAction.delete:
+                  unawaited(_deleteTrip(context, currentTrip));
+                  break;
+              }
+            },
+            itemBuilder: (context) => const [
+              PopupMenuItem(
+                value: _TripDetailMenuAction.edit,
+                child: ListTile(
+                  leading: Icon(Icons.edit_outlined),
+                  title: Text('Reise bearbeiten'),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+              PopupMenuItem(
+                value: _TripDetailMenuAction.export,
+                child: ListTile(
+                  leading: Icon(Icons.archive_outlined),
+                  title: Text('Reise exportieren'),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+              PopupMenuDivider(),
+              PopupMenuItem(
+                value: _TripDetailMenuAction.delete,
+                child: ListTile(
+                  leading: Icon(Icons.delete_outline),
+                  title: Text('Reise löschen'),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+            ],
           ),
-          IconButton(
-            tooltip: 'Bearbeiten',
-            onPressed: () => _editTrip(context, currentTrip),
-            icon: const Icon(Icons.edit_outlined),
-          ),
-          IconButton(
-            tooltip: 'Löschen',
-            onPressed: () => _deleteTrip(context, currentTrip),
-            icon: const Icon(Icons.delete_outline),
-          ),
+          const SizedBox(width: 4),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -332,22 +365,23 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
         label: const Text('Dokument'),
       ),
       body: SafeArea(
+        top: false,
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+          key: PageStorageKey<String>('trip-detail-${currentTrip.id}'),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 112),
           children: [
             TripDetailHeroCard(trip: currentTrip),
-            const SizedBox(height: 16),
-            AppSectionCard(
-              icon: Icons.play_circle_outline_rounded,
-              title: 'Reise abspielen',
-              subtitle: 'Starte den interaktiven Travel Replay dieser Reise.',
-              onTap: () => _openReplay(context, currentTrip),
+            const SizedBox(height: 14),
+            TripDetailQuickActions(
+              onReplay: () => _openReplay(context, currentTrip),
+              onEdit: () => _editTrip(context, currentTrip),
+              onExport: () => _exportTrip(context, currentTrip),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 18),
             TripChecklistSection(trip: currentTrip),
-            const SizedBox(height: 16),
+            const SizedBox(height: 18),
             TripAlbumSection(trip: currentTrip),
-            const SizedBox(height: 16),
+            const SizedBox(height: 18),
             TripVaultSection(
               trip: currentTrip,
               visibleDocuments: visibleDocuments,

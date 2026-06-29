@@ -31,7 +31,7 @@ void main() {
     );
 
     expect(analyzer.callCount, 1);
-    expect(find.text('World Statistics Pro'), findsOneWidget);
+    expect(find.text('Deine Reisebilanz'), findsOneWidget);
 
     rebuildParent(() {});
     await tester.pump();

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'package:florys_diaries/core/widgets/app_section_title.dart';
+import 'package:florys_diaries/app/theme/app_colors.dart';
+import 'package:florys_diaries/core/widgets/travel_data_empty_state.dart';
 import 'package:florys_diaries/features/map/application/world_map_analyzer.dart';
 import 'package:florys_diaries/features/map/domain/map_visit_models.dart';
 import 'package:florys_diaries/features/map/domain/world_map_snapshot.dart';
@@ -52,82 +53,100 @@ class _WorldMapScreenState extends State<WorldMapScreen> {
         : null;
 
     return SafeArea(
+      top: false,
       child: ListView(
-        padding: const EdgeInsets.only(bottom: 24),
+        key: const PageStorageKey<String>('world-map'),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
         children: [
-          const AppSectionTitle(
-            title: 'World Explorer',
-            subtitle: 'Karte, Routen und Reiseziele gezielt steuern.',
+          Text(
+            'Deine Reisewelt',
+            style: Theme.of(context).textTheme.headlineSmall,
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Column(
-              children: [
-                WorldSummaryCard(
-                  countryCount: snapshot.countryCount,
-                  cityCount: snapshot.cityCount,
-                  tripCount: snapshot.tripCount,
-                  travelDays: snapshot.travelDays,
-                  progressPercent: snapshot.progressPercent,
-                ),
-                const SizedBox(height: 14),
-                WorldMapControls(
-                  selectedLayer: _layer,
-                  selectedStyle: _style,
-                  selectedYear: selectedYear,
-                  years: snapshot.years,
-                  onLayerChanged: (layer) {
-                    setState(() {
-                      _layer = layer;
-                      _focusedRouteId = null;
-                    });
-                  },
-                  onStyleChanged: (style) {
-                    setState(() => _style = style);
-                  },
-                  onYearChanged: (year) {
-                    setState(() {
-                      _selectedYear = year;
-                      _focusedRouteId = null;
-                    });
-                  },
-                ),
-                const SizedBox(height: 14),
-                ProfessionalWorldMap(
-                  countries: snapshot.countries,
-                  cities: snapshot.cities,
-                  routes: snapshot.routes,
-                  layer: _layer,
-                  style: _style,
-                  focusedRouteId: focusedRouteId,
-                  onRouteSelected: (routeId) {
-                    setState(() => _focusedRouteId = routeId);
-                  },
-                ),
-                const SizedBox(height: 14),
-                WorldMapTripFocusPanel(
-                  trips: snapshot.trips,
-                  routes: snapshot.routes,
-                  focusedRouteId: focusedRouteId,
-                  onRouteFocus: (routeId) {
-                    setState(() {
-                      _layer = WorldMapLayer.routes;
-                      _focusedRouteId = routeId;
-                    });
-                  },
-                ),
-                const SizedBox(height: 14),
-                WorldMapTravelRoutesPanel(
-                  routes: snapshot.routes,
-                  focusedRouteId: focusedRouteId,
-                ),
-                const SizedBox(height: 14),
-                WorldMapVisitedCountriesPanel(countries: snapshot.countries),
-                const SizedBox(height: 14),
-                WorldMapContinentOverview(continents: snapshot.continents),
-              ],
+          const SizedBox(height: 5),
+          Text(
+            'Länder, Städte und Routen aus deinen gespeicherten Reisen.',
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
+          ),
+          const SizedBox(height: 18),
+          WorldSummaryCard(
+            countryCount: snapshot.countryCount,
+            cityCount: snapshot.cityCount,
+            tripCount: snapshot.tripCount,
+            travelDays: snapshot.travelDays,
+            progressPercent: snapshot.progressPercent,
+          ),
+          const SizedBox(height: 14),
+          if (allTrips.isEmpty) ...[
+            const TravelDataEmptyState(
+              icon: Icons.public_rounded,
+              title: 'Deine Weltkarte wartet auf die erste Reise',
+              description:
+                  'Sobald du eine Reise mit Land und Reiseziel speicherst, '
+                  'erscheinen hier Länder, Städte und später auch Routen.',
+              hint:
+                  'Bereits vorhandene Reisen werden automatisch ausgewertet. '
+                  'Eine zusätzliche Eingabe für die Karte ist nicht nötig.',
             ),
+            const SizedBox(height: 14),
+          ],
+          WorldMapControls(
+            selectedLayer: _layer,
+            selectedStyle: _style,
+            selectedYear: selectedYear,
+            years: snapshot.years,
+            onLayerChanged: (layer) {
+              setState(() {
+                _layer = layer;
+                _focusedRouteId = null;
+              });
+            },
+            onStyleChanged: (style) {
+              setState(() => _style = style);
+            },
+            onYearChanged: (year) {
+              setState(() {
+                _selectedYear = year;
+                _focusedRouteId = null;
+              });
+            },
           ),
+          const SizedBox(height: 14),
+          ProfessionalWorldMap(
+            countries: snapshot.countries,
+            cities: snapshot.cities,
+            routes: snapshot.routes,
+            layer: _layer,
+            style: _style,
+            focusedRouteId: focusedRouteId,
+            onRouteSelected: (routeId) {
+              setState(() => _focusedRouteId = routeId);
+            },
+          ),
+          if (allTrips.isNotEmpty) ...[
+            const SizedBox(height: 14),
+            WorldMapTripFocusPanel(
+              trips: snapshot.trips,
+              routes: snapshot.routes,
+              focusedRouteId: focusedRouteId,
+              onRouteFocus: (routeId) {
+                setState(() {
+                  _layer = WorldMapLayer.routes;
+                  _focusedRouteId = routeId;
+                });
+              },
+            ),
+            const SizedBox(height: 14),
+            WorldMapTravelRoutesPanel(
+              routes: snapshot.routes,
+              focusedRouteId: focusedRouteId,
+            ),
+            const SizedBox(height: 14),
+            WorldMapVisitedCountriesPanel(countries: snapshot.countries),
+            const SizedBox(height: 14),
+            WorldMapContinentOverview(continents: snapshot.continents),
+          ],
         ],
       ),
     );

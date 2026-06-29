@@ -11,92 +11,154 @@ class TripCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: EdgeInsets.zero,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(22),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 46,
-                    height: 46,
-                    decoration: BoxDecoration(
-                      color: AppColors.primarySoft,
-                      borderRadius: BorderRadius.circular(16),
+    return Semantics(
+      button: true,
+      label: '${trip.title}, ${trip.destination}, ${trip.country}',
+      child: Card(
+        child: InkWell(
+          borderRadius: BorderRadius.circular(22),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: trip.isPast
+                            ? AppColors.surfaceSoft
+                            : AppColors.primarySoft,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Icon(
+                        trip.isPast
+                            ? Icons.luggage_rounded
+                            : Icons.flight_takeoff_rounded,
+                        color: AppColors.primary,
+                      ),
                     ),
-                    child: Icon(
-                      trip.isPast
-                          ? Icons.luggage_rounded
-                          : Icons.flight_takeoff_rounded,
-                      color: AppColors.primary,
+                    const SizedBox(width: 13),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            trip.title,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w900,
+                                  color: AppColors.text,
+                                ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${trip.destination}, ${trip.country}',
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(color: AppColors.textMuted),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    const SizedBox(width: 8),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        Text(
-                          trip.title,
-                          style: Theme.of(context).textTheme.titleMedium
-                              ?.copyWith(
-                                fontWeight: FontWeight.w900,
-                                color: AppColors.text,
-                              ),
-                        ),
-                        const SizedBox(height: 3),
-                        Text(
-                          '${trip.destination}, ${trip.country}',
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(color: AppColors.textMuted),
+                        _StatusBadge(isPast: trip.isPast),
+                        const SizedBox(height: 8),
+                        const Icon(
+                          Icons.chevron_right_rounded,
+                          color: AppColors.textMuted,
                         ),
                       ],
                     ),
-                  ),
-                  _StatusBadge(isPast: trip.isPast),
-                ],
-              ),
-              const SizedBox(height: 14),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  _TripChip(
-                    icon: Icons.calendar_today_outlined,
-                    label: _dateRange(trip),
-                  ),
-                  _TripChip(
-                    icon: Icons.timelapse,
-                    label: '${trip.durationDays} Tage',
-                  ),
-                  _TripChip(
-                    icon: Icons.description_outlined,
-                    label: '${trip.documentCount} Dokumente',
-                  ),
-                  _TripChip(
-                    icon: Icons.photo_library_outlined,
-                    label: '${trip.photoCount} Fotos',
-                  ),
-                ],
-              ),
-              if (trip.notes.trim().isNotEmpty) ...[
-                const SizedBox(height: 12),
-                Text(
-                  trip.notes,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
+                  ],
                 ),
+                const SizedBox(height: 14),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceSoft,
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.calendar_today_outlined,
+                        size: 17,
+                        color: AppColors.primary,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _dateRange(trip),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: AppColors.text,
+                                fontWeight: FontWeight.w800,
+                              ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${trip.durationDays} Tage',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.textMuted,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 11),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _TripMeta(
+                      icon: Icons.description_outlined,
+                      label: '${trip.documentCount} Dokumente',
+                    ),
+                    _TripMeta(
+                      icon: Icons.photo_library_outlined,
+                      label: '${trip.photoCount} Fotos',
+                    ),
+                    if (trip.checklistItems.isNotEmpty)
+                      _TripMeta(
+                        icon: Icons.checklist_rounded,
+                        label:
+                            '${trip.checklistCompletedCount}/'
+                            '${trip.checklistItems.length} erledigt',
+                      ),
+                  ],
+                ),
+                if (trip.notes.trim().isNotEmpty) ...[
+                  const SizedBox(height: 11),
+                  Text(
+                    trip.notes,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: AppColors.textMuted),
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ),
@@ -122,15 +184,14 @@ class _StatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
       decoration: BoxDecoration(
         color: isPast ? AppColors.surfaceSoft : AppColors.primarySoft,
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: AppColors.border),
       ),
       child: Text(
         isPast ? 'Archiv' : 'Geplant',
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+        style: Theme.of(context).textTheme.labelMedium?.copyWith(
           color: AppColors.primary,
           fontWeight: FontWeight.w900,
         ),
@@ -139,35 +200,27 @@ class _StatusBadge extends StatelessWidget {
   }
 }
 
-class _TripChip extends StatelessWidget {
-  const _TripChip({required this.icon, required this.label});
+class _TripMeta extends StatelessWidget {
+  const _TripMeta({required this.icon, required this.label});
 
   final IconData icon;
   final String label;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceSoft,
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 15, color: AppColors.primary),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: AppColors.text,
-              fontWeight: FontWeight.w700,
-            ),
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 15, color: AppColors.primary),
+        const SizedBox(width: 5),
+        Text(
+          label,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: AppColors.textMuted,
+            fontWeight: FontWeight.w700,
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'package:florys_diaries/core/widgets/app_section_title.dart';
+import 'package:florys_diaries/app/theme/app_colors.dart';
+import 'package:florys_diaries/core/widgets/travel_data_empty_state.dart';
 import 'package:florys_diaries/features/statistics/application/travel_statistics_analyzer.dart';
 import 'package:florys_diaries/features/statistics/domain/travel_statistics.dart';
 import 'package:florys_diaries/features/statistics/presentation/widgets/statistics_overview_cards.dart';
@@ -47,44 +48,59 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     final statistics = _statistics!;
 
     return SafeArea(
+      top: false,
       child: ListView(
-        padding: const EdgeInsets.only(bottom: 24),
+        key: const PageStorageKey<String>('travel-statistics'),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
         children: [
-          const AppSectionTitle(
-            title: 'World Statistics Pro',
-            subtitle:
-                'Länder, Städte, Reisetage und Erinnerungen aus deinen echten Reisen.',
+          Text(
+            'Deine Reisebilanz',
+            style: Theme.of(context).textTheme.headlineSmall,
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Column(
-              children: [
-                StatisticsHeroGrid(statistics: statistics),
-                const SizedBox(height: 14),
-                StatisticsWorldProgressCard(statistics: statistics),
-                const SizedBox(height: 14),
-                StatisticsRecordsCard(statistics: statistics),
-                const SizedBox(height: 14),
-                StatisticsRankPanel(
-                  title: 'Meistbesuchte Länder',
-                  emptyText: 'Noch keine Länder erfasst.',
-                  items: statistics.topCountries,
-                ),
-                const SizedBox(height: 14),
-                StatisticsRankPanel(
-                  title: 'Meistbesuchte Städte',
-                  emptyText: 'Noch keine Städte erfasst.',
-                  items: statistics.topCities,
-                ),
-                const SizedBox(height: 14),
-                StatisticsContinentPanel(items: statistics.continents),
-                const SizedBox(height: 14),
-                StatisticsYearPanel(items: statistics.years),
-                const SizedBox(height: 14),
-                StatisticsVaultMemoryPanel(statistics: statistics),
-              ],
+          const SizedBox(height: 5),
+          Text(
+            'Fortschritt, Rekorde und Erinnerungen aus deinen echten Reisen.',
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
+          ),
+          const SizedBox(height: 18),
+          if (statistics.tripCount == 0)
+            const TravelDataEmptyState(
+              icon: Icons.bar_chart_rounded,
+              title: 'Noch keine Reisebilanz vorhanden',
+              description:
+                  'Die Statistik entsteht automatisch aus gespeicherten '
+                  'Reisen, Ländern, Städten, Dokumenten und Erinnerungen.',
+              hint:
+                  'Nach deiner ersten Reise werden alle Werte beim Öffnen '
+                  'dieser Seite automatisch neu berechnet.',
+            )
+          else ...[
+            StatisticsHeroGrid(statistics: statistics),
+            const SizedBox(height: 14),
+            StatisticsWorldProgressCard(statistics: statistics),
+            const SizedBox(height: 14),
+            StatisticsRecordsCard(statistics: statistics),
+            const SizedBox(height: 14),
+            StatisticsRankPanel(
+              title: 'Meistbesuchte Länder',
+              emptyText: 'Noch keine Länder erfasst.',
+              items: statistics.topCountries,
             ),
-          ),
+            const SizedBox(height: 14),
+            StatisticsRankPanel(
+              title: 'Meistbesuchte Städte',
+              emptyText: 'Noch keine Städte erfasst.',
+              items: statistics.topCities,
+            ),
+            const SizedBox(height: 14),
+            StatisticsContinentPanel(items: statistics.continents),
+            const SizedBox(height: 14),
+            StatisticsYearPanel(items: statistics.years),
+            const SizedBox(height: 14),
+            StatisticsVaultMemoryPanel(statistics: statistics),
+          ],
         ],
       ),
     );
@@ -95,6 +111,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     if (identical(_analyzedTrips, trips) && _statistics != null) {
       return;
     }
+
     _analyzedTrips = trips;
     _statistics = widget.analyzer.analyze(trips);
   }

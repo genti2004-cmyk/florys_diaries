@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:florys_diaries/app/theme/app_colors.dart';
 import 'package:florys_diaries/core/widgets/app_section_card.dart';
 import 'package:florys_diaries/core/widgets/app_section_title.dart';
 import 'package:florys_diaries/features/documents/application/trip_document_query.dart';
@@ -40,18 +41,21 @@ class TripVaultSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final favoriteCount = trip.documents
+        .where((document) => document.isFavorite)
+        .length;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const AppSectionTitle(
-          title: 'Travel Vault',
-          subtitle: 'Tickets, Buchungen, Screenshots und wichtige Notizen.',
+          title: 'Dokumente & Reiseunterlagen',
+          subtitle: 'Tickets, Buchungen, Nachweise und wichtige Dateien.',
         ),
         _VaultOverview(
-          trip: trip,
-          favoriteCount: trip.documents
-              .where((document) => document.isFavorite)
-              .length,
+          documentCount: trip.documentCount,
+          favoriteCount: favoriteCount,
+          photoCount: trip.photoCount,
           onAddDocument: onAddDocument,
         ),
         const SizedBox(height: 16),
@@ -69,9 +73,9 @@ class TripVaultSection extends StatelessWidget {
         if (trip.documents.isEmpty)
           AppSectionCard(
             icon: Icons.add_circle_outline_rounded,
-            title: 'Noch keine Dokumente',
+            title: 'Noch keine Reiseunterlagen',
             subtitle:
-                'Lege Flugtickets, Hotelbuchungen, Bahnfahrten oder Notizen an.',
+                'Füge Flugtickets, Hotelbuchungen, Bahnfahrten oder Notizen hinzu.',
             onTap: onAddDocument,
           )
         else if (visibleDocuments.isEmpty)
@@ -99,45 +103,131 @@ class TripVaultSection extends StatelessWidget {
 
 class _VaultOverview extends StatelessWidget {
   const _VaultOverview({
-    required this.trip,
+    required this.documentCount,
     required this.favoriteCount,
+    required this.photoCount,
     required this.onAddDocument,
   });
 
-  final Trip trip;
+  final int documentCount;
   final int favoriteCount;
+  final int photoCount;
   final VoidCallback onAddDocument;
 
   @override
   Widget build(BuildContext context) {
-    final documentsCard = AppSectionCard(
-      icon: Icons.description_outlined,
-      title: '${trip.documentCount} Dokumente',
-      subtitle: '$favoriteCount Favoriten',
-      onTap: onAddDocument,
-    );
-    final photosCard = AppSectionCard(
-      icon: Icons.photo_library_outlined,
-      title: '${trip.photoCount} Fotos',
-      subtitle: 'Galerie folgt im nächsten Ausbau.',
-    );
-
     return LayoutBuilder(
       builder: (context, constraints) {
-        if (constraints.maxWidth < 520) {
+        final stacked = constraints.maxWidth < 520;
+        final documents = _VaultMetricCard(
+          icon: Icons.description_outlined,
+          value: documentCount.toString(),
+          label: documentCount == 1 ? 'Dokument' : 'Dokumente',
+          detail: '$favoriteCount Favoriten',
+          onTap: onAddDocument,
+        );
+        final photos = _VaultMetricCard(
+          icon: Icons.photo_library_outlined,
+          value: photoCount.toString(),
+          label: photoCount == 1 ? 'Foto' : 'Fotos',
+          detail: 'Im Reisealbum',
+        );
+
+        if (stacked) {
           return Column(
-            children: [documentsCard, const SizedBox(height: 12), photosCard],
+            children: [documents, const SizedBox(height: 10), photos],
           );
         }
 
         return Row(
           children: [
-            Expanded(child: documentsCard),
-            const SizedBox(width: 12),
-            Expanded(child: photosCard),
+            Expanded(child: documents),
+            const SizedBox(width: 10),
+            Expanded(child: photos),
           ],
         );
       },
+    );
+  }
+}
+
+class _VaultMetricCard extends StatelessWidget {
+  const _VaultMetricCard({
+    required this.icon,
+    required this.value,
+    required this.label,
+    required this.detail,
+    this.onTap,
+  });
+
+  final IconData icon;
+  final String value;
+  final String label;
+  final String detail;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: AppColors.primarySoft,
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: Icon(icon, color: AppColors.primary),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '$value $label',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: AppColors.text,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      detail,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.textMuted,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (onTap != null)
+                const Icon(
+                  Icons.add_circle_outline_rounded,
+                  color: AppColors.primary,
+                ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
