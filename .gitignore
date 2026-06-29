@@ -57,3 +57,5 @@ FlorysDiaries_Lokal_*.zip
 FlorysDiaries_Auto_*.zip
 florysdiaries_current_safe.zip
 
+# FlorysDiaries: lokale QA-Fehlerprotokolle
+*_test_error.txt

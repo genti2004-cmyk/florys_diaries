@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:florys_diaries/app/theme/app_colors.dart';
+import 'package:florys_diaries/core/constants/app_metadata.dart';
 import 'package:florys_diaries/core/widgets/app_section_card.dart';
 import 'package:florys_diaries/features/backup/domain/automatic_cloud_backup_settings.dart';
 import 'package:florys_diaries/features/backup/domain/backup_sync_status.dart';
@@ -174,7 +175,8 @@ class SettingsContent extends StatelessWidget {
             icon: Icons.info_outline_rounded,
             title: 'Version',
             subtitle:
-                'FlorysDiaries v0.19.2 – überarbeitete Oberfläche und responsive Ansichten.',
+                '${AppMetadata.name} ${AppMetadata.displayVersion} – '
+                'überarbeitete Oberfläche und responsive Ansichten.',
           ),
         ],
       ),

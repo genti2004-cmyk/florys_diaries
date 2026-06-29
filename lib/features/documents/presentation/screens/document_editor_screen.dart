@@ -4,6 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
 import 'package:florys_diaries/app/theme/app_colors.dart';
+import 'package:florys_diaries/core/widgets/unsaved_changes_guard.dart';
 import 'package:florys_diaries/features/documents/data/travel_file_service.dart';
 import 'package:florys_diaries/features/documents/domain/document_category.dart';
 import 'package:florys_diaries/features/documents/domain/travel_document.dart';
@@ -37,6 +38,7 @@ class _DocumentEditorScreenState extends State<DocumentEditorScreen> {
   String _selectedFilePath = '';
   String _selectedFileName = '';
   bool _isSaving = false;
+  bool _hasUnsavedChanges = false;
 
   bool get _isEditing => widget.document != null;
 
@@ -50,13 +52,27 @@ class _DocumentEditorScreenState extends State<DocumentEditorScreen> {
     );
     _selectedFileName = document?.fileName ?? '';
     _categoryId = document?.categoryId ?? DocumentCategories.flight.id;
+
+    _titleController.addListener(_markTextChanged);
+    _descriptionController.addListener(_markTextChanged);
   }
 
   @override
   void dispose() {
-    _titleController.dispose();
-    _descriptionController.dispose();
+    _titleController
+      ..removeListener(_markTextChanged)
+      ..dispose();
+    _descriptionController
+      ..removeListener(_markTextChanged)
+      ..dispose();
     super.dispose();
+  }
+
+  void _markTextChanged() {
+    if (_hasUnsavedChanges || !mounted) {
+      return;
+    }
+    setState(() => _hasUnsavedChanges = true);
   }
 
   Future<void> _pickFile() async {
@@ -68,13 +84,14 @@ class _DocumentEditorScreenState extends State<DocumentEditorScreen> {
 
     final pickedFile = result?.files.single;
     final path = pickedFile?.path;
-    if (path == null || path.trim().isEmpty) {
+    if (path == null || path.trim().isEmpty || !mounted) {
       return;
     }
 
     setState(() {
       _selectedFilePath = path;
       _selectedFileName = pickedFile?.name ?? _fileNameFromPath(path);
+      _hasUnsavedChanges = true;
       if (_titleController.text.trim().isEmpty) {
         _titleController.text = _titleFromFileName(_selectedFileName);
       }
@@ -82,7 +99,9 @@ class _DocumentEditorScreenState extends State<DocumentEditorScreen> {
   }
 
   Future<void> _save() async {
-    if (!_formKey.currentState!.validate() || _isSaving) {
+    FocusManager.instance.primaryFocus?.unfocus();
+
+    if (_isSaving || !_formKey.currentState!.validate()) {
       return;
     }
 
@@ -91,17 +110,19 @@ class _DocumentEditorScreenState extends State<DocumentEditorScreen> {
     try {
       final oldDocument = widget.document;
       final documentId = oldDocument?.id ?? _createId();
-      var document = TravelDocument(
-        id: documentId,
-        title: _titleController.text.trim(),
-        categoryId: _categoryId,
-        createdAt: oldDocument?.createdAt ?? DateTime.now(),
-        description: _descriptionController.text.trim(),
-        fileName: oldDocument?.fileName ?? '',
-        relativePath: oldDocument?.relativePath ?? '',
-        fileSizeBytes: oldDocument?.fileSizeBytes ?? 0,
-        fileExtension: oldDocument?.fileExtension ?? '',
-      );
+      var document = oldDocument == null
+          ? TravelDocument(
+              id: documentId,
+              title: _titleController.text.trim(),
+              categoryId: _categoryId,
+              createdAt: DateTime.now(),
+              description: _descriptionController.text.trim(),
+            )
+          : oldDocument.copyWith(
+              title: _titleController.text.trim(),
+              categoryId: _categoryId,
+              description: _descriptionController.text.trim(),
+            );
 
       if (_selectedFilePath.trim().isNotEmpty) {
         final copiedFile = await _fileService.copyFileToTrip(
@@ -121,15 +142,26 @@ class _DocumentEditorScreenState extends State<DocumentEditorScreen> {
       if (!mounted) {
         return;
       }
-      Navigator.of(context).pop(DocumentEditorResult.save(document));
+
+      final result = DocumentEditorResult.save(document);
+      setState(() {
+        _isSaving = false;
+        _hasUnsavedChanges = false;
+      });
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          Navigator.of(context).pop(result);
+        }
+      });
     } on FileSystemException catch (error) {
-      _showError(error.message);
-    } catch (_) {
-      _showError('Die Datei konnte nicht gespeichert werden.');
-    } finally {
-      if (mounted) {
-        setState(() => _isSaving = false);
-      }
+      _handleSaveError(
+        error.message.trim().isEmpty
+            ? 'Die Datei konnte nicht gespeichert werden.'
+            : error.message,
+      );
+    } catch (error) {
+      debugPrint('Dokument konnte nicht gespeichert werden: $error');
+      _handleSaveError('Die Datei konnte nicht gespeichert werden.');
     }
   }
 
@@ -162,7 +194,22 @@ class _DocumentEditorScreenState extends State<DocumentEditorScreen> {
     if (!mounted || confirmed != true) {
       return;
     }
-    Navigator.of(context).pop(DocumentEditorResult.delete(document));
+
+    final result = DocumentEditorResult.delete(document);
+    setState(() => _hasUnsavedChanges = false);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        Navigator.of(context).pop(result);
+      }
+    });
+  }
+
+  void _handleSaveError(String message) {
+    if (!mounted) {
+      return;
+    }
+    setState(() => _isSaving = false);
+    _showError(message);
   }
 
   void _showError(String message) {
@@ -180,107 +227,122 @@ class _DocumentEditorScreenState extends State<DocumentEditorScreen> {
         ? 'Noch keine Datei ausgewählt'
         : _selectedFileName;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(_isEditing ? 'Dokument bearbeiten' : 'Dokument anlegen'),
-        actions: [
-          if (_isEditing)
-            IconButton(
-              tooltip: 'Löschen',
-              onPressed: _isSaving ? null : _delete,
-              icon: const Icon(Icons.delete_outline),
+    return UnsavedChangesGuard<DocumentEditorResult>(
+      hasUnsavedChanges: _hasUnsavedChanges && !_isSaving,
+      title: 'Dokumentänderungen verwerfen?',
+      message:
+          'Die Änderungen an diesem Dokument wurden noch nicht gespeichert.',
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(_isEditing ? 'Dokument bearbeiten' : 'Dokument anlegen'),
+          actions: [
+            if (_isEditing)
+              IconButton(
+                tooltip: 'Löschen',
+                onPressed: _isSaving ? null : _delete,
+                icon: const Icon(Icons.delete_outline),
+              ),
+          ],
+        ),
+        body: SafeArea(
+          child: Form(
+            key: _formKey,
+            child: ListView(
+              key: const PageStorageKey<String>('document-editor-form'),
+              padding: const EdgeInsets.all(16),
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              children: [
+                DropdownButtonFormField<String>(
+                  key: const ValueKey<String>('document-editor-category'),
+                  initialValue: _categoryId,
+                  decoration: const InputDecoration(
+                    labelText: 'Kategorie',
+                    prefixIcon: Icon(Icons.folder_outlined),
+                  ),
+                  items: DocumentCategories.values
+                      .map((category) {
+                        return DropdownMenuItem<String>(
+                          value: category.id,
+                          child: Row(
+                            children: [
+                              Icon(
+                                category.icon,
+                                size: 20,
+                                color: AppColors.primary,
+                              ),
+                              const SizedBox(width: 10),
+                              Text(category.label),
+                            ],
+                          ),
+                        );
+                      })
+                      .toList(growable: false),
+                  onChanged: _isSaving
+                      ? null
+                      : (value) {
+                          if (value == null || value == _categoryId) {
+                            return;
+                          }
+                          setState(() {
+                            _categoryId = value;
+                            _hasUnsavedChanges = true;
+                          });
+                        },
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  key: const ValueKey<String>('document-editor-title'),
+                  controller: _titleController,
+                  enabled: !_isSaving,
+                  textInputAction: TextInputAction.next,
+                  decoration: const InputDecoration(
+                    labelText: 'Titel',
+                    hintText: 'z. B. Flugticket Lufthansa',
+                    prefixIcon: Icon(Icons.title_rounded),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Bitte Titel eintragen';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 12),
+                _FilePickerCard(
+                  fileName: selectedFileText,
+                  hasFile: _selectedFileName.trim().isNotEmpty,
+                  isBusy: _isSaving,
+                  onPickFile: _pickFile,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  key: const ValueKey<String>('document-editor-description'),
+                  controller: _descriptionController,
+                  enabled: !_isSaving,
+                  minLines: 4,
+                  maxLines: 7,
+                  decoration: const InputDecoration(
+                    labelText: 'Beschreibung / Notiz',
+                    hintText: 'Buchungsnummer, Strecke, Check-in, Details ...',
+                    prefixIcon: Icon(Icons.notes_outlined),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                FilledButton.icon(
+                  key: const ValueKey<String>('document-editor-save'),
+                  onPressed: _isSaving ? null : _save,
+                  icon: _isSaving
+                      ? const SizedBox.square(
+                          dimension: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.check_rounded),
+                  label: Text(
+                    _isEditing ? 'Änderungen speichern' : 'Dokument speichern',
+                  ),
+                ),
+              ],
             ),
-        ],
-      ),
-      body: SafeArea(
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              DropdownButtonFormField<String>(
-                initialValue: _categoryId,
-                decoration: const InputDecoration(
-                  labelText: 'Kategorie',
-                  prefixIcon: Icon(Icons.folder_outlined),
-                ),
-                items: DocumentCategories.values
-                    .map((category) {
-                      return DropdownMenuItem<String>(
-                        value: category.id,
-                        child: Row(
-                          children: [
-                            Icon(
-                              category.icon,
-                              size: 20,
-                              color: AppColors.primary,
-                            ),
-                            const SizedBox(width: 10),
-                            Text(category.label),
-                          ],
-                        ),
-                      );
-                    })
-                    .toList(growable: false),
-                onChanged: _isSaving
-                    ? null
-                    : (value) {
-                        if (value == null) {
-                          return;
-                        }
-                        setState(() => _categoryId = value);
-                      },
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _titleController,
-                enabled: !_isSaving,
-                textInputAction: TextInputAction.next,
-                decoration: const InputDecoration(
-                  labelText: 'Titel',
-                  hintText: 'z. B. Flugticket Lufthansa',
-                  prefixIcon: Icon(Icons.title_rounded),
-                ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Bitte Titel eintragen';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 12),
-              _FilePickerCard(
-                fileName: selectedFileText,
-                hasFile: _selectedFileName.trim().isNotEmpty,
-                isBusy: _isSaving,
-                onPickFile: _pickFile,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _descriptionController,
-                enabled: !_isSaving,
-                minLines: 4,
-                maxLines: 7,
-                decoration: const InputDecoration(
-                  labelText: 'Beschreibung / Notiz',
-                  hintText: 'Buchungsnummer, Strecke, Check-in, Details ...',
-                  prefixIcon: Icon(Icons.notes_outlined),
-                ),
-              ),
-              const SizedBox(height: 20),
-              FilledButton.icon(
-                onPressed: _isSaving ? null : _save,
-                icon: _isSaving
-                    ? const SizedBox.square(
-                        dimension: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.check_rounded),
-                label: Text(
-                  _isEditing ? 'Änderungen speichern' : 'Dokument speichern',
-                ),
-              ),
-            ],
           ),
         ),
       ),

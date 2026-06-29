@@ -85,6 +85,114 @@ void main() {
       ),
     );
   });
+
+  test('rejects malformed nested entries instead of dropping them', () async {
+    final tripJson = _tripWithoutDocument().toJson();
+    tripJson['documents'] = ['kein gültiger Dokumenteintrag'];
+
+    final backup = await _createBackup(
+      testRoot,
+      trips: const [],
+      rawTripEntries: [tripJson],
+      files: const {},
+      declaredTripCount: 1,
+    );
+
+    await expectLater(
+      reader.read(backup),
+      throwsA(
+        isA<FormatException>().having(
+          (error) => error.message,
+          'message',
+          contains('Dokument'),
+        ),
+      ),
+    );
+  });
+
+  test('rejects duplicate nested ids before restore', () async {
+    final tripJson = _tripWithoutDocument().toJson();
+    tripJson['albumEntries'] = [
+      {
+        'id': 'album-1',
+        'typeId': 'note',
+        'date': '2026-07-01T00:00:00.000',
+        'title': 'Erster Eintrag',
+      },
+      {
+        'id': 'album-1',
+        'typeId': 'highlight',
+        'date': '2026-07-02T00:00:00.000',
+        'title': 'Doppelter Eintrag',
+      },
+    ];
+
+    final backup = await _createBackup(
+      testRoot,
+      trips: const [],
+      rawTripEntries: [tripJson],
+      files: const {},
+      declaredTripCount: 1,
+    );
+
+    await expectLater(
+      reader.read(backup),
+      throwsA(
+        isA<FormatException>().having(
+          (error) => error.message,
+          'message',
+          contains('Album-Eintrag-ID'),
+        ),
+      ),
+    );
+  });
+
+  test('preserves nested trip content during backup inspection', () async {
+    final tripJson = _tripWithoutDocument().toJson();
+    tripJson['albumEntries'] = [
+      {
+        'id': 'album-1',
+        'typeId': 'highlight',
+        'date': '2026-07-01T00:00:00.000',
+        'title': 'Lieblingsmoment',
+        'description': 'Beschreibung',
+        'location': 'Prizren',
+        'isFavorite': true,
+      },
+    ];
+    tripJson['checklistItems'] = [
+      {
+        'id': 'checklist-1',
+        'title': 'Reisepass',
+        'category': 'documents',
+        'priority': 'high',
+        'createdAt': '2026-06-01T00:00:00.000',
+        'notes': 'Nicht vergessen',
+        'dueDate': '2026-06-28T00:00:00.000',
+        'isCompleted': true,
+        'sourceKey': 'passport',
+      },
+    ];
+    tripJson['photoCount'] = 9;
+
+    final backup = await _createBackup(
+      testRoot,
+      trips: const [],
+      rawTripEntries: [tripJson],
+      files: const {},
+      declaredTripCount: 1,
+    );
+
+    final package = await reader.read(backup);
+    final restored = package.trips.single;
+
+    expect(restored.albumEntries.single.id, 'album-1');
+    expect(restored.albumEntries.single.isFavorite, isTrue);
+    expect(restored.checklistItems.single.id, 'checklist-1');
+    expect(restored.checklistItems.single.sourceKey, 'passport');
+    expect(restored.checklistItems.single.isCompleted, isTrue);
+    expect(restored.photoCount, 9);
+  });
 }
 
 Trip _tripWithDocument() {
@@ -125,6 +233,7 @@ Future<File> _createBackup(
   Directory testRoot, {
   required List<Trip> trips,
   required Map<String, List<int>> files,
+  List<Object?>? rawTripEntries,
   int? declaredTripCount,
 }) async {
   final workspace = Directory(
@@ -142,7 +251,7 @@ Future<File> _createBackup(
     'schemaVersion': BackupArchiveReader.schemaVersion,
     'appVersion': '0.18.2',
     'createdAt': DateTime.utc(2026, 6, 28).toIso8601String(),
-    'tripCount': declaredTripCount ?? trips.length,
+    'tripCount': declaredTripCount ?? rawTripEntries?.length ?? trips.length,
     'fileCount': files.length,
     'contentBytes': contentBytes,
   };
@@ -153,7 +262,7 @@ Future<File> _createBackup(
   await File(
     '${workspace.path}${Platform.pathSeparator}trips.json',
   ).writeAsString(
-    jsonEncode(trips.map((trip) => trip.toJson()).toList()),
+    jsonEncode(rawTripEntries ?? trips.map((trip) => trip.toJson()).toList()),
     flush: true,
   );
 

@@ -188,6 +188,8 @@ class BackupArchiveReader {
         throw const FormatException('Ein Enddatum im Backup ist ungültig.');
       }
 
+      _validateNestedEntries(value);
+
       final trip = Trip.fromJson(value);
       if (trip.endDate.isBefore(trip.startDate)) {
         throw const FormatException(
@@ -198,6 +200,85 @@ class BackupArchiveReader {
     }
 
     return trips;
+  }
+
+  static void _validateNestedEntries(Map<String, dynamic> tripJson) {
+    _validateNestedList(
+      tripJson['documents'],
+      label: 'Dokument',
+      validate: (entry, ids) {
+        _requireUniqueId(entry, ids, label: 'Dokument');
+        _requireValidDate(entry['createdAt'], label: 'Dokumentdatum');
+      },
+    );
+    _validateNestedList(
+      tripJson['albumEntries'],
+      label: 'Album-Eintrag',
+      validate: (entry, ids) {
+        _requireUniqueId(entry, ids, label: 'Album-Eintrag');
+        _requireValidDate(entry['date'], label: 'Albumdatum');
+      },
+    );
+    _validateNestedList(
+      tripJson['checklistItems'],
+      label: 'Checklisten-Eintrag',
+      validate: (entry, ids) {
+        _requireUniqueId(entry, ids, label: 'Checklisten-Eintrag');
+        final title = entry['title'];
+        if (title is! String || title.trim().isEmpty) {
+          throw const FormatException(
+            'Ein Checklisten-Titel im Backup ist ungültig.',
+          );
+        }
+        _requireValidDate(entry['createdAt'], label: 'Checklisten-Datum');
+
+        final dueDate = entry['dueDate'];
+        if (dueDate != null) {
+          _requireValidDate(dueDate, label: 'Fälligkeitsdatum');
+        }
+      },
+    );
+  }
+
+  static void _validateNestedList(
+    Object? value, {
+    required String label,
+    required void Function(Map<String, dynamic> entry, Set<String> ids)
+    validate,
+  }) {
+    if (value == null) {
+      return;
+    }
+    if (value is! List) {
+      throw FormatException('$label-Daten im Backup sind ungültig.');
+    }
+
+    final ids = <String>{};
+    for (final rawEntry in value) {
+      if (rawEntry is! Map<String, dynamic>) {
+        throw FormatException('Ein $label im Backup ist ungültig.');
+      }
+      validate(rawEntry, ids);
+    }
+  }
+
+  static void _requireUniqueId(
+    Map<String, dynamic> entry,
+    Set<String> ids, {
+    required String label,
+  }) {
+    final id = entry['id'];
+    if (id is! String || id.trim().isEmpty || !ids.add(id)) {
+      throw FormatException(
+        'Eine $label-ID im Backup ist ungültig oder doppelt.',
+      );
+    }
+  }
+
+  static void _requireValidDate(Object? value, {required String label}) {
+    if (value is! String || DateTime.tryParse(value) == null) {
+      throw FormatException('$label im Backup ist ungültig.');
+    }
   }
 
   static void _validateManifestCounts(

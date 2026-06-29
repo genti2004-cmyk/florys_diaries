@@ -6,6 +6,7 @@ import 'package:path_provider/path_provider.dart';
 
 import 'package:florys_diaries/features/backup/data/backup_archive_reader.dart';
 import 'package:florys_diaries/features/backup/data/backup_file_manager.dart';
+import 'package:florys_diaries/features/backup/data/backup_manifest.dart';
 import 'package:florys_diaries/features/backup/domain/app_backup_result.dart';
 import 'package:florys_diaries/features/trips/domain/trip.dart';
 
@@ -140,15 +141,14 @@ class AppBackupService {
     final encoder = const JsonEncoder.withIndent('  ');
     final file = File(_join(workspace.path, 'manifest.json'));
     await file.writeAsString(
-      encoder.convert({
-        'format': BackupArchiveReader.formatId,
-        'schemaVersion': BackupArchiveReader.schemaVersion,
-        'appVersion': '0.18.2',
-        'createdAt': createdAt.toUtc().toIso8601String(),
-        'tripCount': tripCount,
-        'fileCount': fileCount,
-        'contentBytes': contentBytes,
-      }),
+      encoder.convert(
+        BackupManifest.create(
+          createdAt: createdAt,
+          tripCount: tripCount,
+          fileCount: fileCount,
+          contentBytes: contentBytes,
+        ),
+      ),
       flush: true,
     );
   }
