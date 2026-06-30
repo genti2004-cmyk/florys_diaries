@@ -514,89 +514,109 @@ class _TripSectionNavigation extends StatelessWidget {
       color: AppColors.surface,
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
+        padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
         decoration: const BoxDecoration(
           border: Border(bottom: BorderSide(color: AppColors.border)),
         ),
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: [
-              _SectionChip(
+        child: Row(
+          children: [
+            Expanded(
+              child: _SectionTab(
                 icon: Icons.dashboard_outlined,
+                selectedIcon: Icons.dashboard_rounded,
                 label: 'Übersicht',
                 selected: selected == _TripDetailSection.overview,
                 onTap: () => onSelected(_TripDetailSection.overview),
               ),
-              const SizedBox(width: 8),
-              _SectionChip(
-                icon: Icons.checklist_rounded,
+            ),
+            const SizedBox(width: 6),
+            Expanded(
+              child: _SectionTab(
+                icon: Icons.checklist_outlined,
+                selectedIcon: Icons.checklist_rounded,
                 label: 'Planung',
                 selected: selected == _TripDetailSection.planning,
                 onTap: () => onSelected(_TripDetailSection.planning),
               ),
-              const SizedBox(width: 8),
-              _SectionChip(
+            ),
+            const SizedBox(width: 6),
+            Expanded(
+              child: _SectionTab(
                 icon: Icons.folder_outlined,
+                selectedIcon: Icons.folder_rounded,
                 label: 'Dokumente',
                 selected: selected == _TripDetailSection.documents,
                 onTap: () => onSelected(_TripDetailSection.documents),
               ),
-              const SizedBox(width: 8),
-              _SectionChip(
+            ),
+            const SizedBox(width: 6),
+            Expanded(
+              child: _SectionTab(
                 icon: Icons.favorite_border_rounded,
+                selectedIcon: Icons.favorite_rounded,
                 label: 'Momente',
                 selected: selected == _TripDetailSection.memories,
                 onTap: () => onSelected(_TripDetailSection.memories),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-class _SectionChip extends StatelessWidget {
-  const _SectionChip({
+class _SectionTab extends StatelessWidget {
+  const _SectionTab({
     required this.icon,
+    required this.selectedIcon,
     required this.label,
     required this.selected,
     required this.onTap,
   });
 
   final IconData icon;
+  final IconData selectedIcon;
   final String label;
   final bool selected;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: selected ? AppColors.primary : AppColors.surfaceSoft,
-      borderRadius: BorderRadius.circular(999),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(999),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                icon,
-                size: 17,
-                color: selected ? Colors.white : AppColors.textMuted,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                label,
-                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  color: selected ? Colors.white : AppColors.text,
-                  fontWeight: FontWeight.w900,
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: label,
+      child: Material(
+        color: selected ? AppColors.primarySoft : Colors.transparent,
+        borderRadius: BorderRadius.circular(18),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(18),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 9),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  selected ? selectedIcon : icon,
+                  size: 21,
+                  color: selected ? AppColors.primary : AppColors.textMuted,
                 ),
-              ),
-            ],
+                const SizedBox(height: 5),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      color: selected ? AppColors.primary : AppColors.textMuted,
+                      fontWeight: selected ? FontWeight.w900 : FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
