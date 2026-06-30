@@ -9,6 +9,7 @@ import 'package:florys_diaries/features/trips/domain/trip.dart';
 import 'package:florys_diaries/features/trips/presentation/widgets/trip_empty_state.dart';
 import 'package:florys_diaries/features/trips/presentation/widgets/upcoming_trip_hero.dart';
 
+import 'past_trips_screen.dart';
 import 'trip_detail_screen.dart';
 import 'trip_editor_screen.dart';
 
@@ -31,6 +32,12 @@ class UpcomingTripsScreen extends StatelessWidget {
     return Navigator.of(
       context,
     ).push(MaterialPageRoute<void>(builder: (_) => const SettingsScreen()));
+  }
+
+  Future<void> _openTimeline(BuildContext context) {
+    return Navigator.of(
+      context,
+    ).push(MaterialPageRoute<void>(builder: (_) => const PastTripsScreen()));
   }
 
   void _openTrip(BuildContext context, Trip trip) {
@@ -58,21 +65,24 @@ class UpcomingTripsScreen extends StatelessWidget {
       0,
       (sum, trip) => sum + trip.albumEntryCount,
     );
-    final totalDays = allTrips.fold<int>(0, (sum, trip) => sum + trip.durationDays);
+    final totalDays = allTrips.fold<int>(
+      0,
+      (sum, trip) => sum + trip.durationDays,
+    );
 
     return ColoredBox(
       color: AppColors.homeBackground,
       child: SafeArea(
         bottom: false,
         child: ListView(
-          key: const PageStorageKey<String>('upcoming-trips'),
-          padding: const EdgeInsets.fromLTRB(16, 18, 16, 110),
+          key: const PageStorageKey<String>('premium-home-v2'),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 128),
           children: [
             _HomeHeader(
               onOpenAssistant: () => _openAssistant(context),
               onOpenSettings: () => _openSettings(context),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 18),
             if (store.isLoading)
               const _LoadingState()
             else if (nextTrip == null)
@@ -82,7 +92,7 @@ class UpcomingTripsScreen extends StatelessWidget {
                 trip: nextTrip,
                 onTap: () => _openTrip(context, nextTrip),
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 16),
               _MetricsGrid(
                 items: [
                   _MetricItem(label: 'Reisen', value: '${allTrips.length}'),
@@ -98,14 +108,17 @@ class UpcomingTripsScreen extends StatelessWidget {
               _SectionHeader(
                 title: 'Meine Reisen',
                 subtitle: 'Schneller Zugriff auf deine geplanten Abenteuer.',
+                actionLabel: 'Timeline',
+                onAction: () => _openTimeline(context),
               ),
               const SizedBox(height: 12),
               SizedBox(
-                height: 214,
+                height: 198,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   itemCount: trips.length,
-                  separatorBuilder: (context, index) => const SizedBox(width: 12),
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(width: 12),
                   itemBuilder: (context, index) {
                     final trip = trips[index];
                     return _CompactTripCard(
@@ -116,31 +129,24 @@ class UpcomingTripsScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 22),
-              _SectionHeader(
+              const _SectionHeader(
                 title: 'Reisestatus',
                 subtitle: 'Was du bereits gesammelt und erlebt hast.',
               ),
               const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: _InsightCard(
-                      icon: Icons.favorite_outline_rounded,
-                      title: '$memoryCount Erinnerungen',
-                      subtitle: 'Momente, Highlights und Notizen aus deinen Reisen.',
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _InsightCard(
-                      icon: Icons.flight_takeoff_rounded,
-                      title: '${trips.length} kommende Reisen',
-                      subtitle: trips.length == 1
-                          ? 'Ein Abenteuer wartet bereits auf dich.'
-                          : 'Mehrere Reisen stehen schon in den Startlöchern.',
-                    ),
-                  ),
-                ],
+              _InsightCard(
+                icon: Icons.favorite_outline_rounded,
+                title: '$memoryCount Erinnerungen',
+                subtitle:
+                    'Momente, Highlights und Notizen aus deinen Reisen.',
+              ),
+              const SizedBox(height: 10),
+              _InsightCard(
+                icon: Icons.flight_takeoff_rounded,
+                title: '${trips.length} kommende Reisen',
+                subtitle: trips.length == 1
+                    ? 'Ein Abenteuer wartet bereits auf dich.'
+                    : 'Mehrere Reisen stehen bereits in den Startlöchern.',
               ),
             ],
           ],
@@ -169,22 +175,29 @@ class _HomeHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '${TravelVisuals.greeting()}, Florentina ✨',
+                '${TravelVisuals.greeting()}, Florenta ✨',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 7),
               Text(
                 'FlorysDiaries',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   color: Colors.white,
+                  fontSize: 27,
                 ),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 5),
               Text(
                 'Deine Reisen. Deine Geschichten. Für immer.',
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: AppColors.homeTextMuted,
                 ),
@@ -192,7 +205,7 @@ class _HomeHeader extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 10),
         _HeaderIconButton(
           icon: Icons.auto_awesome_rounded,
           onTap: onOpenAssistant,
@@ -217,18 +230,18 @@ class _HeaderIconButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: AppColors.homeSurface,
-      borderRadius: BorderRadius.circular(18),
+      borderRadius: BorderRadius.circular(16),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
         child: Ink(
-          width: 48,
-          height: 48,
+          width: 44,
+          height: 44,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(color: AppColors.homeBorder),
           ),
-          child: Icon(icon, color: Colors.white),
+          child: Icon(icon, color: Colors.white, size: 22),
         ),
       ),
     );
@@ -241,11 +254,11 @@ class _LoadingState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 180,
+      height: 160,
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: AppColors.homeSurface,
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(26),
         border: Border.all(color: AppColors.homeBorder),
       ),
       child: const Column(
@@ -271,16 +284,14 @@ class _DarkEmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.homeSurface,
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(26),
         border: Border.all(color: AppColors.homeBorder),
       ),
       child: Theme(
-        data: Theme.of(context).copyWith(
-          cardColor: AppColors.homeSurface,
-        ),
+        data: Theme.of(context).copyWith(cardColor: AppColors.homeSurface),
         child: TripEmptyState(onCreateTrip: onCreateTrip),
       ),
     );
@@ -300,22 +311,20 @@ class _MetricsGrid extends StatelessWidget {
       itemCount: items.length,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        mainAxisSpacing: 12,
-        crossAxisSpacing: 12,
-        childAspectRatio: 1.75,
+        mainAxisSpacing: 10,
+        crossAxisSpacing: 10,
+        childAspectRatio: 2.25,
       ),
       itemBuilder: (context, index) {
         final item = items[index];
         return Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
             color: AppColors.homeSurface,
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(22),
             border: Border.all(color: AppColors.homeBorder),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
+          child: Row(
             children: [
               Text(
                 item.value,
@@ -324,11 +333,15 @@ class _MetricsGrid extends StatelessWidget {
                   fontWeight: FontWeight.w900,
                 ),
               ),
-              const SizedBox(height: 6),
-              Text(
-                item.label,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.homeTextMuted,
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  item.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.homeTextMuted,
+                  ),
                 ),
               ),
             ],
@@ -340,29 +353,58 @@ class _MetricsGrid extends StatelessWidget {
 }
 
 class _SectionHeader extends StatelessWidget {
-  const _SectionHeader({required this.title, required this.subtitle});
+  const _SectionHeader({
+    required this.title,
+    required this.subtitle,
+    this.actionLabel,
+    this.onAction,
+  });
 
   final String title;
   final String subtitle;
+  final String? actionLabel;
+  final VoidCallback? onAction;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        Text(
-          title,
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            color: Colors.white,
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                subtitle,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppColors.homeTextMuted,
+                ),
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 4),
-        Text(
-          subtitle,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: AppColors.homeTextMuted,
+        if (actionLabel != null && onAction != null) ...[
+          const SizedBox(width: 10),
+          TextButton(
+            onPressed: onAction,
+            style: TextButton.styleFrom(foregroundColor: Colors.white),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(actionLabel!),
+                const SizedBox(width: 3),
+                const Icon(Icons.chevron_right_rounded, size: 18),
+              ],
+            ),
           ),
-        ),
+        ],
       ],
     );
   }
@@ -381,16 +423,16 @@ class _CompactTripCard extends StatelessWidget {
     );
 
     return SizedBox(
-      width: 190,
+      width: 178,
       child: Material(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(26),
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(28),
+          borderRadius: BorderRadius.circular(26),
           child: Ink(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(28),
+              borderRadius: BorderRadius.circular(26),
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -398,14 +440,14 @@ class _CompactTripCard extends StatelessWidget {
               ),
             ),
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(15),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
+                      horizontal: 9,
+                      vertical: 5,
                     ),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.14),
@@ -431,19 +473,23 @@ class _CompactTripCard extends StatelessWidget {
                       fontWeight: FontWeight.w900,
                     ),
                   ),
-                  const SizedBox(height: 5),
+                  const SizedBox(height: 4),
                   Text(
                     '${trip.destination}, ${trip.country}',
-                    maxLines: 2,
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Colors.white.withValues(alpha: 0.86),
                     ),
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 10),
                   Row(
                     children: [
-                      Icon(Icons.timelapse_rounded, size: 15, color: Colors.white),
+                      const Icon(
+                        Icons.timelapse_rounded,
+                        size: 15,
+                        color: Colors.white,
+                      ),
                       const SizedBox(width: 5),
                       Text(
                         '${trip.durationDays} Tage',
@@ -481,26 +527,44 @@ class _InsightCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.homeSurface,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(22),
         border: Border.all(color: AppColors.homeBorder),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Icon(icon, color: Colors.white),
-          const SizedBox(height: 14),
-          Text(
-            title,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w900,
+          Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(
+              color: AppColors.homeSurfaceSoft,
+              borderRadius: BorderRadius.circular(16),
             ),
+            child: Icon(icon, color: Colors.white),
           ),
-          const SizedBox(height: 6),
-          Text(
-            subtitle,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: AppColors.homeTextMuted,
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.homeTextMuted,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
