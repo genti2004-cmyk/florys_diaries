@@ -1,61 +1,32 @@
-# Miscellaneous
-*.class
-*.log
-*.pyc
-*.swp
-.DS_Store
-.atom/
-.build/
-.buildlog/
-.history
-.svn/
-.swiftpm/
-migrate_working_dir/
-
-# IntelliJ related
-*.iml
-*.ipr
-*.iws
-.idea/
-
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
-#.vscode/
-
-# Flutter/Dart/Pub related
-**/doc/api/
-**/ios/Flutter/.last_build_id
+# Flutter / Dart
 .dart_tool/
-.flutter-plugins-dependencies
+.packages
 .pub-cache/
 .pub/
-/build/
-/coverage/
+build/
+coverage/
+.flutter-plugins
+.flutter-plugins-dependencies
 
-# Symbolication related
-app.*.symbols
+# IDE
+.idea/
+*.iml
+.vscode/
 
-# Obfuscation related
-app.*.map.json
+# Platform generated files
+android/.gradle/
+android/local.properties
+ios/Flutter/.last_build_id
 
-# Android Studio will place build artifacts here
-/android/app/debug
-/android/app/profile
-/android/app/release
-
-# FlorysDiaries: lokale Signierung und Geheimnisse
+# Signing secrets
 **/key.properties
 **/*.jks
 **/*.keystore
+
+# Local environment and temporary files
 .env
 .env.*
-
-# FlorysDiaries: persönliche Sicherungen und lokale Exportarchive
-FlorysDiaries_Backup_*.zip
-FlorysDiaries_Lokal_*.zip
-FlorysDiaries_Auto_*.zip
-florysdiaries_current_safe.zip
-
-# FlorysDiaries: lokale QA-Fehlerprotokolle
-*_test_error.txt
+*.log
+*.tmp
+.DS_Store
+Thumbs.db

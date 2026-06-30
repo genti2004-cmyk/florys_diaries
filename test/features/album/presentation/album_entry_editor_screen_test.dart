@@ -82,7 +82,7 @@ void main() {
     await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
 
-    expect(find.text('Album-Änderungen verwerfen?'), findsOneWidget);
+    expect(find.text('Momentänderungen verwerfen?'), findsOneWidget);
     expect(find.text('Weiter bearbeiten'), findsOneWidget);
 
     await tester.tap(find.text('Weiter bearbeiten'));

@@ -7,12 +7,14 @@ import 'package:florys_diaries/features/backup/application/backup_sync_status_sc
 import 'package:florys_diaries/features/backup/data/app_backup_service.dart';
 import 'package:florys_diaries/features/backup/data/automatic_cloud_backup_settings_service.dart';
 import 'package:florys_diaries/features/backup/data/automatic_google_drive_backup_service.dart';
+import 'package:florys_diaries/features/backup/data/data_safety_service.dart';
 import 'package:florys_diaries/features/backup/data/backup_provider_registry.dart';
 import 'package:florys_diaries/features/backup/data/google_drive_app_data_service.dart';
 import 'package:florys_diaries/features/backup/data/local_backup_service.dart';
 import 'package:florys_diaries/features/backup/domain/app_backup_result.dart';
 import 'package:florys_diaries/features/backup/domain/automatic_cloud_backup_settings.dart';
 import 'package:florys_diaries/features/backup/domain/backup_provider.dart';
+import 'package:florys_diaries/features/backup/domain/data_safety_report.dart';
 import 'package:florys_diaries/features/backup/domain/google_drive_backup_models.dart';
 import 'package:florys_diaries/features/backup/domain/local_backup_entry.dart';
 import 'package:florys_diaries/features/settings/presentation/settings_backup_formatter.dart';
@@ -37,6 +39,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       AutomaticCloudBackupSettingsService();
   static final _automaticGoogleDriveBackupService =
       AutomaticGoogleDriveBackupService();
+  static const _dataSafetyService = DataSafetyService();
 
   bool _isBusy = false;
   bool _isHistoryLoading = true;
@@ -50,6 +53,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   AutomaticCloudBackupSettings _automaticCloudSettings =
       AutomaticCloudBackupSettings.defaults;
   bool _isAutomaticCloudSettingsLoading = true;
+  bool _isDataSafetyLoading = false;
+  bool _initialSafetyCheckScheduled = false;
+  DataSafetyReport? _dataSafetyReport;
 
   BackupProvider get _selectedProvider =>
       _providerRegistry.providerFor(_selectedProviderId);
@@ -59,6 +65,56 @@ class _SettingsScreenState extends State<SettingsScreen> {
     super.initState();
     _loadLocalBackups();
     _loadAutomaticCloudSettings();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_initialSafetyCheckScheduled) {
+      return;
+    }
+    _initialSafetyCheckScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        unawaited(_runDataSafetyCheck(showErrors: false));
+      }
+    });
+  }
+
+  Future<void> _runDataSafetyCheck({bool showErrors = true}) async {
+    if (_isDataSafetyLoading) {
+      return;
+    }
+
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => _isDataSafetyLoading = true);
+
+    try {
+      final store = TripStoreScope.of(context);
+      final report = await _dataSafetyService.inspect(
+        store.trips,
+        localBackups: _isHistoryLoading ? null : _localBackups,
+      );
+      if (!mounted) {
+        return;
+      }
+      setState(() => _dataSafetyReport = report);
+    } on FileSystemException catch (error) {
+      if (mounted && showErrors) {
+        _showError(messenger, error.message);
+      }
+    } catch (_) {
+      if (mounted && showErrors) {
+        _showError(
+          messenger,
+          'Die Daten-Sicherheitsprüfung konnte nicht abgeschlossen werden.',
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isDataSafetyLoading = false);
+      }
+    }
   }
 
   Future<void> _loadLocalBackups() async {
@@ -71,6 +127,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
         _localBackups = entries;
         _isHistoryLoading = false;
       });
+      if (_dataSafetyReport != null && !_isBusy) {
+        unawaited(_runDataSafetyCheck(showErrors: false));
+      }
     } catch (_) {
       if (!mounted) {
         return;
@@ -386,6 +445,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         automatic: false,
       );
       await _loadLocalBackups();
+      await _runDataSafetyCheck(showErrors: false);
       if (!mounted) {
         return;
       }
@@ -664,23 +724,40 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final store = TripStoreScope.of(context);
     setState(() {
       _isBusy = true;
-      _statusText = 'Backup wird wiederhergestellt ...';
+      _statusText = 'Sicherheitskopie des aktuellen Stands wird erstellt ...';
     });
 
     try {
-      final result = await _backupService.restoreBackup(backupFile);
-      await store.reloadFromStorage();
+      final safetyBackup = await _localBackupService.createSafetyBackup(
+        store.trips,
+      );
+      await _loadLocalBackups();
       if (!mounted) {
         return;
       }
 
       setState(() {
-        _statusText = SettingsBackupFormatter.restoreSummary(result);
+        _statusText =
+            'Sicherheitskopie erstellt: ${safetyBackup.fileName}. '
+            'Backup wird wiederhergestellt ...';
+      });
+
+      final result = await _backupService.restoreBackup(backupFile);
+      await store.reloadFromStorage();
+      await _runDataSafetyCheck(showErrors: false);
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _statusText =
+            '${SettingsBackupFormatter.restoreSummary(result)} '
+            'Der vorherige Stand bleibt als Sicherheitskopie erhalten.';
       });
       messenger.showSnackBar(
         SnackBar(
           content: Text(
-            '${result.tripCount} Reisen wurden erfolgreich wiederhergestellt.',
+            '${result.tripCount} Reisen wurden wiederhergestellt. Der vorherige Stand wurde lokal gesichert.',
           ),
         ),
       );
@@ -696,7 +773,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       if (mounted) {
         _showError(
           messenger,
-          'Die Wiederherstellung ist fehlgeschlagen. Die bisherigen Daten bleiben erhalten.',
+          'Die Wiederherstellung wurde abgebrochen oder ist fehlgeschlagen. Die bisherigen Daten bleiben erhalten; eine bereits erstellte Sicherheitskopie bleibt verfügbar.',
         );
       }
     } finally {
@@ -747,6 +824,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     try {
       await _localBackupService.deleteBackup(entry);
       await _loadLocalBackups();
+      await _runDataSafetyCheck(showErrors: false);
       if (!mounted) {
         return;
       }
@@ -815,6 +893,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       isCloudHistoryLoading: _isCloudHistoryLoading,
       automaticCloudSettings: _automaticCloudSettings,
       isAutomaticCloudSettingsLoading: _isAutomaticCloudSettingsLoading,
+      dataSafetyReport: _dataSafetyReport,
+      isDataSafetyLoading: _isDataSafetyLoading,
       onProviderSelected: _selectProvider,
       onUnavailableProviderSelected: _showUnavailableProvider,
       onCreateBackup: _createBackup,
@@ -829,6 +909,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       onCreateLocalBackup: _createLocalBackup,
       onRestoreLocalBackup: _restoreLocalBackup,
       onDeleteLocalBackup: _deleteLocalBackup,
+      onRunDataSafetyCheck: () => unawaited(_runDataSafetyCheck()),
       onOpenPrivacy: _openPrivacyAndData,
     );
   }

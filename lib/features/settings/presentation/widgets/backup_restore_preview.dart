@@ -91,9 +91,10 @@ class BackupRestorePreview extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Bei der Wiederherstellung werden alle aktuell in dieser '
-                  'App gespeicherten Reisen und lokalen Dokumentdateien durch '
-                  'genau diesen Sicherungsstand ersetzt.',
+                  'Bei der Wiederherstellung werden die aktuellen Reisen '
+                  'und lokalen Dokumentdateien durch diesen Sicherungsstand '
+                  'ersetzt. Vorher legt FlorysDiaries automatisch eine lokale '
+                  'Sicherheitskopie des jetzigen Stands an.',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: const Color(0xFF704B00),
                     fontWeight: FontWeight.w700,

@@ -19,6 +19,8 @@ class LocalBackupEntry {
 
   bool get canRestore => isValid;
 
+  bool get isSafetyCopy => fileName.contains('_Sicherheit_');
+
   String get fileName {
     final normalized = file.path.replaceAll('\\', '/');
     final parts = normalized

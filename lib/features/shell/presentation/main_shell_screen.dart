@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:florys_diaries/app/theme/app_colors.dart';
 import 'package:florys_diaries/features/album/presentation/screens/memories_screen.dart';
 import 'package:florys_diaries/features/map/presentation/world_map_screen.dart';
+import 'package:florys_diaries/features/settings/presentation/settings_screen.dart';
 import 'package:florys_diaries/features/trips/application/trip_store_scope.dart';
 import 'package:florys_diaries/features/trips/presentation/screens/past_trips_screen.dart';
 import 'package:florys_diaries/features/trips/presentation/screens/upcoming_trips_screen.dart';
@@ -34,6 +35,12 @@ class _MainShellScreenState extends State<MainShellScreen> {
     setState(() => _index = 0);
   }
 
+  Future<void> _openBackupSettings() {
+    return Navigator.of(
+      context,
+    ).push(MaterialPageRoute<void>(builder: (_) => const SettingsScreen()));
+  }
+
   @override
   Widget build(BuildContext context) {
     final tripStore = TripStoreScope.of(context);
@@ -47,6 +54,7 @@ class _MainShellScreenState extends State<MainShellScreen> {
             tripStore.loadErrorMessage ??
             'Die lokalen Reisedaten konnten nicht sicher geladen werden.',
         onRetry: () => unawaited(tripStore.reloadFromStorage()),
+        onOpenBackups: () => unawaited(_openBackupSettings()),
       );
     }
 
@@ -150,10 +158,15 @@ class _TripStartupLoadingScreen extends StatelessWidget {
 }
 
 class _TripStorageErrorScreen extends StatelessWidget {
-  const _TripStorageErrorScreen({required this.message, required this.onRetry});
+  const _TripStorageErrorScreen({
+    required this.message,
+    required this.onRetry,
+    required this.onOpenBackups,
+  });
 
   final String message;
   final VoidCallback onRetry;
+  final VoidCallback onOpenBackups;
 
   @override
   Widget build(BuildContext context) {
@@ -188,7 +201,7 @@ class _TripStorageErrorScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 18),
                     Text(
-                      'Reisedaten konnten nicht geladen werden',
+                      'Reisedaten nicht freigeben',
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
@@ -200,13 +213,32 @@ class _TripStorageErrorScreen extends StatelessWidget {
                         color: AppColors.textMuted,
                       ),
                     ),
+                    const SizedBox(height: 10),
+                    Text(
+                      'Die App bleibt gesperrt, bis die lokalen Daten wieder sicher gelesen werden können.',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.textMuted,
+                      ),
+                    ),
                     const SizedBox(height: 18),
                     SizedBox(
                       width: double.infinity,
                       child: FilledButton.icon(
+                        key: const ValueKey<String>('trip-storage-retry'),
                         onPressed: onRetry,
                         icon: const Icon(Icons.refresh_rounded),
                         label: const Text('Erneut versuchen'),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        key: const ValueKey<String>('trip-storage-backups'),
+                        onPressed: onOpenBackups,
+                        icon: const Icon(Icons.backup_outlined),
+                        label: const Text('Backups öffnen'),
                       ),
                     ),
                   ],

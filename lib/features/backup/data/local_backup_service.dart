@@ -24,6 +24,7 @@ class LocalBackupService {
   final DateTime Function()? clock;
 
   static const int maximumAutomaticBackups = 7;
+  static const int maximumSafetyBackups = 3;
   static const Duration automaticBackupInterval = Duration(hours: 24);
   static const String _directoryName = 'FlorysDiariesLocalBackups';
 
@@ -69,10 +70,21 @@ class LocalBackupService {
     );
   }
 
+
+  Future<LocalBackupEntry> createSafetyBackup(List<Trip> trips) {
+    return _createLocalBackup(
+      trips,
+      automatic: false,
+      contentFingerprint: null,
+      kindOverride: 'Sicherheit',
+    );
+  }
+
   Future<LocalBackupEntry> _createLocalBackup(
     List<Trip> trips, {
     required bool automatic,
     required String? contentFingerprint,
+    String? kindOverride,
   }) async {
     AppBackupCreateResult? created;
     File? copiedTarget;
@@ -85,6 +97,7 @@ class LocalBackupService {
         created.createdAt,
         automatic: automatic,
         contentFingerprint: contentFingerprint,
+        kindOverride: kindOverride,
       );
       copiedTarget = await created.file.copy(target.path);
 
@@ -101,6 +114,8 @@ class LocalBackupService {
 
       if (automatic) {
         await _pruneOldAutomaticBackups();
+      } else if (kindOverride == 'Sicherheit') {
+        await _pruneOldSafetyBackups();
       }
       return entry;
     } catch (error, stackTrace) {
@@ -203,8 +218,9 @@ class LocalBackupService {
     DateTime createdAt, {
     required bool automatic,
     required String? contentFingerprint,
+    String? kindOverride,
   }) async {
-    final kind = automatic ? 'Auto' : 'Lokal';
+    final kind = kindOverride ?? (automatic ? 'Auto' : 'Lokal');
     final fingerprintSuffix = automatic && contentFingerprint != null
         ? '_F${_normalizeFingerprint(contentFingerprint)}'
         : '';
@@ -218,6 +234,26 @@ class LocalBackupService {
       suffix++;
     }
     return candidate;
+  }
+
+
+  Future<void> _pruneOldSafetyBackups() async {
+    final safetyEntries = (await listBackups())
+        .where((entry) => entry.isSafetyCopy && entry.isValid)
+        .toList(growable: false);
+    if (safetyEntries.length <= maximumSafetyBackups) {
+      return;
+    }
+
+    for (final entry in safetyEntries.skip(maximumSafetyBackups)) {
+      try {
+        if (await entry.file.exists()) {
+          await entry.file.delete();
+        }
+      } on FileSystemException {
+        // Eine einzelne nicht löschbare Datei blockiert die Wiederherstellung nicht.
+      }
+    }
   }
 
   Future<void> _pruneOldAutomaticBackups() async {

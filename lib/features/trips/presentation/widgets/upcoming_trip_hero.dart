@@ -27,153 +27,215 @@ class UpcomingTripHero extends StatelessWidget {
     return Semantics(
       button: true,
       label: 'Nächste Reise: ${trip.title}',
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(30),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: SizedBox(
-            height: 330,
-            child: TripCoverImage(
-              trip: trip,
-              borderRadius: BorderRadius.circular(30),
-              showFallbackIcon: false,
-              overlay: const LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Color(0x22000000),
-                  Color(0x33000000),
-                  Color(0xD907111F),
-                ],
-                stops: [0, 0.42, 1],
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(18),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final textScale = MediaQuery.textScalerOf(context).scale(1);
+          final isNarrow = constraints.maxWidth < 350;
+          final extraTextHeight = ((textScale - 1).clamp(0, 1) * 120).round();
+          final cardHeight = isNarrow ? 500.0 + extraTextHeight : 330.0;
+
+          return Material(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(30),
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              onTap: onTap,
+              child: SizedBox(
+                height: cardHeight,
+                child: TripCoverImage(
+                  trip: trip,
+                  borderRadius: BorderRadius.circular(30),
+                  showFallbackIcon: false,
+                  overlay: const LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Color(0x22000000),
+                      Color(0x33000000),
+                      Color(0xD907111F),
+                    ],
+                    stops: [0, 0.42, 1],
+                  ),
+                  child: Padding(
+                    padding: EdgeInsets.all(isNarrow ? 16 : 18),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _GlassBadge(
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(palette.icon, size: 16, color: Colors.white),
-                              const SizedBox(width: 6),
-                              const Text(
-                                'Nächste Reise',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                            ],
-                          ),
+                        _HeroHeader(
+                          isNarrow: isNarrow,
+                          icon: palette.icon,
+                          status: status.label,
                         ),
                         const Spacer(),
-                        _GlassBadge(
-                          child: Text(
-                            status.label,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w800,
-                            ),
+                        Text(
+                          trip.title,
+                          maxLines: isNarrow ? 3 : 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.headlineSmall
+                              ?.copyWith(
+                                color: Colors.white,
+                                fontSize: isNarrow ? 25 : 30,
+                                fontWeight: FontWeight.w900,
+                                shadows: const [
+                                  Shadow(
+                                    color: Color(0x66000000),
+                                    blurRadius: 12,
+                                  ),
+                                ],
+                              ),
+                        ),
+                        const SizedBox(height: 5),
+                        Text(
+                          '${trip.destination}, ${trip.country}',
+                          maxLines: isNarrow ? 2 : 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                            color: Colors.white.withValues(alpha: 0.92),
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
-                      ],
-                    ),
-                    const Spacer(),
-                    Text(
-                      trip.title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        color: Colors.white,
-                        fontSize: 30,
-                        fontWeight: FontWeight.w900,
-                        shadows: const [
-                          Shadow(color: Color(0x66000000), blurRadius: 12),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 5),
-                    Text(
-                      '${trip.destination}, ${trip.country}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: Colors.white.withValues(alpha: 0.92),
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        _GlassFact(
-                          icon: Icons.calendar_today_outlined,
-                          value: TravelVisuals.formatDateRange(
-                            trip.startDate,
-                            trip.endDate,
-                          ),
-                        ),
-                        _GlassFact(
-                          icon: Icons.timelapse_rounded,
-                          value: '${trip.durationDays} Tage',
-                        ),
-                        _GlassFact(
-                          icon: Icons.photo_library_outlined,
-                          value: '$photoCount Fotos',
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 14),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            '${trip.documentCount} Dokumente · '
-                            '${trip.albumEntryCount} Momente',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Colors.white.withValues(alpha: 0.86),
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        const _GlassBadge(
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
+                        const SizedBox(height: 14),
+                        if (isNarrow)
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              Text(
-                                'Öffnen',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w800,
+                              _GlassFact(
+                                icon: Icons.calendar_today_outlined,
+                                value: TravelVisuals.formatDateRange(
+                                  trip.startDate,
+                                  trip.endDate,
+                                ),
+                                expand: true,
+                              ),
+                              const SizedBox(height: 8),
+                              _GlassFact(
+                                icon: Icons.timelapse_rounded,
+                                value: '${trip.durationDays} Tage',
+                                expand: true,
+                              ),
+                              const SizedBox(height: 8),
+                              _GlassFact(
+                                icon: Icons.photo_library_outlined,
+                                value: '$photoCount Fotos',
+                                expand: true,
+                              ),
+                            ],
+                          )
+                        else
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              _GlassFact(
+                                icon: Icons.calendar_today_outlined,
+                                value: TravelVisuals.formatDateRange(
+                                  trip.startDate,
+                                  trip.endDate,
                                 ),
                               ),
-                              SizedBox(width: 4),
-                              Icon(
-                                Icons.arrow_forward_rounded,
-                                size: 18,
-                                color: Colors.white,
+                              _GlassFact(
+                                icon: Icons.timelapse_rounded,
+                                value: '${trip.durationDays} Tage',
+                              ),
+                              _GlassFact(
+                                icon: Icons.photo_library_outlined,
+                                value: '$photoCount Fotos',
                               ),
                             ],
                           ),
-                        ),
+                        const SizedBox(height: 14),
+                        if (isNarrow)
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Text(
+                                '${trip.documentCount} Dokumente · '
+                                '${trip.albumEntryCount} Momente',
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(
+                                      color: Colors.white.withValues(
+                                        alpha: 0.86,
+                                      ),
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                              ),
+                              const SizedBox(height: 10),
+                              const Align(
+                                alignment: Alignment.centerRight,
+                                child: _GlassBadge(
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        'Öffnen',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w800,
+                                        ),
+                                      ),
+                                      SizedBox(width: 4),
+                                      Icon(
+                                        Icons.arrow_forward_rounded,
+                                        size: 18,
+                                        color: Colors.white,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          )
+                        else
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  '${trip.documentCount} Dokumente · '
+                                  '${trip.albumEntryCount} Momente',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        color: Colors.white.withValues(
+                                          alpha: 0.86,
+                                        ),
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              const _GlassBadge(
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      'Öffnen',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                    SizedBox(width: 4),
+                                    Icon(
+                                      Icons.arrow_forward_rounded,
+                                      size: 18,
+                                      color: Colors.white,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
                       ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }
@@ -192,29 +254,100 @@ class UpcomingTripHero extends StatelessWidget {
     );
 
     if (!today.isBefore(start) && !today.isAfter(end)) {
-      return const _TripStartStatus(label: 'Reise läuft');
+      return const _TripStartStatus(label: 'Diese Reise läuft gerade');
     }
 
     final days = start.difference(today).inDays;
     if (days <= 0) {
-      return const _TripStartStatus(label: 'Zeitraum erreicht');
+      return const _TripStartStatus(label: 'Reisezeitraum erreicht');
     }
     if (days == 1) {
-      return const _TripStartStatus(label: 'Morgen');
+      return const _TripStartStatus(label: 'Startet morgen');
     }
-    return _TripStartStatus(label: 'In $days Tagen');
+    return _TripStartStatus(label: 'Startet in $days Tagen');
+  }
+}
+
+class _HeroHeader extends StatelessWidget {
+  const _HeroHeader({
+    required this.isNarrow,
+    required this.icon,
+    required this.status,
+  });
+
+  final bool isNarrow;
+  final IconData icon;
+  final String status;
+
+  @override
+  Widget build(BuildContext context) {
+    final titleBadge = _GlassBadge(
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: Colors.white),
+          const SizedBox(width: 6),
+          const Text(
+            'Nächste Reise',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+    final statusBadge = _GlassBadge(
+      child: Text(
+        status,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+    );
+
+    if (isNarrow) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          titleBadge,
+          const SizedBox(height: 8),
+          SizedBox(width: double.infinity, child: statusBadge),
+        ],
+      );
+    }
+
+    return Row(
+      children: [
+        titleBadge,
+        const SizedBox(width: 10),
+        Expanded(
+          child: Align(alignment: Alignment.centerRight, child: statusBadge),
+        ),
+      ],
+    );
   }
 }
 
 class _GlassFact extends StatelessWidget {
-  const _GlassFact({required this.icon, required this.value});
+  const _GlassFact({
+    required this.icon,
+    required this.value,
+    this.expand = false,
+  });
 
   final IconData icon;
   final String value;
+  final bool expand;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final content = Container(
+      width: expand ? double.infinity : null,
+      constraints: expand ? null : const BoxConstraints(maxWidth: 250),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
         color: Colors.black.withValues(alpha: 0.22),
@@ -222,20 +355,26 @@ class _GlassFact extends StatelessWidget {
         border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
+        mainAxisSize: expand ? MainAxisSize.max : MainAxisSize.min,
         children: [
           Icon(icon, size: 14, color: Colors.white),
           const SizedBox(width: 6),
-          Text(
-            value,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w700,
+          Flexible(
+            child: Text(
+              value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         ],
       ),
     );
+
+    return expand ? SizedBox(width: double.infinity, child: content) : content;
   }
 }
 

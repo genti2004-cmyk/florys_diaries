@@ -54,15 +54,14 @@ class LocalBackupHistory extends StatelessWidget {
                     children: [
                       Text(
                         'Lokale Backup-Historie',
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.text,
-                            ),
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.text,
+                        ),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Beim Start, nach Änderungen und beim Wechsel in den Hintergrund wird automatisch geprüft. Höchstens einmal in 24 Stunden entsteht ein neues Backup; die 7 neuesten automatischen Sicherungen bleiben erhalten.',
+                        'Automatisch bleiben die 7 neuesten Sicherungen erhalten. Vor einer Wiederherstellung werden zusätzlich bis zu 3 Sicherheitskopien des vorherigen Stands bewahrt.',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: AppColors.textMuted,
                         ),
@@ -118,9 +117,9 @@ class LocalBackupHistory extends StatelessWidget {
                 ),
                 child: Text(
                   'Noch keine lokale Sicherung vorhanden.',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppColors.textMuted,
+                  ),
                 ),
               )
             else
@@ -162,31 +161,41 @@ class _LocalBackupTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final label = !entry.isValid
         ? 'Beschädigt'
+        : entry.isSafetyCopy
+        ? 'Sicherheitskopie'
         : entry.isAutomatic
         ? 'Automatisch'
         : 'Manuell';
     final subtitle = !entry.isValid
         ? '${entry.validationError ?? 'Die Sicherung ist ungültig.'}\n'
               '${_formatBytes(entry.sizeBytes)} · ${entry.fileName}'
+        : entry.isSafetyCopy
+        ? 'Vor einer Wiederherstellung erstellt · ${_formatBytes(entry.sizeBytes)}'
         : '${_formatBytes(entry.sizeBytes)} · ${entry.fileName}';
+
+    final icon = !entry.isValid
+        ? Icons.warning_amber_rounded
+        : entry.isSafetyCopy
+        ? Icons.health_and_safety_outlined
+        : entry.isAutomatic
+        ? Icons.autorenew_outlined
+        : Icons.save_outlined;
 
     return ListTile(
       key: ValueKey<String>('local-backup-${entry.fileName}'),
       contentPadding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
       leading: CircleAvatar(
         backgroundColor: entry.isValid
-            ? AppColors.primarySoft
+            ? entry.isSafetyCopy
+                ? const Color(0xFFEAF7F0)
+                : AppColors.primarySoft
             : const Color(0xFFFFF1F0),
         foregroundColor: entry.isValid
-            ? AppColors.primary
+            ? entry.isSafetyCopy
+                ? AppColors.success
+                : AppColors.primary
             : const Color(0xFFB42318),
-        child: Icon(
-          !entry.isValid
-              ? Icons.warning_amber_rounded
-              : entry.isAutomatic
-              ? Icons.autorenew_outlined
-              : Icons.save_outlined,
-        ),
+        child: Icon(icon),
       ),
       title: Text(
         '$label · ${_formatDateTime(entry.createdAt)}',

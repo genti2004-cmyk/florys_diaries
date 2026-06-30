@@ -6,11 +6,13 @@ import 'package:florys_diaries/core/widgets/app_section_card.dart';
 import 'package:florys_diaries/features/backup/domain/automatic_cloud_backup_settings.dart';
 import 'package:florys_diaries/features/backup/domain/backup_sync_status.dart';
 import 'package:florys_diaries/features/backup/domain/backup_provider.dart';
+import 'package:florys_diaries/features/backup/domain/data_safety_report.dart';
 import 'package:florys_diaries/features/backup/domain/google_drive_backup_models.dart';
 import 'package:florys_diaries/features/backup/domain/local_backup_entry.dart';
 import 'package:florys_diaries/features/backup/presentation/widgets/backup_panel.dart';
 import 'package:florys_diaries/features/backup/presentation/widgets/backup_provider_selector.dart';
 import 'package:florys_diaries/features/backup/presentation/widgets/backup_sync_status_card.dart';
+import 'package:florys_diaries/features/backup/presentation/widgets/data_safety_card.dart';
 import 'package:florys_diaries/features/backup/presentation/widgets/google_drive_automatic_backup_settings.dart';
 import 'package:florys_diaries/features/backup/presentation/widgets/google_drive_backup_history.dart';
 import 'package:florys_diaries/features/backup/presentation/widgets/local_backup_history.dart';
@@ -33,6 +35,8 @@ class SettingsContent extends StatelessWidget {
     required this.isCloudHistoryLoading,
     required this.automaticCloudSettings,
     required this.isAutomaticCloudSettingsLoading,
+    this.dataSafetyReport,
+    this.isDataSafetyLoading = false,
     required this.onProviderSelected,
     required this.onUnavailableProviderSelected,
     required this.onCreateBackup,
@@ -47,6 +51,7 @@ class SettingsContent extends StatelessWidget {
     required this.onCreateLocalBackup,
     required this.onRestoreLocalBackup,
     required this.onDeleteLocalBackup,
+    this.onRunDataSafetyCheck,
     required this.onOpenPrivacy,
   });
 
@@ -63,6 +68,8 @@ class SettingsContent extends StatelessWidget {
   final bool isCloudHistoryLoading;
   final AutomaticCloudBackupSettings automaticCloudSettings;
   final bool isAutomaticCloudSettingsLoading;
+  final DataSafetyReport? dataSafetyReport;
+  final bool isDataSafetyLoading;
   final ValueChanged<BackupProviderId> onProviderSelected;
   final ValueChanged<BackupProvider> onUnavailableProviderSelected;
   final VoidCallback onCreateBackup;
@@ -77,6 +84,7 @@ class SettingsContent extends StatelessWidget {
   final VoidCallback onCreateLocalBackup;
   final Future<void> Function(LocalBackupEntry entry) onRestoreLocalBackup;
   final Future<void> Function(LocalBackupEntry entry) onDeleteLocalBackup;
+  final VoidCallback? onRunDataSafetyCheck;
   final VoidCallback onOpenPrivacy;
 
   @override
@@ -85,7 +93,7 @@ class SettingsContent extends StatelessWidget {
       top: false,
       child: ListView(
         key: const PageStorageKey<String>('settings-content'),
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 110),
         children: [
           Text(
             'Sicherung & App',
@@ -93,7 +101,7 @@ class SettingsContent extends StatelessWidget {
           ),
           const SizedBox(height: 5),
           Text(
-            'Backups verwalten, Wiederherstellung prüfen und App-Informationen ansehen.',
+            'Datenzustand prüfen, Backups verwalten und Wiederherstellungen sicher vorbereiten.',
             style: Theme.of(
               context,
             ).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
@@ -106,6 +114,13 @@ class SettingsContent extends StatelessWidget {
             cloudAccountEmail: cloudAccountEmail,
             automaticCloudEnabled: automaticCloudSettings.enabled,
             syncStatus: backupSyncStatus,
+          ),
+          const SizedBox(height: 14),
+          DataSafetyCard(
+            report: dataSafetyReport,
+            isLoading: isDataSafetyLoading,
+            isBusy: isBusy,
+            onCheck: onRunDataSafetyCheck ?? _ignoreDataSafetyCheck,
           ),
           const SizedBox(height: 14),
           const SettingsSectionHeader(
@@ -183,7 +198,7 @@ class SettingsContent extends StatelessWidget {
             icon: Icons.lock_outline_rounded,
             title: 'Sicherheit',
             subtitle:
-                'Reisedaten liegen im privaten App-Bereich. Android-Systembackups sind deaktiviert; Wiederherstellungen erfolgen nur über geprüfte FlorysDiaries-Backups.',
+                'Reisedaten liegen im privaten App-Bereich. Wiederherstellungen werden geprüft und erhalten vorher automatisch eine lokale Sicherheitskopie.',
           ),
           const SizedBox(height: 12),
           const AppSectionCard(
@@ -198,3 +213,5 @@ class SettingsContent extends StatelessWidget {
     );
   }
 }
+
+void _ignoreDataSafetyCheck() {}

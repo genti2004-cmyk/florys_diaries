@@ -10,7 +10,7 @@ import 'package:florys_diaries/features/trips/data/trip_storage_service.dart';
 import 'package:florys_diaries/features/trips/domain/trip.dart';
 
 void main() {
-  testWidgets('back from another tab returns to Reisen first', (tester) async {
+  testWidgets('back from another tab returns to Home first', (tester) async {
     final tripStore = TripStore(
       storageService: _RecoverableTripStorageService(),
       now: () => DateTime(2026, 6, 29),
@@ -29,7 +29,7 @@ void main() {
     await tester.tap(
       find.descendant(
         of: find.byType(NavigationBar),
-        matching: find.text('Statistik'),
+        matching: find.text('Momente'),
       ),
     );
     await tester.pump();
