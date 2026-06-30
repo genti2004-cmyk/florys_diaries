@@ -16,6 +16,7 @@ import 'package:florys_diaries/features/backup/domain/backup_provider.dart';
 import 'package:florys_diaries/features/backup/domain/google_drive_backup_models.dart';
 import 'package:florys_diaries/features/backup/domain/local_backup_entry.dart';
 import 'package:florys_diaries/features/settings/presentation/settings_backup_formatter.dart';
+import 'package:florys_diaries/features/settings/presentation/privacy_and_data_screen.dart';
 import 'package:florys_diaries/features/settings/presentation/widgets/settings_backup_dialogs.dart';
 import 'package:florys_diaries/features/settings/presentation/widgets/settings_content.dart';
 import 'package:florys_diaries/features/trips/application/trip_store_scope.dart';
@@ -91,6 +92,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
         _automaticCloudSettings = settings;
         _isAutomaticCloudSettingsLoading = false;
       });
+    } on AutomaticCloudBackupSettingsException catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _automaticCloudSettings = AutomaticCloudBackupSettings.defaults;
+        _isAutomaticCloudSettingsLoading = false;
+        _statusText = error.message;
+      });
     } catch (_) {
       if (!mounted) {
         return;
@@ -98,6 +108,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
       setState(() {
         _automaticCloudSettings = AutomaticCloudBackupSettings.defaults;
         _isAutomaticCloudSettingsLoading = false;
+        _statusText =
+            'Die automatischen Backup-Einstellungen konnten nicht geladen '
+            'werden.';
       });
     }
   }
@@ -116,6 +129,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     try {
       await _automaticCloudSettingsService.save(settings);
+    } on AutomaticCloudBackupSettingsException catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() => _automaticCloudSettings = previous);
+      _showError(ScaffoldMessenger.of(context), error.message);
     } on FileSystemException catch (error) {
       if (!mounted) {
         return;
@@ -772,6 +791,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
     messenger.showSnackBar(SnackBar(content: Text(message)));
   }
 
+  void _openPrivacyAndData() {
+    Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(builder: (_) => const PrivacyAndDataScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final backupSyncStatus = BackupSyncStatusScope.of(context).status;
@@ -804,6 +829,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       onCreateLocalBackup: _createLocalBackup,
       onRestoreLocalBackup: _restoreLocalBackup,
       onDeleteLocalBackup: _deleteLocalBackup,
+      onOpenPrivacy: _openPrivacyAndData,
     );
   }
 }

@@ -54,6 +54,7 @@ void main() {
               onCreateLocalBackup: () {},
               onRestoreLocalBackup: (_) async {},
               onDeleteLocalBackup: (_) async {},
+              onOpenPrivacy: () {},
             ),
           ),
         ),
@@ -77,6 +78,9 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.text('Automatische Backup-Synchronisierung'), findsOneWidget);
     expect(find.text('Google Drive'), findsWidgets);
+    expect(find.text('Microsoft OneDrive'), findsNothing);
+    expect(find.text('Dropbox'), findsNothing);
+    expect(find.textContaining('bleiben vorbereitet'), findsNothing);
 
     await tester.scrollUntilVisible(
       find.text('Sicherheit'),
@@ -97,5 +101,124 @@ void main() {
 
     expect(tester.takeException(), isNull);
     expect(find.text('Version'), findsOneWidget);
+  });
+
+  testWidgets(
+    'automatic Google Drive switch is visible before selecting Google Drive',
+    (tester) async {
+      const registry = BackupProviderRegistry();
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SettingsContent(
+              providers: registry.providers,
+              backupSyncStatus: const BackupSyncStatus.initial(),
+              selectedProviderId: BackupProviderId.device,
+              selectedProviderName: 'Auf diesem Gerät',
+              isBusy: false,
+              statusText: null,
+              localBackups: const [],
+              isLocalHistoryLoading: false,
+              cloudBackups: const [],
+              cloudAccountEmail: null,
+              isCloudHistoryLoading: false,
+              automaticCloudSettings: AutomaticCloudBackupSettings.defaults,
+              isAutomaticCloudSettingsLoading: false,
+              onProviderSelected: (_) {},
+              onUnavailableProviderSelected: (_) {},
+              onCreateBackup: () {},
+              onRestoreBackup: () {},
+              onRefreshCloudBackups: () async {},
+              onRestoreCloudBackup: (_) {},
+              onDeleteCloudBackup: (_) {},
+              onAutomaticCloudEnabledChanged: (_) {},
+              onAutomaticCloudIntervalChanged: (_) {},
+              onAutomaticCloudRetentionChanged: (_) {},
+              onRunAutomaticCloudBackup: () {},
+              onCreateLocalBackup: () {},
+              onRestoreLocalBackup: (_) async {},
+              onDeleteLocalBackup: (_) async {},
+              onOpenPrivacy: () {},
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      final automaticSettings = find.text(
+        'Automatische Google-Drive-Sicherung',
+      );
+      await tester.scrollUntilVisible(
+        automaticSettings,
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
+      expect(automaticSettings, findsOneWidget);
+      expect(find.byType(Switch), findsOneWidget);
+      expect(find.text('Google-Drive-Backups'), findsNothing);
+    },
+  );
+
+  testWidgets('privacy card invokes its navigation callback', (tester) async {
+    var opened = false;
+    const registry = BackupProviderRegistry();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SettingsContent(
+            providers: registry.providers,
+            backupSyncStatus: const BackupSyncStatus.initial(),
+            selectedProviderId: BackupProviderId.device,
+            selectedProviderName: 'Auf diesem Gerät',
+            isBusy: false,
+            statusText: null,
+            localBackups: const [],
+            isLocalHistoryLoading: false,
+            cloudBackups: const [],
+            cloudAccountEmail: null,
+            isCloudHistoryLoading: false,
+            automaticCloudSettings: AutomaticCloudBackupSettings.defaults,
+            isAutomaticCloudSettingsLoading: false,
+            onProviderSelected: (_) {},
+            onUnavailableProviderSelected: (_) {},
+            onCreateBackup: () {},
+            onRestoreBackup: () {},
+            onRefreshCloudBackups: () async {},
+            onRestoreCloudBackup: (_) {},
+            onDeleteCloudBackup: (_) {},
+            onAutomaticCloudEnabledChanged: (_) {},
+            onAutomaticCloudIntervalChanged: (_) {},
+            onAutomaticCloudRetentionChanged: (_) {},
+            onRunAutomaticCloudBackup: () {},
+            onCreateLocalBackup: () {},
+            onRestoreLocalBackup: (_) async {},
+            onDeleteLocalBackup: (_) async {},
+            onOpenPrivacy: () => opened = true,
+          ),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    final privacyCard = find.byKey(
+      const ValueKey<String>('open-privacy-and-data'),
+    );
+    await tester.scrollUntilVisible(
+      privacyCard,
+      350,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(privacyCard);
+    await tester.pump();
+
+    expect(opened, isTrue);
   });
 }

@@ -9,6 +9,9 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+val releaseAppLabel = "FlorysDiaries"
+val debugAppLabel = "FlorysDiaries DEV"
+
 val keystorePropertiesFile = rootProject.file("key.properties")
 val keystoreProperties = Properties()
 val releaseTaskRequested = gradle.startParameter.taskNames.any { taskName ->
@@ -45,7 +48,7 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
-        manifestPlaceholders["appLabel"] = "FlorysDiaries"
+        manifestPlaceholders["appLabel"] = releaseAppLabel
     }
 
     signingConfigs {
@@ -84,11 +87,11 @@ android {
         getByName("debug") {
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug"
-            manifestPlaceholders["appLabel"] = "FlorysDiaries DEV"
+            manifestPlaceholders["appLabel"] = debugAppLabel
         }
 
         release {
-            manifestPlaceholders["appLabel"] = "FlorysDiaries"
+            manifestPlaceholders["appLabel"] = releaseAppLabel
             if (keystorePropertiesFile.exists()) {
                 signingConfig = signingConfigs.getByName("release")
             }

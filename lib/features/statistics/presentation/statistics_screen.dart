@@ -47,61 +47,62 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   Widget build(BuildContext context) {
     final statistics = _statistics!;
 
-    return SafeArea(
-      top: false,
-      child: ListView(
-        key: const PageStorageKey<String>('travel-statistics'),
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
-        children: [
-          Text(
-            'Deine Reisebilanz',
-            style: Theme.of(context).textTheme.headlineSmall,
-          ),
-          const SizedBox(height: 5),
-          Text(
-            'Fortschritt, Rekorde und Erinnerungen aus deinen echten Reisen.',
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
-          ),
-          const SizedBox(height: 18),
-          if (statistics.tripCount == 0)
-            const TravelDataEmptyState(
-              icon: Icons.bar_chart_rounded,
-              title: 'Noch keine Reisebilanz vorhanden',
-              description:
-                  'Die Statistik entsteht automatisch aus gespeicherten '
-                  'Reisen, Ländern, Städten, Dokumenten und Erinnerungen.',
-              hint:
-                  'Nach deiner ersten Reise werden alle Werte beim Öffnen '
-                  'dieser Seite automatisch neu berechnet.',
-            )
-          else ...[
-            StatisticsHeroGrid(statistics: statistics),
-            const SizedBox(height: 14),
-            StatisticsWorldProgressCard(statistics: statistics),
-            const SizedBox(height: 14),
-            StatisticsRecordsCard(statistics: statistics),
-            const SizedBox(height: 14),
-            StatisticsRankPanel(
-              title: 'Meistbesuchte Länder',
-              emptyText: 'Noch keine Länder erfasst.',
-              items: statistics.topCountries,
+    return ColoredBox(
+      color: AppColors.background,
+      child: SafeArea(
+        bottom: false,
+        child: ListView(
+          key: const PageStorageKey<String>('travel-statistics'),
+          padding: const EdgeInsets.fromLTRB(16, 18, 16, 110),
+          children: [
+            Text(
+              'Statistiken',
+              style: Theme.of(context).textTheme.headlineSmall,
             ),
-            const SizedBox(height: 14),
-            StatisticsRankPanel(
-              title: 'Meistbesuchte Städte',
-              emptyText: 'Noch keine Städte erfasst.',
-              items: statistics.topCities,
+            const SizedBox(height: 6),
+            Text(
+              'Fortschritt, Rekorde und Reisezahlen in einer klaren Premium-Ansicht.',
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
             ),
-            const SizedBox(height: 14),
-            StatisticsContinentPanel(items: statistics.continents),
-            const SizedBox(height: 14),
-            StatisticsYearPanel(items: statistics.years),
-            const SizedBox(height: 14),
-            StatisticsVaultMemoryPanel(statistics: statistics),
+            const SizedBox(height: 18),
+            if (statistics.tripCount == 0)
+              const TravelDataEmptyState(
+                icon: Icons.bar_chart_rounded,
+                title: 'Noch keine Reisebilanz vorhanden',
+                description:
+                    'Die Statistik entsteht automatisch aus gespeicherten Reisen, Ländern, Städten, Dokumenten und Erinnerungen.',
+                hint:
+                    'Nach deiner ersten Reise werden alle Werte beim Öffnen dieser Seite automatisch neu berechnet.',
+              )
+            else ...[
+              StatisticsHeroGrid(statistics: statistics),
+              const SizedBox(height: 14),
+              StatisticsWorldProgressCard(statistics: statistics),
+              const SizedBox(height: 14),
+              StatisticsRecordsCard(statistics: statistics),
+              const SizedBox(height: 14),
+              StatisticsRankPanel(
+                title: 'Meistbesuchte Länder',
+                emptyText: 'Noch keine Länder erfasst.',
+                items: statistics.topCountries,
+              ),
+              const SizedBox(height: 14),
+              StatisticsRankPanel(
+                title: 'Meistbesuchte Städte',
+                emptyText: 'Noch keine Städte erfasst.',
+                items: statistics.topCities,
+              ),
+              const SizedBox(height: 14),
+              StatisticsContinentPanel(items: statistics.continents),
+              const SizedBox(height: 14),
+              StatisticsYearPanel(items: statistics.years),
+              const SizedBox(height: 14),
+              StatisticsVaultMemoryPanel(statistics: statistics),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }

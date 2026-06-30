@@ -11,9 +11,16 @@ class BackupContentFingerprintService {
 
   final BackupFileManager fileManager;
 
-  static const int _offsetBasis = 0xcbf29ce484222325;
-  static const int _prime = 0x100000001b3;
-  static const int _mask = 0xffffffffffffffff;
+  static final BigInt _offsetBasis = BigInt.parse(
+    'cbf29ce484222325',
+    radix: 16,
+  );
+  static final BigInt _prime = BigInt.parse('100000001b3', radix: 16);
+  static final BigInt _unsigned64Modulus = BigInt.one << 64;
+  static final BigInt _mask = _unsigned64Modulus - BigInt.one;
+
+  static final RegExp _canonicalPattern = RegExp(r'^[0-9a-f]{16,64}$');
+  static final RegExp _legacySigned64Pattern = RegExp(r'^-[0-9a-f]{1,16}$');
 
   Future<String> calculate(List<Trip> trips) async {
     var hash = _offsetBasis;
@@ -60,6 +67,33 @@ class BackupContentFingerprintService {
     return hash.toRadixString(16).padLeft(16, '0');
   }
 
+  static String normalize(String value) {
+    final normalized = value.trim().toLowerCase();
+
+    if (_canonicalPattern.hasMatch(normalized)) {
+      return normalized;
+    }
+
+    if (_legacySigned64Pattern.hasMatch(normalized)) {
+      final signed = BigInt.parse(normalized, radix: 16);
+      final unsigned = signed + _unsigned64Modulus;
+
+      if (unsigned >= BigInt.zero && unsigned <= _mask) {
+        return unsigned.toRadixString(16).padLeft(16, '0');
+      }
+    }
+
+    throw const FormatException('Der Backup-Fingerabdruck ist ungültig.');
+  }
+
+  static String? tryNormalize(String value) {
+    try {
+      return normalize(value);
+    } on FormatException {
+      return null;
+    }
+  }
+
   static Object? _normalizeJson(Object? value) {
     if (value is Map) {
       final entries =
@@ -86,18 +120,17 @@ class BackupContentFingerprintService {
     return value;
   }
 
-  static int _addString(int hash, String value) {
+  static BigInt _addString(BigInt hash, String value) {
     final bytes = utf8.encode(value);
     var current = _addBytes(hash, utf8.encode('${bytes.length}:'));
     current = _addBytes(current, bytes);
     return _addBytes(current, const [10]);
   }
 
-  static int _addBytes(int hash, List<int> bytes) {
+  static BigInt _addBytes(BigInt hash, List<int> bytes) {
     var current = hash;
     for (final byte in bytes) {
-      current ^= byte;
-      current = (current * _prime) & _mask;
+      current = (current ^ BigInt.from(byte)) * _prime & _mask;
     }
     return current;
   }

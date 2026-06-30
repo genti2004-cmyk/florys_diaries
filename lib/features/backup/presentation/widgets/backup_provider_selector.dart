@@ -91,7 +91,8 @@ class BackupProviderSelector extends StatelessWidget {
             }),
             const SizedBox(height: 10),
             Text(
-              'Google Drive ist verfügbar und verwendet ausschließlich den versteckten App-Datenordner. OneDrive und Dropbox bleiben vorbereitet.',
+              'Verfügbar sind die lokale ZIP-Sicherung und der private '
+              'FlorysDiaries-App-Datenordner in Google Drive.',
               style: Theme.of(
                 context,
               ).textTheme.bodySmall?.copyWith(color: AppColors.textMuted),

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import 'package:florys_diaries/core/constants/app_metadata.dart';
 import '../features/backup/application/backup_sync_coordinator.dart';
 import '../features/backup/application/backup_sync_status_scope.dart';
 import '../features/backup/application/backup_sync_status_store.dart';
@@ -127,7 +128,7 @@ class _FlorysDiariesAppState extends State<FlorysDiariesApp>
       child: TripStoreScope(
         store: _tripStore,
         child: MaterialApp(
-          title: 'FlorysDiaries',
+          title: AppMetadata.name,
           debugShowCheckedModeBanner: false,
           theme: AppTheme.light,
           home: const MainShellScreen(),

@@ -207,6 +207,21 @@ void main() {
     expect(created!.isValid, isTrue);
     expect(backupService.createCalls, 1);
   });
+
+  test(
+    'canonicalizes a signed Android fingerprint in automatic file names',
+    () async {
+      fingerprintService.value = '-3bf6eec27d3a7dc8';
+
+      final entry = await service.createLocalBackup(
+        const <Trip>[],
+        automatic: true,
+      );
+
+      expect(entry.fileName, contains('_Fc409113d82c58238'));
+      expect(entry.fileName, isNot(contains('_F-')));
+    },
+  );
 }
 
 class _FakeAppBackupService extends AppBackupService {

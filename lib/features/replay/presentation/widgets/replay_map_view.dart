@@ -3,6 +3,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
 import 'package:florys_diaries/app/theme/app_colors.dart';
+import 'package:florys_diaries/core/constants/app_metadata.dart';
 import 'package:florys_diaries/features/replay/domain/replay_event.dart';
 import 'package:florys_diaries/features/replay/domain/replay_geo_point.dart';
 import 'package:florys_diaries/features/replay/presentation/widgets/replay_cinematic_map_controller.dart';
@@ -102,7 +103,8 @@ class _ReplayMapViewState extends State<ReplayMapView>
                         TileLayer(
                           urlTemplate:
                               'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                          userAgentPackageName: 'com.florysdiaries.travel',
+                          userAgentPackageName:
+                              AppMetadata.mapUserAgentPackageName,
                           tileBuilder: _tileBuilder,
                         ),
                         if (routePoints.length >= 2)
@@ -193,7 +195,21 @@ class _ReplayMapViewState extends State<ReplayMapView>
   }
 
   double get _initialZoom {
-    return widget.events.any((event) => event.hasPosition) ? 5.2 : 2.4;
+    final uniquePositions = <String>{};
+    for (final event in widget.events) {
+      final position = event.position;
+      if (position != null && position.isValid) {
+        uniquePositions.add(_positionKey(position));
+      }
+    }
+
+    if (uniquePositions.isEmpty) {
+      return 2.4;
+    }
+    if (uniquePositions.length == 1) {
+      return 7.4;
+    }
+    return 5.2;
   }
 
   void _moveToCurrentLocation(int oldIndex) {

@@ -12,7 +12,7 @@ class ReplayBuilder {
   const ReplayBuilder();
 
   ReplayTimeline buildForTrip(Trip trip) {
-    final destinationPosition = _knownPosition(
+    final destinationPosition = _positionFor(
       country: trip.country,
       city: trip.destination,
     );
@@ -27,6 +27,7 @@ class ReplayBuilder {
         location: trip.destination,
         description: trip.notes,
         badge: '${trip.durationDays} Tage',
+        position: destinationPosition,
       ),
       ReplayEvent(
         id: '${trip.id}_destination',
@@ -39,9 +40,19 @@ class ReplayBuilder {
         badge: 'Zielort',
         position: destinationPosition,
       ),
-      ...trip.documents.map(_documentEvent),
+      ...trip.documents.map(
+        (document) => _documentEvent(
+          document,
+          location: trip.destination,
+          fallbackPosition: destinationPosition,
+        ),
+      ),
       ...trip.albumEntries.map(
-        (entry) => _albumEvent(entry, country: trip.country),
+        (entry) => _albumEvent(
+          entry,
+          country: trip.country,
+          fallbackPosition: destinationPosition,
+        ),
       ),
       if (trip.photoCount > 0)
         ReplayEvent(
@@ -63,7 +74,8 @@ class ReplayBuilder {
         date: trip.endDate,
         location: trip.destination,
         description:
-            '${trip.durationDays} Reisetage, ${trip.documentCount} Dokumente, ${trip.highlightCount} Highlights.',
+            '${trip.durationDays} Reisetage, ${trip.documentCount} Dokumente, '
+            '${trip.highlightCount} Highlights.',
         badge: 'Rückblick',
         position: destinationPosition,
       ),
@@ -72,7 +84,11 @@ class ReplayBuilder {
     return ReplayTimeline(events: events);
   }
 
-  ReplayEvent _documentEvent(TravelDocument document) {
+  ReplayEvent _documentEvent(
+    TravelDocument document, {
+    required String location,
+    required ReplayGeoPoint? fallbackPosition,
+  }) {
     return ReplayEvent(
       id: 'document_${document.id}',
       type: _isImageDocument(document)
@@ -81,10 +97,12 @@ class ReplayBuilder {
       title: document.title,
       subtitle: document.category.label,
       date: document.createdAt,
+      location: location,
       description: document.description,
       badge: document.isFavorite
           ? 'Favorit · ${document.fileTypeLabel}'
           : document.fileTypeLabel,
+      position: fallbackPosition,
     );
   }
 
@@ -96,30 +114,54 @@ class ReplayBuilder {
         extension == 'webp';
   }
 
-  ReplayEvent _albumEvent(TripAlbumEntry entry, {required String country}) {
+  ReplayEvent _albumEvent(
+    TripAlbumEntry entry, {
+    required String country,
+    required ReplayGeoPoint? fallbackPosition,
+  }) {
+    final location = entry.location.trim();
+
     return ReplayEvent(
       id: 'album_${entry.id}',
       type: _typeForAlbumEntry(entry),
       title: entry.title,
       subtitle: TripAlbumEntryTypes.byId(entry.typeId).label,
       date: entry.date,
-      location: entry.location,
+      location: location,
       description: entry.description,
       badge: entry.isFavorite ? 'Favorit' : '',
-      position: _knownPosition(country: country, city: entry.location),
+      position: location.isEmpty
+          ? fallbackPosition
+          : _positionFor(country: country, city: location) ?? fallbackPosition,
     );
   }
 
-  ReplayGeoPoint? _knownPosition({
+  ReplayGeoPoint? _positionFor({
     required String country,
     required String city,
   }) {
-    if (country.trim().isEmpty || city.trim().isEmpty) {
+    final normalizedCountry = country.trim();
+    final normalizedCity = city.trim();
+    if (normalizedCountry.isEmpty || normalizedCity.isEmpty) {
       return null;
     }
 
-    final position = knownCityPosition(country, city);
-    return position == null ? null : _toReplayGeoPoint(position);
+    final exact = knownCityPosition(normalizedCountry, normalizedCity);
+    if (exact != null) {
+      return _toReplayGeoPoint(exact);
+    }
+
+    final countryBase = knownCountryPosition(normalizedCountry);
+    if (countryBase == null) {
+      return null;
+    }
+
+    final fallback = cityPosition(
+      normalizedCountry,
+      normalizedCity,
+      countryBase,
+    );
+    return _toReplayGeoPoint(fallback);
   }
 
   ReplayGeoPoint _toReplayGeoPoint(LatLng position) {

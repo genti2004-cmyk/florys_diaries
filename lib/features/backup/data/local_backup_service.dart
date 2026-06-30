@@ -268,22 +268,25 @@ class LocalBackupService {
 
   static String? _fingerprintFromFileName(String fileName) {
     final match = RegExp(
-      r'_F([0-9a-f]{16,64})(?:_\d+)?\.zip$',
+      r'_F(-?[0-9a-f]{1,64})(?:_\d+)?\.zip$',
       caseSensitive: false,
     ).firstMatch(fileName);
-    return match?.group(1)?.toLowerCase();
+    final value = match?.group(1);
+    return value == null
+        ? null
+        : BackupContentFingerprintService.tryNormalize(value);
   }
 
   static String _normalizeFingerprint(String value) {
-    final normalized = value.trim().toLowerCase();
-    if (!RegExp(r'^[0-9a-f]{16,64}$').hasMatch(normalized)) {
+    try {
+      return BackupContentFingerprintService.normalize(value);
+    } on FormatException {
       throw ArgumentError.value(
         value,
         'contentFingerprint',
         'Der Backup-Fingerabdruck ist ungültig.',
       );
     }
-    return normalized;
   }
 
   static DateTime? _dateFromFileName(String fileName) {

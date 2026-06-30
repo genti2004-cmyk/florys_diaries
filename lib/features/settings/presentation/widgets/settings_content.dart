@@ -47,6 +47,7 @@ class SettingsContent extends StatelessWidget {
     required this.onCreateLocalBackup,
     required this.onRestoreLocalBackup,
     required this.onDeleteLocalBackup,
+    required this.onOpenPrivacy,
   });
 
   final List<BackupProvider> providers;
@@ -76,6 +77,7 @@ class SettingsContent extends StatelessWidget {
   final VoidCallback onCreateLocalBackup;
   final Future<void> Function(LocalBackupEntry entry) onRestoreLocalBackup;
   final Future<void> Function(LocalBackupEntry entry) onDeleteLocalBackup;
+  final VoidCallback onOpenPrivacy;
 
   @override
   Widget build(BuildContext context) {
@@ -128,6 +130,16 @@ class SettingsContent extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           BackupSyncStatusCard(status: backupSyncStatus),
+          const SizedBox(height: 12),
+          GoogleDriveAutomaticBackupSettings(
+            settings: automaticCloudSettings,
+            isLoading: isAutomaticCloudSettingsLoading,
+            isBusy: isBusy,
+            onEnabledChanged: onAutomaticCloudEnabledChanged,
+            onIntervalChanged: onAutomaticCloudIntervalChanged,
+            onRetentionChanged: onAutomaticCloudRetentionChanged,
+            onRunNow: onRunAutomaticCloudBackup,
+          ),
           if (selectedProviderId == BackupProviderId.googleDrive) ...[
             const SizedBox(height: 12),
             GoogleDriveBackupHistory(
@@ -138,16 +150,6 @@ class SettingsContent extends StatelessWidget {
               onRefresh: onRefreshCloudBackups,
               onRestore: onRestoreCloudBackup,
               onDelete: onDeleteCloudBackup,
-            ),
-            const SizedBox(height: 12),
-            GoogleDriveAutomaticBackupSettings(
-              settings: automaticCloudSettings,
-              isLoading: isAutomaticCloudSettingsLoading,
-              isBusy: isBusy,
-              onEnabledChanged: onAutomaticCloudEnabledChanged,
-              onIntervalChanged: onAutomaticCloudIntervalChanged,
-              onRetentionChanged: onAutomaticCloudRetentionChanged,
-              onRunNow: onRunAutomaticCloudBackup,
             ),
           ],
           const SizedBox(height: 12),
@@ -162,13 +164,26 @@ class SettingsContent extends StatelessWidget {
           const SizedBox(height: 14),
           const SettingsSectionHeader(
             title: 'App & Datenschutz',
-            subtitle: 'Lokale Speicherung, zukünftiger App-Schutz und Version.',
+            subtitle: 'Speicherorte, verwendete Onlinedienste und App-Version.',
           ),
+          AppSectionCard(
+            key: const ValueKey<String>('open-privacy-and-data'),
+            icon: Icons.privacy_tip_outlined,
+            title: 'Datenschutz & Daten',
+            subtitle:
+                'Lokale Speicherung, Google Drive, Karten und Löschung transparent ansehen.',
+            trailing: const Icon(
+              Icons.chevron_right_rounded,
+              color: AppColors.textMuted,
+            ),
+            onTap: onOpenPrivacy,
+          ),
+          const SizedBox(height: 12),
           const AppSectionCard(
             icon: Icons.lock_outline_rounded,
             title: 'Sicherheit',
             subtitle:
-                'Reisedaten werden lokal auf diesem Gerät gespeichert. PIN und Biometrie sind für eine spätere Version vorgesehen.',
+                'Reisedaten liegen im privaten App-Bereich. Android-Systembackups sind deaktiviert; Wiederherstellungen erfolgen nur über geprüfte FlorysDiaries-Backups.',
           ),
           const SizedBox(height: 12),
           const AppSectionCard(
@@ -176,8 +191,7 @@ class SettingsContent extends StatelessWidget {
             title: 'Version',
             subtitle:
                 '${AppMetadata.name} ${AppMetadata.displayVersion} – '
-                'Release Candidate mit gehärteter Daten-, Dokument- und '
-                'Backup-Sicherheit.',
+                'stabiler Release Candidate für die Vorbereitung von v1.0.',
           ),
         ],
       ),

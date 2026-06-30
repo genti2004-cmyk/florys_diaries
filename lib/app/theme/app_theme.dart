@@ -21,17 +21,17 @@ class AppTheme {
 
     final textTheme = const TextTheme(
       headlineSmall: TextStyle(
-        fontSize: 26,
-        height: 1.15,
+        fontSize: 28,
+        height: 1.12,
         fontWeight: FontWeight.w900,
-        letterSpacing: -0.5,
+        letterSpacing: -0.7,
         color: AppColors.text,
       ),
       titleLarge: TextStyle(
         fontSize: 21,
         height: 1.2,
         fontWeight: FontWeight.w900,
-        letterSpacing: -0.25,
+        letterSpacing: -0.3,
         color: AppColors.text,
       ),
       titleMedium: TextStyle(
@@ -41,10 +41,10 @@ class AppTheme {
         color: AppColors.text,
       ),
       bodyLarge: TextStyle(fontSize: 16, height: 1.45, color: AppColors.text),
-      bodyMedium: TextStyle(fontSize: 14, height: 1.4, color: AppColors.text),
+      bodyMedium: TextStyle(fontSize: 14, height: 1.45, color: AppColors.text),
       bodySmall: TextStyle(
         fontSize: 12,
-        height: 1.35,
+        height: 1.4,
         color: AppColors.textMuted,
       ),
       labelLarge: TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
@@ -64,17 +64,17 @@ class AppTheme {
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
-        toolbarHeight: 72,
+        toolbarHeight: 66,
         titleSpacing: 16,
       ),
       navigationBarTheme: NavigationBarThemeData(
-        height: 72,
+        height: 76,
         elevation: 0,
         backgroundColor: AppColors.surface,
         surfaceTintColor: Colors.transparent,
         indicatorColor: AppColors.primarySoft,
         indicatorShape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(18),
         ),
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           final isSelected = states.contains(WidgetState.selected);
@@ -93,12 +93,12 @@ class AppTheme {
         }),
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        elevation: 3,
-        focusElevation: 4,
-        hoverElevation: 4,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        backgroundColor: AppColors.surface,
+        foregroundColor: AppColors.primary,
+        elevation: 6,
+        focusElevation: 7,
+        hoverElevation: 7,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
@@ -108,7 +108,7 @@ class AppTheme {
           foregroundColor: Colors.white,
           textStyle: const TextStyle(fontWeight: FontWeight.w800),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15),
+            borderRadius: BorderRadius.circular(18),
           ),
         ),
       ),
@@ -120,7 +120,7 @@ class AppTheme {
           side: const BorderSide(color: AppColors.border),
           textStyle: const TextStyle(fontWeight: FontWeight.w800),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15),
+            borderRadius: BorderRadius.circular(18),
           ),
         ),
       ),
@@ -131,7 +131,7 @@ class AppTheme {
           foregroundColor: AppColors.primary,
           textStyle: const TextStyle(fontWeight: FontWeight.w800),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(13),
+            borderRadius: BorderRadius.circular(14),
           ),
         ),
       ),
@@ -143,15 +143,15 @@ class AppTheme {
           vertical: 15,
         ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(18),
           borderSide: const BorderSide(color: AppColors.border),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(18),
           borderSide: const BorderSide(color: AppColors.border),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(18),
           borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
         ),
       ),
@@ -159,10 +159,10 @@ class AppTheme {
         margin: EdgeInsets.zero,
         color: AppColors.surface,
         surfaceTintColor: Colors.transparent,
-        elevation: 1,
-        shadowColor: const Color(0x160F4C5C),
+        elevation: 0,
+        shadowColor: const Color(0x0D183153),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(28),
           side: const BorderSide(color: AppColors.border),
         ),
       ),
@@ -170,8 +170,8 @@ class AppTheme {
         backgroundColor: AppColors.surface,
         surfaceTintColor: Colors.transparent,
         elevation: 8,
-        shadowColor: const Color(0x260F4C5C),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        shadowColor: const Color(0x26183153),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
       ),
       bottomSheetTheme: const BottomSheetThemeData(
         backgroundColor: AppColors.surface,
