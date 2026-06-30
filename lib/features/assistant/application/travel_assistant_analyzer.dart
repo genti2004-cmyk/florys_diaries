@@ -26,7 +26,7 @@ class TravelAssistantAnalyzer {
           title: 'Dein Reisetagebuch wartet',
           message:
               'Lege eine Reise an. Danach kann der Assistent Unterlagen, '
-              'Erinnerungen und Vorbereitung auswerten.',
+              'Momente und Vorbereitung auswerten.',
         ),
       );
     } else {
@@ -95,7 +95,7 @@ class TravelAssistantAnalyzer {
                 ? 'Die Reise beginnt heute oder läuft bereits. Hinterlege '
                       'Tickets, Buchungen oder Reisedokumente.'
                 : 'Noch $daysUntil Tage. Hinterlege Tickets, Buchungen oder '
-                      'Reisedokumente im Travel Vault.',
+                      'Reisedokumente im Dokumentenbereich.',
             tripId: trip.id,
           ),
         );
@@ -154,7 +154,7 @@ class TravelAssistantAnalyzer {
             title: 'Fotos von $tripLabel erzählen noch keine Geschichte',
             message:
                 '${trip.photoCount} Fotos sind erfasst. Ergänze eine '
-                'Notiz oder Erinnerung für das Reisealbum.',
+                'Notiz oder Moment für das Reisealbum.',
             tripId: trip.id,
           ),
         );
@@ -179,7 +179,7 @@ class TravelAssistantAnalyzer {
             priority: TravelAssistantPriority.low,
             title: '$tripLabel kurz festhalten',
             message:
-                'Eine kleine Erinnerung macht die Reise später leichter '
+                'Ein kurzer Moment macht die Reise später lebendiger '
                 'wiedererlebbar.',
             tripId: trip.id,
           ),

@@ -42,7 +42,7 @@ class ArchiveEmptyState extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             'Sobald eine Reise beendet ist, erscheint sie hier mit '
-            'Dokumenten, Checkliste, Album und Erinnerungen.',
+            'Dokumenten, Checkliste, Album und Momente.',
             textAlign: TextAlign.center,
             style: Theme.of(
               context,

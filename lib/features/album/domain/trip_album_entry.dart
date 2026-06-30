@@ -88,7 +88,7 @@ class TripAlbumEntryTypes {
   );
   static const place = TripAlbumEntryType(id: 'place', label: 'Ort');
   static const food = TripAlbumEntryType(id: 'food', label: 'Essen');
-  static const memory = TripAlbumEntryType(id: 'memory', label: 'Erinnerung');
+  static const memory = TripAlbumEntryType(id: 'memory', label: 'Moment');
 
   static const List<TripAlbumEntryType> values = [
     note,

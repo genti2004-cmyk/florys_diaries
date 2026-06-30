@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:florys_diaries/core/widgets/travel_visuals.dart';
+import 'package:florys_diaries/core/widgets/trip_cover_image.dart';
 import 'package:florys_diaries/features/trips/domain/trip.dart';
 
 class TripDetailHeroCard extends StatelessWidget {
@@ -16,144 +17,89 @@ class TripDetailHeroCard extends StatelessWidget {
       '${trip.title} ${trip.destination} ${trip.country}',
     );
 
-    return Container(
+    return SizedBox(
       width: double.infinity,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: palette.gradient,
+      height: 260,
+      child: TripCoverImage(
+        trip: trip,
+        borderRadius: BorderRadius.circular(30),
+        showFallbackIcon: false,
+        overlay: const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0x18000000), Color(0xD607111F)],
         ),
-        borderRadius: BorderRadius.circular(32),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x1F0B1526),
-            blurRadius: 28,
-            offset: Offset(0, 16),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                _GlassBadge(
-                  icon: status.icon,
-                  label: status.label,
-                ),
-                const Spacer(),
-                Container(
-                  width: 42,
-                  height: 42,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.14),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.16),
+        child: Padding(
+          padding: const EdgeInsets.all(18),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  _GlassBadge(icon: status.icon, label: status.label),
+                  const Spacer(),
+                  Container(
+                    width: 42,
+                    height: 42,
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.22),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.18),
+                      ),
                     ),
+                    child: Icon(palette.icon, color: Colors.white),
                   ),
-                  child: Icon(palette.icon, color: Colors.white),
+                ],
+              ),
+              const Spacer(),
+              Text(
+                trip.title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  color: Colors.white,
+                  fontSize: 29,
+                  fontWeight: FontWeight.w900,
+                  shadows: const [
+                    Shadow(color: Color(0x66000000), blurRadius: 10),
+                  ],
                 ),
-              ],
-            ),
-            const SizedBox(height: 22),
-            Text(
-              trip.title,
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.w900,
               ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              '${trip.destination}, ${trip.country}',
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: Colors.white.withValues(alpha: 0.88),
-                fontWeight: FontWeight.w600,
+              const SizedBox(height: 5),
+              Text(
+                '${trip.destination}, ${trip.country}',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: Colors.white.withValues(alpha: 0.92),
+                  fontWeight: FontWeight.w700,
+                ),
               ),
-            ),
-            const SizedBox(height: 20),
-            Row(
-              children: [
-                Expanded(
-                  child: _HeroMetric(
+              const SizedBox(height: 14),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _HeroChip(
                     icon: Icons.calendar_today_outlined,
-                    title: 'Zeitraum',
-                    value: TravelVisuals.formatDateRange(
+                    label: TravelVisuals.formatDateRange(
                       trip.startDate,
                       trip.endDate,
                     ),
                   ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _HeroMetric(
+                  _HeroChip(
                     icon: Icons.timelapse_rounded,
-                    title: 'Dauer',
-                    value: '${trip.durationDays} Tage',
+                    label: '${trip.durationDays} Tage',
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(
-                  child: _HeroMetric(
-                    icon: Icons.description_outlined,
-                    title: 'Dokumente',
-                    value: '${trip.documentCount}',
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _HeroMetric(
-                    icon: Icons.favorite_outline_rounded,
-                    title: 'Erinnerungen',
-                    value: '${trip.albumEntryCount}',
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.11),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.14),
-                ),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Icon(Icons.notes_rounded, size: 18, color: Colors.white),
-                  const SizedBox(width: 9),
-                  Expanded(
-                    child: Text(
-                      trip.notes.trim().isEmpty
-                          ? 'Noch keine persönlichen Notizen gespeichert.'
-                          : trip.notes,
-                      maxLines: 4,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.white.withValues(alpha: 0.88),
-                      ),
-                    ),
+                  _HeroChip(
+                    icon: Icons.favorite_border_rounded,
+                    label: '${trip.albumEntryCount} Momente',
                   ),
                 ],
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -204,61 +150,6 @@ class TripDetailHeroCard extends StatelessWidget {
   }
 }
 
-class _HeroMetric extends StatelessWidget {
-  const _HeroMetric({
-    required this.icon,
-    required this.title,
-    required this.value,
-  });
-
-  final IconData icon;
-  final String title;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(13),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, size: 15, color: Colors.white),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Colors.white.withValues(alpha: 0.78),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _GlassBadge extends StatelessWidget {
   const _GlassBadge({required this.icon, required this.label});
 
@@ -270,9 +161,9 @@ class _GlassBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.14),
+        color: Colors.black.withValues(alpha: 0.24),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -284,6 +175,39 @@ class _GlassBadge extends StatelessWidget {
             style: Theme.of(context).textTheme.labelMedium?.copyWith(
               color: Colors.white,
               fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HeroChip extends StatelessWidget {
+  const _HeroChip({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.22),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: Colors.white),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
             ),
           ),
         ],

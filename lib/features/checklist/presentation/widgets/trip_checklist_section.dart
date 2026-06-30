@@ -29,12 +29,12 @@ class TripChecklistSection extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Reise-Checkliste',
+                    'Checkliste',
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Aufgaben, Fälligkeiten und intelligente Vorbereitung.',
+                    'Alle Aufgaben für diese Reise auf einen Blick.',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: AppColors.textMuted,
                     ),

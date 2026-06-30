@@ -35,7 +35,7 @@ class AssistantOverviewGrid extends StatelessWidget {
         ),
         _MetricTile(
           icon: Icons.auto_awesome_rounded,
-          label: 'Erinnerungen',
+          label: 'Momente',
           value: snapshot.memoryCount.toString(),
         ),
       ],

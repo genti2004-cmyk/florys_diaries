@@ -1,14 +1,13 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'package:florys_diaries/app/theme/app_colors.dart';
 import 'package:florys_diaries/features/album/presentation/screens/memories_screen.dart';
 import 'package:florys_diaries/features/map/presentation/world_map_screen.dart';
-import 'package:florys_diaries/features/statistics/presentation/statistics_screen.dart';
 import 'package:florys_diaries/features/trips/application/trip_store_scope.dart';
 import 'package:florys_diaries/features/trips/presentation/screens/past_trips_screen.dart';
-import 'package:florys_diaries/features/trips/presentation/screens/trip_editor_screen.dart';
 import 'package:florys_diaries/features/trips/presentation/screens/upcoming_trips_screen.dart';
 
 class MainShellScreen extends StatefulWidget {
@@ -20,20 +19,6 @@ class MainShellScreen extends StatefulWidget {
 
 class _MainShellScreenState extends State<MainShellScreen> {
   int _index = 0;
-
-  static const List<Widget> _screens = [
-    UpcomingTripsScreen(),
-    PastTripsScreen(),
-    WorldMapScreen(),
-    StatisticsScreen(),
-    MemoriesScreen(),
-  ];
-
-  Future<void> _openTripEditor() {
-    return Navigator.of(
-      context,
-    ).push(MaterialPageRoute<void>(builder: (_) => const TripEditorScreen()));
-  }
 
   void _selectDestination(int value) {
     if (value == _index) {
@@ -65,72 +50,82 @@ class _MainShellScreenState extends State<MainShellScreen> {
       );
     }
 
-    final showNewTripAction = _index == 0;
-    final navBackground = _index == 0 ? AppColors.homeSurface : AppColors.surface;
-    final navBorder = _index == 0 ? AppColors.homeBorder : AppColors.border;
+    final screens = <Widget>[
+      UpcomingTripsScreen(
+        onOpenTrips: () => _selectDestination(1),
+        onOpenMap: () => _selectDestination(2),
+      ),
+      const PastTripsScreen(),
+      const WorldMapScreen(),
+      const MemoriesScreen(),
+    ];
 
-    return PopScope<void>(
-      canPop: _index == 0,
-      onPopInvokedWithResult: (didPop, result) => _handleBack(didPop),
-      child: Scaffold(
-        extendBody: true,
-        body: IndexedStack(index: _index, children: _screens),
-        floatingActionButton: showNewTripAction
-            ? FloatingActionButton(
-                tooltip: 'Neue Reise',
-                onPressed: _openTripEditor,
-                child: const Icon(Icons.add_rounded),
-              )
-            : null,
-        bottomNavigationBar: Padding(
-          padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: navBackground,
-              borderRadius: BorderRadius.circular(28),
-              border: Border.all(color: navBorder),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x120D1728),
-                  blurRadius: 20,
-                  offset: Offset(0, 8),
-                ),
-              ],
-            ),
-            child: SafeArea(
-              top: false,
-              child: NavigationBar(
-                selectedIndex: _index,
-                labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-                onDestinationSelected: _selectDestination,
-                backgroundColor: Colors.transparent,
-                destinations: const [
-                  NavigationDestination(
-                    icon: Icon(Icons.home_outlined),
-                    selectedIcon: Icon(Icons.home_rounded),
-                    label: 'Home',
-                  ),
-                  NavigationDestination(
-                    icon: Icon(Icons.timeline_outlined),
-                    selectedIcon: Icon(Icons.timeline_rounded),
-                    label: 'Timeline',
-                  ),
-                  NavigationDestination(
-                    icon: Icon(Icons.public_outlined),
-                    selectedIcon: Icon(Icons.public_rounded),
-                    label: 'Karte',
-                  ),
-                  NavigationDestination(
-                    icon: Icon(Icons.bar_chart_outlined),
-                    selectedIcon: Icon(Icons.bar_chart_rounded),
-                    label: 'Statistik',
-                  ),
-                  NavigationDestination(
-                    icon: Icon(Icons.favorite_border_rounded),
-                    selectedIcon: Icon(Icons.favorite_rounded),
-                    label: 'Momente',
+    final isDarkPage = _index == 0;
+    final navBackground = isDarkPage ? AppColors.homeSurface : AppColors.surface;
+    final navBorder = isDarkPage ? AppColors.homeBorder : AppColors.border;
+    final overlayStyle = isDarkPage
+        ? SystemUiOverlayStyle.light.copyWith(
+            statusBarColor: Colors.transparent,
+            systemNavigationBarColor: AppColors.homeBackground,
+          )
+        : SystemUiOverlayStyle.dark.copyWith(
+            statusBarColor: Colors.transparent,
+            systemNavigationBarColor: AppColors.background,
+          );
+
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: overlayStyle,
+      child: PopScope<void>(
+        canPop: _index == 0,
+        onPopInvokedWithResult: (didPop, result) => _handleBack(didPop),
+        child: Scaffold(
+          extendBody: true,
+          body: IndexedStack(index: _index, children: screens),
+          bottomNavigationBar: Padding(
+            padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: navBackground,
+                borderRadius: BorderRadius.circular(26),
+                border: Border.all(color: navBorder),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x120D1728),
+                    blurRadius: 20,
+                    offset: Offset(0, 8),
                   ),
                 ],
+              ),
+              child: SafeArea(
+                top: false,
+                child: NavigationBar(
+                  selectedIndex: _index,
+                  labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+                  onDestinationSelected: _selectDestination,
+                  backgroundColor: Colors.transparent,
+                  destinations: const [
+                    NavigationDestination(
+                      icon: Icon(Icons.home_outlined),
+                      selectedIcon: Icon(Icons.home_rounded),
+                      label: 'Home',
+                    ),
+                    NavigationDestination(
+                      icon: Icon(Icons.luggage_outlined),
+                      selectedIcon: Icon(Icons.luggage_rounded),
+                      label: 'Reisen',
+                    ),
+                    NavigationDestination(
+                      icon: Icon(Icons.public_outlined),
+                      selectedIcon: Icon(Icons.public_rounded),
+                      label: 'Karte',
+                    ),
+                    NavigationDestination(
+                      icon: Icon(Icons.favorite_border_rounded),
+                      selectedIcon: Icon(Icons.favorite_rounded),
+                      label: 'Momente',
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

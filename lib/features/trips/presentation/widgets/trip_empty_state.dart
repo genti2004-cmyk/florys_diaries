@@ -44,7 +44,7 @@ class TripEmptyState extends StatelessWidget {
           const SizedBox(height: 7),
           Text(
             'Lege Ziel und Zeitraum an. Dokumente, Checkliste und '
-            'Erinnerungen ergänzt du anschließend direkt in der Reise.',
+            'Momente ergänzt du anschließend direkt in der Reise.',
             textAlign: TextAlign.center,
             style: Theme.of(
               context,

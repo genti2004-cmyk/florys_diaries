@@ -69,7 +69,7 @@ class TravelAssistantAnswerService {
         title: 'Noch keine Reisedaten',
         body:
             'Lege zuerst eine Reise an. Danach kann der Assistent Dokumente, '
-            'Erinnerungen und Reiseziele auswerten.',
+            'Momente und Reiseziele auswerten.',
       );
     }
 
@@ -77,7 +77,7 @@ class TravelAssistantAnswerService {
       title: 'Lokale Reiseanalyse',
       body:
           'Ich habe ${snapshot.tripCount} Reisen durchsucht. Frage nach der '
-          'nächsten Reise, fehlenden Dokumenten, Erinnerungen, Highlights oder '
+          'nächsten Reise, fehlenden Dokumenten, Momenten, Highlights oder '
           'bereisten Ländern.',
     );
   }
@@ -242,18 +242,18 @@ class TravelAssistantAnswerService {
     if (undocumented.isNotEmpty) {
       final trip = undocumented.first;
       return TravelAssistantAnswer(
-        title: '${_tripLabel(trip)} wartet auf eine Erinnerung',
+        title: '${_tripLabel(trip)} hat noch keinen Moment im Album',
         body:
             'Diese vergangene Reise hat noch keine Notiz und keinen '
             'Album-Eintrag. Insgesamt sind '
-            '${_countLabel(snapshot.memoryCount, 'Erinnerung', 'Erinnerungen')} '
+            '${_countLabel(snapshot.memoryCount, 'Moment', 'Momente')} '
             'und ${_countLabel(snapshot.photoCount, 'Foto', 'Fotos')} erfasst.',
         tripId: trip.id,
       );
     }
 
     return TravelAssistantAnswer(
-      title: 'Deine Erinnerungen',
+      title: 'Deine Momente',
       body:
           '${_countLabel(snapshot.memoryCount, 'Album-Eintrag', 'Album-Einträge')}, '
           '${_countLabel(snapshot.highlightCount, 'Lieblingsmoment', 'Lieblingsmomente')} '
@@ -312,7 +312,7 @@ class TravelAssistantAnswerService {
           '${_countLabel(snapshot.tripCount, 'Reise', 'Reisen')} in '
           '${_countLabel(snapshot.countryCount, 'Land', 'Ländern')} · '
           '${_countLabel(snapshot.documentCount, 'Dokument', 'Dokumente')} · '
-          '${_countLabel(snapshot.memoryCount, 'Erinnerung', 'Erinnerungen')} · '
+          '${_countLabel(snapshot.memoryCount, 'Moment', 'Momente')} · '
           '${_countLabel(snapshot.photoCount, 'Foto', 'Fotos')}.',
     );
   }

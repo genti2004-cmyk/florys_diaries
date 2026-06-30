@@ -14,9 +14,11 @@ class StatisticsScreen extends StatefulWidget {
   const StatisticsScreen({
     super.key,
     this.analyzer = const TravelStatisticsAnalyzer(),
+    this.showHeader = true,
   });
 
   final TravelStatisticsAnalyzer analyzer;
+  final bool showHeader;
 
   @override
   State<StatisticsScreen> createState() => _StatisticsScreenState();
@@ -55,24 +57,26 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
           key: const PageStorageKey<String>('travel-statistics'),
           padding: const EdgeInsets.fromLTRB(16, 18, 16, 150),
           children: [
-            Text(
-              'Statistiken',
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'Fortschritt, Rekorde und Reisezahlen in einer klaren Premium-Ansicht.',
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
-            ),
-            const SizedBox(height: 18),
+            if (widget.showHeader) ...[
+              Text(
+                'Statistiken',
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Fortschritt, Rekorde und Reisezahlen in einer klaren Premium-Ansicht.',
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
+              ),
+              const SizedBox(height: 18),
+            ],
             if (statistics.tripCount == 0)
               const TravelDataEmptyState(
                 icon: Icons.bar_chart_rounded,
                 title: 'Noch keine Reisebilanz vorhanden',
                 description:
-                    'Die Statistik entsteht automatisch aus gespeicherten Reisen, Ländern, Städten, Dokumenten und Erinnerungen.',
+                    'Die Statistik entsteht automatisch aus gespeicherten Reisen, Ländern, Städten, Dokumenten und Momenten.',
                 hint:
                     'Nach deiner ersten Reise werden alle Werte beim Öffnen dieser Seite automatisch neu berechnet.',
               )

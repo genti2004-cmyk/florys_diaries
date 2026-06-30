@@ -86,7 +86,7 @@ class _TravelAssistantScreenState extends State<TravelAssistantScreen> {
             const AppSectionTitle(
               title: 'Smart Travel Assistant',
               subtitle:
-                  'Lokale Hinweise aus deinen Reisen, Dokumenten und Erinnerungen.',
+                  'Lokale Hinweise aus deinen Reisen, Dokumenten und Momenten.',
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),

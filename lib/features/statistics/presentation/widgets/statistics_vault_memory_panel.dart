@@ -16,7 +16,7 @@ class StatisticsVaultMemoryPanel extends StatelessWidget {
         children: [
           const StatisticsPanelHeader(
             icon: Icons.auto_stories_rounded,
-            title: 'Vault & Erinnerungen',
+            title: 'Vault & Momente',
             subtitle: 'Dokumente, Fotos, Highlights und Lieblingsmomente.',
           ),
           const SizedBox(height: 12),

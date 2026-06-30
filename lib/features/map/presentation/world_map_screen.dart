@@ -13,6 +13,8 @@ import 'package:florys_diaries/features/map/widgets/world_summary_card.dart';
 import 'package:florys_diaries/features/trips/application/trip_store_scope.dart';
 import 'package:florys_diaries/features/trips/domain/trip.dart';
 
+enum _MapSection { map, routes, countries }
+
 class WorldMapScreen extends StatefulWidget {
   const WorldMapScreen({super.key, this.analyzer = const WorldMapAnalyzer()});
 
@@ -25,6 +27,7 @@ class WorldMapScreen extends StatefulWidget {
 class _WorldMapScreenState extends State<WorldMapScreen> {
   WorldMapLayer _layer = WorldMapLayer.all;
   WorldMapStyle _style = WorldMapStyle.light;
+  _MapSection _section = _MapSection.map;
   int? _selectedYear;
   String? _focusedRouteId;
 
@@ -57,8 +60,8 @@ class _WorldMapScreenState extends State<WorldMapScreen> {
       child: SafeArea(
         bottom: false,
         child: ListView(
-          key: const PageStorageKey<String>('world-map'),
-          padding: const EdgeInsets.fromLTRB(16, 18, 16, 150),
+          key: const PageStorageKey<String>('world-map-v61'),
+          padding: const EdgeInsets.fromLTRB(16, 18, 16, 132),
           children: [
             Text(
               'Weltkarte',
@@ -66,12 +69,12 @@ class _WorldMapScreenState extends State<WorldMapScreen> {
             ),
             const SizedBox(height: 6),
             Text(
-              'Länder, Städte und Routen aus deinen gespeicherten Reisen auf einer hellen Premium-Kartenansicht.',
+              'Karte, Reiserouten und bereiste Länder – ohne unnötig lange Seite.',
               style: Theme.of(
                 context,
               ).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 16),
             WorldSummaryCard(
               countryCount: snapshot.countryCount,
               cityCount: snapshot.cityCount,
@@ -80,51 +83,37 @@ class _WorldMapScreenState extends State<WorldMapScreen> {
               progressPercent: snapshot.progressPercent,
             ),
             const SizedBox(height: 14),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(14),
-                child: WorldMapControls(
-                  selectedLayer: _layer,
-                  selectedStyle: _style,
-                  selectedYear: selectedYear,
-                  years: snapshot.years,
-                  onLayerChanged: (layer) {
-                    setState(() {
-                      _layer = layer;
-                      _focusedRouteId = null;
-                    });
-                  },
-                  onStyleChanged: (style) {
-                    setState(() => _style = style);
-                  },
-                  onYearChanged: (year) {
-                    setState(() {
-                      _selectedYear = year;
-                      _focusedRouteId = null;
-                    });
-                  },
-                ),
+            SizedBox(
+              width: double.infinity,
+              child: SegmentedButton<_MapSection>(
+                segments: const [
+                  ButtonSegment(
+                    value: _MapSection.map,
+                    icon: Icon(Icons.public_rounded),
+                    label: Text('Karte'),
+                  ),
+                  ButtonSegment(
+                    value: _MapSection.routes,
+                    icon: Icon(Icons.route_rounded),
+                    label: Text('Routen'),
+                  ),
+                  ButtonSegment(
+                    value: _MapSection.countries,
+                    icon: Icon(Icons.flag_outlined),
+                    label: Text('Länder'),
+                  ),
+                ],
+                selected: {_section},
+                showSelectedIcon: false,
+                onSelectionChanged: (selection) {
+                  if (selection.isNotEmpty) {
+                    setState(() => _section = selection.first);
+                  }
+                },
               ),
             ),
             const SizedBox(height: 14),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(14),
-                child: ProfessionalWorldMap(
-                  countries: snapshot.countries,
-                  cities: snapshot.cities,
-                  routes: snapshot.routes,
-                  layer: _layer,
-                  style: _style,
-                  focusedRouteId: focusedRouteId,
-                  onRouteSelected: (routeId) {
-                    setState(() => _focusedRouteId = routeId);
-                  },
-                ),
-              ),
-            ),
-            if (allTrips.isEmpty) ...[
-              const SizedBox(height: 14),
+            if (allTrips.isEmpty)
               const TravelDataEmptyState(
                 icon: Icons.public_rounded,
                 title: 'Deine Weltkarte wartet auf die erste Reise',
@@ -132,34 +121,110 @@ class _WorldMapScreenState extends State<WorldMapScreen> {
                     'Sobald du eine Reise mit Land und Reiseziel speicherst, erscheinen hier Länder, Städte und später auch Routen.',
                 hint:
                     'Bereits vorhandene Reisen werden automatisch ausgewertet. Eine zusätzliche Eingabe für die Karte ist nicht nötig.',
-              ),
-            ] else ...[
-              const SizedBox(height: 14),
-              WorldMapTripFocusPanel(
-                trips: snapshot.trips,
-                routes: snapshot.routes,
-                focusedRouteId: focusedRouteId,
-                onRouteFocus: (routeId) {
-                  setState(() {
-                    _layer = WorldMapLayer.routes;
-                    _focusedRouteId = routeId;
-                  });
-                },
-              ),
-              const SizedBox(height: 14),
-              WorldMapTravelRoutesPanel(
-                routes: snapshot.routes,
+              )
+            else
+              ..._sectionContent(
+                snapshot: snapshot,
+                selectedYear: selectedYear,
                 focusedRouteId: focusedRouteId,
               ),
-              const SizedBox(height: 14),
-              WorldMapVisitedCountriesPanel(countries: snapshot.countries),
-              const SizedBox(height: 14),
-              WorldMapContinentOverview(continents: snapshot.continents),
-            ],
           ],
         ),
       ),
     );
+  }
+
+  List<Widget> _sectionContent({
+    required WorldMapSnapshot snapshot,
+    required int? selectedYear,
+    required String? focusedRouteId,
+  }) {
+    switch (_section) {
+      case _MapSection.map:
+        return [
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: WorldMapControls(
+                selectedLayer: _layer,
+                selectedStyle: _style,
+                selectedYear: selectedYear,
+                years: snapshot.years,
+                onLayerChanged: (layer) {
+                  setState(() {
+                    _layer = layer;
+                    _focusedRouteId = null;
+                  });
+                },
+                onStyleChanged: (style) {
+                  setState(() => _style = style);
+                },
+                onYearChanged: (year) {
+                  setState(() {
+                    _selectedYear = year;
+                    _focusedRouteId = null;
+                  });
+                },
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: ProfessionalWorldMap(
+                countries: snapshot.countries,
+                cities: snapshot.cities,
+                routes: snapshot.routes,
+                layer: _layer,
+                style: _style,
+                focusedRouteId: focusedRouteId,
+                onRouteSelected: (routeId) {
+                  setState(() => _focusedRouteId = routeId);
+                },
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+          WorldMapTripFocusPanel(
+            trips: snapshot.trips,
+            routes: snapshot.routes,
+            focusedRouteId: focusedRouteId,
+            onRouteFocus: (routeId) {
+              setState(() {
+                _layer = WorldMapLayer.routes;
+                _focusedRouteId = routeId;
+              });
+            },
+          ),
+        ];
+      case _MapSection.routes:
+        return [
+          WorldMapTravelRoutesPanel(
+            routes: snapshot.routes,
+            focusedRouteId: focusedRouteId,
+          ),
+          const SizedBox(height: 14),
+          WorldMapTripFocusPanel(
+            trips: snapshot.trips,
+            routes: snapshot.routes,
+            focusedRouteId: focusedRouteId,
+            onRouteFocus: (routeId) {
+              setState(() {
+                _focusedRouteId = routeId;
+                _section = _MapSection.map;
+                _layer = WorldMapLayer.routes;
+              });
+            },
+          ),
+        ];
+      case _MapSection.countries:
+        return [
+          WorldMapVisitedCountriesPanel(countries: snapshot.countries),
+          const SizedBox(height: 14),
+          WorldMapContinentOverview(continents: snapshot.continents),
+        ];
+    }
   }
 
   WorldMapSnapshot _snapshotFor(List<Trip> trips, int? year) {

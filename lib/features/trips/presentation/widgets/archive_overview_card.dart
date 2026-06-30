@@ -118,7 +118,7 @@ class ArchiveOverviewCard extends StatelessWidget {
                       child: _ArchiveMetric(
                         icon: Icons.collections_bookmark_outlined,
                         value: memories.toString(),
-                        label: 'Erinnerungen',
+                        label: 'Momente',
                       ),
                     ),
                 ],

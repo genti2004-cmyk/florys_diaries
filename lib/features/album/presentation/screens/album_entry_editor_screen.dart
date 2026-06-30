@@ -282,7 +282,7 @@ class _AlbumEntryEditorScreenState extends State<AlbumEntryEditorScreen> {
                   maxLines: 8,
                   decoration: const InputDecoration(
                     alignLabelWithHint: true,
-                    labelText: 'Beschreibung / Erinnerung',
+                    labelText: 'Beschreibung / Moment',
                     prefixIcon: Icon(Icons.notes_outlined),
                   ),
                 ),

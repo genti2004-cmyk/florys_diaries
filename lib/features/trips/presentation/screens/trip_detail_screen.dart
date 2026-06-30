@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 
 import 'package:florys_diaries/app/theme/app_colors.dart';
-
 import 'package:florys_diaries/features/album/presentation/widgets/trip_album_section.dart';
 import 'package:florys_diaries/features/checklist/presentation/widgets/trip_checklist_section.dart';
 import 'package:florys_diaries/features/documents/application/trip_document_query.dart';
@@ -23,6 +22,7 @@ import 'package:florys_diaries/features/trips/presentation/widgets/trip_vault_se
 import 'trip_editor_screen.dart';
 
 enum _TripDetailMenuAction { edit, export, delete }
+enum _TripDetailSection { overview, planning, documents, memories }
 
 class TripDetailScreen extends StatefulWidget {
   const TripDetailScreen({
@@ -43,6 +43,7 @@ class TripDetailScreen extends StatefulWidget {
 class _TripDetailScreenState extends State<TripDetailScreen> {
   final TextEditingController _searchController = TextEditingController();
 
+  _TripDetailSection _section = _TripDetailSection.overview;
   TripDocumentQuery _documentQuery = const TripDocumentQuery();
   List<TravelDocument>? _lastDocumentSource;
   TripDocumentQuery? _lastAppliedQuery;
@@ -310,17 +311,10 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Reiseübersicht'),
-            Text(
-              currentTrip.title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          ],
+        title: Text(
+          currentTrip.title,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
         actions: [
           PopupMenuButton<_TripDetailMenuAction>(
@@ -369,60 +363,87 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
           const SizedBox(width: 4),
         ],
       ),
-      body: SafeArea(
-        top: false,
-        child: ListView(
-          key: PageStorageKey<String>('trip-detail-${currentTrip.id}'),
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 36),
-          children: [
-            TripDetailHeroCard(trip: currentTrip),
-            const SizedBox(height: 14),
-            TripDetailQuickActions(
-              onReplay: () => _openReplay(context, currentTrip),
-              onEdit: () => _editTrip(context, currentTrip),
-              onExport: () => _exportTrip(context, currentTrip),
+      body: Column(
+        children: [
+          _TripSectionNavigation(
+            selected: _section,
+            onSelected: (section) => setState(() => _section = section),
+          ),
+          Expanded(
+            child: IndexedStack(
+              index: _section.index,
+              children: [
+                _OverviewPage(
+                  trip: currentTrip,
+                  onReplay: () => _openReplay(context, currentTrip),
+                  onEdit: () => _editTrip(context, currentTrip),
+                  onExport: () => _exportTrip(context, currentTrip),
+                  onOpenPlanning: () => _selectSection(
+                    _TripDetailSection.planning,
+                  ),
+                  onOpenDocuments: () => _selectSection(
+                    _TripDetailSection.documents,
+                  ),
+                  onOpenMemories: () => _selectSection(
+                    _TripDetailSection.memories,
+                  ),
+                ),
+                _SectionListView(
+                  keyValue: 'planning-${currentTrip.id}',
+                  child: TripChecklistSection(trip: currentTrip),
+                ),
+                _SectionListView(
+                  keyValue: 'documents-${currentTrip.id}',
+                  child: TripVaultSection(
+                    trip: currentTrip,
+                    visibleDocuments: visibleDocuments,
+                    searchController: _searchController,
+                    query: _documentQuery,
+                    onAddDocument: () =>
+                        _openDocumentEditor(context, currentTrip),
+                    onDocumentTap: (document) {
+                      _openDocumentDetail(context, currentTrip, document);
+                    },
+                    onFavoriteToggle: (document) {
+                      _toggleFavorite(context, currentTrip, document);
+                    },
+                    onSearchChanged: (value) {
+                      _updateDocumentQuery(
+                        _documentQuery.copyWith(searchText: value),
+                      );
+                    },
+                    onCategoryChanged: (value) {
+                      _updateDocumentQuery(
+                        _documentQuery.copyWith(categoryId: value),
+                      );
+                    },
+                    onSortChanged: (value) {
+                      _updateDocumentQuery(
+                        _documentQuery.copyWith(sortMode: value),
+                      );
+                    },
+                    onFavoritesChanged: (value) {
+                      _updateDocumentQuery(
+                        _documentQuery.copyWith(favoritesOnly: value),
+                      );
+                    },
+                    onResetFilters: _resetDocumentFilters,
+                  ),
+                ),
+                _SectionListView(
+                  keyValue: 'memories-${currentTrip.id}',
+                  child: TripAlbumSection(trip: currentTrip),
+                ),
+              ],
             ),
-            const SizedBox(height: 24),
-            TripChecklistSection(trip: currentTrip),
-            const SizedBox(height: 24),
-            TripAlbumSection(trip: currentTrip),
-            const SizedBox(height: 24),
-            TripVaultSection(
-              trip: currentTrip,
-              visibleDocuments: visibleDocuments,
-              searchController: _searchController,
-              query: _documentQuery,
-              onAddDocument: () => _openDocumentEditor(context, currentTrip),
-              onDocumentTap: (document) {
-                _openDocumentDetail(context, currentTrip, document);
-              },
-              onFavoriteToggle: (document) {
-                _toggleFavorite(context, currentTrip, document);
-              },
-              onSearchChanged: (value) {
-                _updateDocumentQuery(
-                  _documentQuery.copyWith(searchText: value),
-                );
-              },
-              onCategoryChanged: (value) {
-                _updateDocumentQuery(
-                  _documentQuery.copyWith(categoryId: value),
-                );
-              },
-              onSortChanged: (value) {
-                _updateDocumentQuery(_documentQuery.copyWith(sortMode: value));
-              },
-              onFavoritesChanged: (value) {
-                _updateDocumentQuery(
-                  _documentQuery.copyWith(favoritesOnly: value),
-                );
-              },
-              onResetFilters: _resetDocumentFilters,
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
+  }
+
+  void _selectSection(_TripDetailSection section) {
+    setState(() => _section = section);
   }
 
   List<TravelDocument> _documentsFor(List<TravelDocument> documents) {
@@ -475,5 +496,313 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(message)));
+  }
+}
+
+class _TripSectionNavigation extends StatelessWidget {
+  const _TripSectionNavigation({
+    required this.selected,
+    required this.onSelected,
+  });
+
+  final _TripDetailSection selected;
+  final ValueChanged<_TripDetailSection> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.surface,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
+        decoration: const BoxDecoration(
+          border: Border(bottom: BorderSide(color: AppColors.border)),
+        ),
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              _SectionChip(
+                icon: Icons.dashboard_outlined,
+                label: 'Übersicht',
+                selected: selected == _TripDetailSection.overview,
+                onTap: () => onSelected(_TripDetailSection.overview),
+              ),
+              const SizedBox(width: 8),
+              _SectionChip(
+                icon: Icons.checklist_rounded,
+                label: 'Planung',
+                selected: selected == _TripDetailSection.planning,
+                onTap: () => onSelected(_TripDetailSection.planning),
+              ),
+              const SizedBox(width: 8),
+              _SectionChip(
+                icon: Icons.folder_outlined,
+                label: 'Dokumente',
+                selected: selected == _TripDetailSection.documents,
+                onTap: () => onSelected(_TripDetailSection.documents),
+              ),
+              const SizedBox(width: 8),
+              _SectionChip(
+                icon: Icons.favorite_border_rounded,
+                label: 'Momente',
+                selected: selected == _TripDetailSection.memories,
+                onTap: () => onSelected(_TripDetailSection.memories),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SectionChip extends StatelessWidget {
+  const _SectionChip({
+    required this.icon,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: selected ? AppColors.primary : AppColors.surfaceSoft,
+      borderRadius: BorderRadius.circular(999),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(999),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                size: 17,
+                color: selected ? Colors.white : AppColors.textMuted,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  color: selected ? Colors.white : AppColors.text,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _OverviewPage extends StatelessWidget {
+  const _OverviewPage({
+    required this.trip,
+    required this.onReplay,
+    required this.onEdit,
+    required this.onExport,
+    required this.onOpenPlanning,
+    required this.onOpenDocuments,
+    required this.onOpenMemories,
+  });
+
+  final Trip trip;
+  final VoidCallback onReplay;
+  final VoidCallback onEdit;
+  final VoidCallback onExport;
+  final VoidCallback onOpenPlanning;
+  final VoidCallback onOpenDocuments;
+  final VoidCallback onOpenMemories;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      key: PageStorageKey<String>('overview-${trip.id}'),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 32),
+      children: [
+        TripDetailHeroCard(trip: trip),
+        const SizedBox(height: 14),
+        TripDetailQuickActions(
+          onReplay: onReplay,
+          onEdit: onEdit,
+          onExport: onExport,
+        ),
+        const SizedBox(height: 20),
+        Text('Reise vorbereiten', style: Theme.of(context).textTheme.titleLarge),
+        const SizedBox(height: 10),
+        _OverviewDestinationCard(
+          icon: Icons.checklist_rounded,
+          title: 'Planung',
+          subtitle: _planningLabel(trip),
+          onTap: onOpenPlanning,
+        ),
+        const SizedBox(height: 10),
+        _OverviewDestinationCard(
+          icon: Icons.folder_outlined,
+          title: 'Dokumente',
+          subtitle: trip.documentCount == 1
+              ? '1 Dokument gespeichert'
+              : '${trip.documentCount} Dokumente gespeichert',
+          onTap: onOpenDocuments,
+        ),
+        const SizedBox(height: 10),
+        _OverviewDestinationCard(
+          icon: Icons.favorite_border_rounded,
+          title: 'Momente',
+          subtitle: trip.albumEntryCount == 1
+              ? '1 Moment im Reisealbum'
+              : '${trip.albumEntryCount} Momente im Reisealbum',
+          onTap: onOpenMemories,
+        ),
+        const SizedBox(height: 20),
+        _NotesCard(trip: trip, onEdit: onEdit),
+      ],
+    );
+  }
+
+  static String _planningLabel(Trip trip) {
+    final total = trip.checklistItems.length;
+    if (total == 0) {
+      return 'Noch keine Aufgaben angelegt';
+    }
+    return '${trip.checklistCompletedCount} von $total Aufgaben erledigt';
+  }
+}
+
+class _OverviewDestinationCard extends StatelessWidget {
+  const _OverviewDestinationCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(28),
+        child: Padding(
+          padding: const EdgeInsets.all(15),
+          child: Row(
+            children: [
+              Container(
+                width: 46,
+                height: 46,
+                decoration: BoxDecoration(
+                  color: AppColors.primarySoft,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Icon(icon, color: AppColors.primary),
+              ),
+              const SizedBox(width: 13),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      subtitle,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              const Icon(
+                Icons.chevron_right_rounded,
+                color: AppColors.textMuted,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _NotesCard extends StatelessWidget {
+  const _NotesCard({required this.trip, required this.onEdit});
+
+  final Trip trip;
+  final VoidCallback onEdit;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.notes_rounded, color: AppColors.primary),
+                const SizedBox(width: 9),
+                Expanded(
+                  child: Text(
+                    'Notizen',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+                TextButton(onPressed: onEdit, child: const Text('Bearbeiten')),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              trip.notes.trim().isEmpty
+                  ? 'Noch keine persönlichen Notizen gespeichert.'
+                  : trip.notes,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: trip.notes.trim().isEmpty
+                    ? AppColors.textMuted
+                    : AppColors.text,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SectionListView extends StatelessWidget {
+  const _SectionListView({required this.keyValue, required this.child});
+
+  final String keyValue;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      key: PageStorageKey<String>(keyValue),
+      padding: const EdgeInsets.fromLTRB(16, 18, 16, 32),
+      children: [child],
+    );
   }
 }

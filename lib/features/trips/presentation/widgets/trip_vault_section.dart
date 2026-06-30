@@ -43,24 +43,22 @@ class TripVaultSection extends StatelessWidget {
     final favoriteCount = trip.documents
         .where((document) => document.isFavorite)
         .length;
+    final photoCount = _photoDocumentCount(trip.documents);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Travel Vault',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
+                  Text('Dokumente', style: Theme.of(context).textTheme.titleLarge),
                   const SizedBox(height: 4),
                   Text(
-                    'Tickets, Buchungen, Nachweise und wichtige Dateien.',
+                    'Tickets, Buchungen, Nachweise und Reisefotos.',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: AppColors.textMuted,
                     ),
@@ -72,15 +70,32 @@ class TripVaultSection extends StatelessWidget {
             FilledButton.icon(
               onPressed: onAddDocument,
               icon: const Icon(Icons.add_rounded),
-              label: const Text('Dokument'),
+              label: const Text('Hinzufügen'),
             ),
           ],
         ),
-        const SizedBox(height: 12),
-        _VaultOverview(
-          documentCount: trip.documentCount,
-          favoriteCount: favoriteCount,
-          photoCount: _photoDocumentCount(trip.documents),
+        const SizedBox(height: 14),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            _SummaryChip(
+              icon: Icons.description_outlined,
+              label: trip.documentCount == 1
+                  ? '1 Dokument'
+                  : '${trip.documentCount} Dokumente',
+            ),
+            _SummaryChip(
+              icon: Icons.photo_library_outlined,
+              label: photoCount == 1 ? '1 Foto' : '$photoCount Fotos',
+            ),
+            _SummaryChip(
+              icon: Icons.star_outline_rounded,
+              label: favoriteCount == 1
+                  ? '1 Favorit'
+                  : '$favoriteCount Favoriten',
+            ),
+          ],
         ),
         const SizedBox(height: 14),
         if (trip.documents.isNotEmpty) ...[
@@ -95,13 +110,13 @@ class TripVaultSection extends StatelessWidget {
           const SizedBox(height: 12),
         ],
         if (trip.documents.isEmpty)
-          _EmptyVaultCard(onAddDocument: onAddDocument)
+          _EmptyDocumentsCard(onAddDocument: onAddDocument)
         else if (visibleDocuments.isEmpty)
           _NoResultsCard(onResetFilters: onResetFilters)
         else
           ...visibleDocuments.map(
             (document) => Padding(
-              padding: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.only(bottom: 10),
               child: TravelDocumentCard(
                 document: document,
                 onTap: () => onDocumentTap(document),
@@ -129,106 +144,31 @@ class TripVaultSection extends StatelessWidget {
   }
 }
 
-class _VaultOverview extends StatelessWidget {
-  const _VaultOverview({
-    required this.documentCount,
-    required this.favoriteCount,
-    required this.photoCount,
-  });
-
-  final int documentCount;
-  final int favoriteCount;
-  final int photoCount;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF101F36), Color(0xFF1C3E6F)],
-        ),
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x160D1728),
-            blurRadius: 22,
-            offset: Offset(0, 12),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: _VaultMetric(
-              icon: Icons.description_outlined,
-              value: '$documentCount',
-              label: 'Dokumente',
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: _VaultMetric(
-              icon: Icons.star_outline_rounded,
-              value: '$favoriteCount',
-              label: 'Favoriten',
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: _VaultMetric(
-              icon: Icons.photo_library_outlined,
-              value: '$photoCount',
-              label: 'Fotos',
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _VaultMetric extends StatelessWidget {
-  const _VaultMetric({
-    required this.icon,
-    required this.value,
-    required this.label,
-  });
+class _SummaryChip extends StatelessWidget {
+  const _SummaryChip({required this.icon, required this.label});
 
   final IconData icon;
-  final String value;
   final String label;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 13),
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+        color: AppColors.surfaceSoft,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: AppColors.border),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 18, color: Colors.white),
-          const SizedBox(height: 10),
-          Text(
-            value,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          const SizedBox(height: 3),
+          Icon(icon, size: 15, color: AppColors.primary),
+          const SizedBox(width: 6),
           Text(
             label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Colors.white.withValues(alpha: 0.76),
+              color: AppColors.text,
+              fontWeight: FontWeight.w800,
             ),
           ),
         ],
@@ -237,8 +177,8 @@ class _VaultMetric extends StatelessWidget {
   }
 }
 
-class _EmptyVaultCard extends StatelessWidget {
-  const _EmptyVaultCard({required this.onAddDocument});
+class _EmptyDocumentsCard extends StatelessWidget {
+  const _EmptyDocumentsCard({required this.onAddDocument});
 
   final VoidCallback onAddDocument;
 
@@ -264,14 +204,14 @@ class _EmptyVaultCard extends StatelessWidget {
             ),
             const SizedBox(height: 14),
             Text(
-              'Noch keine Reiseunterlagen',
+              'Noch keine Dokumente',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w900,
               ),
             ),
             const SizedBox(height: 7),
             const Text(
-              'Füge Flugtickets, Hotelbuchungen, Bahnfahrten oder wichtige Nachweise hinzu.',
+              'Füge Flugtickets, Hotelbuchungen, Nachweise oder Reisefotos hinzu.',
               textAlign: TextAlign.center,
               style: TextStyle(color: AppColors.textMuted),
             ),

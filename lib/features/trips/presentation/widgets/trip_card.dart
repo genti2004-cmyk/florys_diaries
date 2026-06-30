@@ -106,7 +106,7 @@ class TripCard extends StatelessWidget {
                     if (trip.albumEntryCount > 0)
                       _TripMeta(
                         icon: Icons.favorite_border_rounded,
-                        label: '${trip.albumEntryCount} Erinnerungen',
+                        label: '${trip.albumEntryCount} Momente',
                       ),
                   ],
                 ),

@@ -65,7 +65,7 @@ class TravelChecklistSuggestionService {
           priority: TripChecklistPriority.high,
           dueDate: _beforeStart(trip, 14),
           notes:
-              'Gültigkeit prüfen und bei Bedarf eine Kopie im Travel Vault sichern.',
+              'Gültigkeit prüfen und bei Bedarf eine Kopie im Dokumentenbereich sichern.',
         ),
       );
     }

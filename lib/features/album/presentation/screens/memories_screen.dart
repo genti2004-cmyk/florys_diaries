@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:florys_diaries/app/theme/app_colors.dart';
 import 'package:florys_diaries/core/widgets/travel_data_empty_state.dart';
 import 'package:florys_diaries/core/widgets/travel_visuals.dart';
+import 'package:florys_diaries/core/widgets/trip_cover_image.dart';
 import 'package:florys_diaries/features/album/domain/trip_album_entry.dart';
 import 'package:florys_diaries/features/trips/application/trip_store_scope.dart';
 import 'package:florys_diaries/features/trips/domain/trip.dart';
@@ -27,61 +28,59 @@ class _MemoriesScreenState extends State<MemoriesScreen> {
   @override
   Widget build(BuildContext context) {
     final store = TripStoreScope.of(context);
-    final memories = _buildMemories(store.trips, favoritesOnly: _favoritesOnly);
-    final totalFavorites = store.trips.fold<int>(
-      0,
-      (sum, trip) =>
-          sum + trip.albumEntries.where((entry) => entry.isFavorite).length,
-    );
+    final allMoments = _buildMoments(store.trips, favoritesOnly: false);
+    final moments = _favoritesOnly
+        ? allMoments.where((moment) => moment.entry.isFavorite).toList()
+        : allMoments;
+    final favoriteCount = allMoments
+        .where((moment) => moment.entry.isFavorite)
+        .length;
 
     return ColoredBox(
       color: AppColors.background,
       child: SafeArea(
         bottom: false,
         child: ListView(
-          key: const PageStorageKey<String>('memories-screen'),
-          padding: const EdgeInsets.fromLTRB(16, 18, 16, 150),
+          key: const PageStorageKey<String>('moments-screen-v61'),
+          padding: const EdgeInsets.fromLTRB(16, 18, 16, 132),
           children: [
-            Text(
-              'Erinnerungen',
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
+            Text('Momente', style: Theme.of(context).textTheme.headlineSmall),
             const SizedBox(height: 6),
             Text(
-              'Deine schönsten Momente, Highlights und Lieblingsorte in einer eleganten Übersicht.',
+              'Fotos, Highlights, Lieblingsorte und persönliche Geschichten aus deinen Reisen.',
               style: Theme.of(
                 context,
               ).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
             ),
-            const SizedBox(height: 18),
-            _MemoryOverviewCard(
-              memoryCount: memories.length,
-              favoriteCount: totalFavorites,
+            const SizedBox(height: 16),
+            _MomentsOverview(
+              momentCount: allMoments.length,
+              favoriteCount: favoriteCount,
               favoritesOnly: _favoritesOnly,
               onFavoritesChanged: (value) {
                 setState(() => _favoritesOnly = value);
               },
             ),
-            const SizedBox(height: 18),
-            if (memories.isEmpty)
+            const SizedBox(height: 16),
+            if (moments.isEmpty)
               TravelDataEmptyState(
                 icon: Icons.favorite_outline_rounded,
                 title: _favoritesOnly
-                    ? 'Noch keine Lieblingsmomente vorhanden'
-                    : 'Noch keine Erinnerungen vorhanden',
+                    ? 'Noch keine Lieblingsmomente'
+                    : 'Noch keine Momente gespeichert',
                 description: _favoritesOnly
-                    ? 'Markiere Einträge im Reisealbum als Favorit, damit sie hier gesammelt erscheinen.'
-                    : 'Sobald du in einer Reise Album-Einträge anlegst, erscheinen sie hier als persönliche Erinnerungswand.',
+                    ? 'Markiere einen Moment im Reisealbum als Favorit, damit er hier erscheint.'
+                    : 'Sobald du im Reisealbum einen Eintrag anlegst, erscheint er automatisch auf dieser Seite.',
                 hint:
-                    'Du kannst Highlights, Orte, Notizen und besondere Momente direkt in jeder Reise speichern.',
+                    'Highlights, Orte, Essen und Tagesnotizen bleiben direkt mit der jeweiligen Reise verbunden.',
               )
             else
-              ...memories.map(
-                (memory) => Padding(
+              ...moments.map(
+                (moment) => Padding(
                   padding: const EdgeInsets.only(bottom: 14),
-                  child: _MemoryCard(
-                    memory: memory,
-                    onTap: () => _openTrip(context, memory.trip),
+                  child: _MomentCard(
+                    moment: moment,
+                    onTap: () => _openTrip(context, moment.trip),
                   ),
                 ),
               ),
@@ -91,32 +90,32 @@ class _MemoriesScreenState extends State<MemoriesScreen> {
     );
   }
 
-  static List<_TripMemory> _buildMemories(
+  static List<_TripMoment> _buildMoments(
     List<Trip> trips, {
     required bool favoritesOnly,
   }) {
-    final memories = <_TripMemory>[];
+    final moments = <_TripMoment>[];
     for (final trip in trips) {
       for (final entry in trip.albumEntries) {
         if (!favoritesOnly || entry.isFavorite) {
-          memories.add(_TripMemory(trip: trip, entry: entry));
+          moments.add(_TripMoment(trip: trip, entry: entry));
         }
       }
     }
-    memories.sort((left, right) => right.entry.date.compareTo(left.entry.date));
-    return memories;
+    moments.sort((left, right) => right.entry.date.compareTo(left.entry.date));
+    return moments;
   }
 }
 
-class _MemoryOverviewCard extends StatelessWidget {
-  const _MemoryOverviewCard({
-    required this.memoryCount,
+class _MomentsOverview extends StatelessWidget {
+  const _MomentsOverview({
+    required this.momentCount,
     required this.favoriteCount,
     required this.favoritesOnly,
     required this.onFavoritesChanged,
   });
 
-  final int memoryCount;
+  final int momentCount;
   final int favoriteCount;
   final bool favoritesOnly;
   final ValueChanged<bool> onFavoritesChanged;
@@ -125,40 +124,50 @@ class _MemoryOverviewCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        child: Row(
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: _TopMetric(
-                    title: 'Momente',
-                    value: '$memoryCount',
-                    icon: Icons.auto_stories_rounded,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _TopMetric(
-                    title: 'Favoriten',
-                    value: '$favoriteCount',
-                    icon: Icons.favorite_rounded,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
             Container(
+              width: 48,
+              height: 48,
               decoration: BoxDecoration(
-                color: AppColors.surfaceSoft,
-                borderRadius: BorderRadius.circular(20),
+                color: AppColors.primarySoft,
+                borderRadius: BorderRadius.circular(16),
               ),
-              child: SwitchListTile.adaptive(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 14),
-                title: const Text('Nur Lieblingsmomente'),
-                value: favoritesOnly,
-                onChanged: onFavoritesChanged,
+              child: const Icon(
+                Icons.auto_stories_rounded,
+                color: AppColors.primary,
               ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '$momentCount Momente',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    '$favoriteCount Favoriten',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ),
+            ),
+            FilterChip(
+              selected: favoritesOnly,
+              onSelected: onFavoritesChanged,
+              avatar: Icon(
+                favoritesOnly
+                    ? Icons.favorite_rounded
+                    : Icons.favorite_border_rounded,
+                size: 17,
+              ),
+              label: const Text('Favoriten'),
             ),
           ],
         ),
@@ -167,195 +176,125 @@ class _MemoryOverviewCard extends StatelessWidget {
   }
 }
 
-class _TopMetric extends StatelessWidget {
-  const _TopMetric({
-    required this.title,
-    required this.value,
-    required this.icon,
-  });
+class _MomentCard extends StatelessWidget {
+  const _MomentCard({required this.moment, required this.onTap});
 
-  final String title;
-  final String value;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceSoft,
-        borderRadius: BorderRadius.circular(22),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: AppColors.primary),
-          const SizedBox(height: 14),
-          Text(
-            value,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(title, style: Theme.of(context).textTheme.bodySmall),
-        ],
-      ),
-    );
-  }
-}
-
-class _MemoryCard extends StatelessWidget {
-  const _MemoryCard({required this.memory, required this.onTap});
-
-  final _TripMemory memory;
+  final _TripMoment moment;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final palette = TravelVisuals.forText(
-      '${memory.trip.destination} ${memory.trip.country} ${memory.entry.title}',
+      '${moment.trip.destination} ${moment.trip.country} ${moment.entry.title}',
     );
 
-    return Material(
-      color: Colors.transparent,
-      borderRadius: BorderRadius.circular(28),
+    return Card(
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(28),
-        child: Ink(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(28),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: palette.gradient,
-            ),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x140E1B30),
-                blurRadius: 20,
-                offset: Offset(0, 12),
-              ),
-            ],
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(18),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 7,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.14),
-                        borderRadius: BorderRadius.circular(999),
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.18),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              height: 176,
+              width: double.infinity,
+              child: TripCoverImage(
+                trip: moment.trip,
+                borderRadius: BorderRadius.zero,
+                showFallbackIcon: false,
+                overlay: const LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Color(0x12000000), Color(0xB807111F)],
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
                         children: [
-                          Icon(palette.icon, size: 15, color: Colors.white),
-                          const SizedBox(width: 6),
-                          Text(
-                            _typeLabel(memory.entry),
-                            style: Theme.of(context).textTheme.labelMedium
-                                ?.copyWith(color: Colors.white),
+                          _ImageChip(
+                            icon: palette.icon,
+                            label: _typeLabel(moment.entry),
                           ),
+                          const Spacer(),
+                          if (moment.entry.isFavorite)
+                            const _ImageChip(
+                              icon: Icons.favorite_rounded,
+                              label: 'Favorit',
+                            ),
                         ],
                       ),
-                    ),
-                    const Spacer(),
-                    if (memory.entry.isFavorite)
-                      const Icon(
-                        Icons.favorite_rounded,
-                        color: Colors.white,
-                        size: 18,
+                      const Spacer(),
+                      Text(
+                        moment.entry.title.trim().isEmpty
+                            ? moment.trip.title
+                            : moment.entry.title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w900,
+                          shadows: const [
+                            Shadow(color: Color(0x66000000), blurRadius: 10),
+                          ],
+                        ),
                       ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  memory.entry.title.trim().isEmpty
-                      ? memory.trip.title
-                      : memory.entry.title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w900,
+                      const SizedBox(height: 4),
+                      Text(
+                        '${moment.trip.destination}, ${moment.trip.country}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Colors.white.withValues(alpha: 0.9),
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  memory.entry.description.trim().isEmpty
-                      ? 'Gespeichert in ${memory.trip.title}'
-                      : memory.entry.description,
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.white.withValues(alpha: 0.82),
-                  ),
-                ),
-                const SizedBox(height: 18),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    _chip(
-                      context,
-                      Icons.location_on_outlined,
-                      memory.entry.location.trim().isEmpty
-                          ? '${memory.trip.destination}, ${memory.trip.country}'
-                          : memory.entry.location,
-                    ),
-                    _chip(
-                      context,
-                      Icons.calendar_today_outlined,
-                      TravelVisuals.formatDate(memory.entry.date),
-                    ),
-                    _chip(context, Icons.flight_outlined, memory.trip.title),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _chip(BuildContext context, IconData icon, String label) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.13),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: Colors.white),
-          const SizedBox(width: 6),
-          Flexible(
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
               ),
             ),
-          ),
-        ],
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (moment.entry.description.trim().isNotEmpty) ...[
+                    Text(
+                      moment.entry.description,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                    const SizedBox(height: 10),
+                  ],
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      _DetailChip(
+                        icon: Icons.calendar_today_outlined,
+                        label: TravelVisuals.formatDate(moment.entry.date),
+                      ),
+                      _DetailChip(
+                        icon: Icons.location_on_outlined,
+                        label: moment.entry.location.trim().isEmpty
+                            ? moment.trip.destination
+                            : moment.entry.location,
+                      ),
+                      _DetailChip(
+                        icon: Icons.flight_outlined,
+                        label: moment.trip.title,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -365,8 +304,78 @@ class _MemoryCard extends StatelessWidget {
   }
 }
 
-class _TripMemory {
-  const _TripMemory({required this.trip, required this.entry});
+class _ImageChip extends StatelessWidget {
+  const _ImageChip({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.25),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: Colors.white),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DetailChip extends StatelessWidget {
+  const _DetailChip({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceSoft,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: AppColors.primary),
+          const SizedBox(width: 6),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 190),
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: AppColors.text,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TripMoment {
+  const _TripMoment({required this.trip, required this.entry});
 
   final Trip trip;
   final TripAlbumEntry entry;

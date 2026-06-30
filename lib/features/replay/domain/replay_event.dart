@@ -59,7 +59,7 @@ class ReplayEvent {
       case ReplayEventType.food:
         return 'Essen';
       case ReplayEventType.memory:
-        return 'Erinnerung';
+        return 'Moment';
       case ReplayEventType.end:
         return 'Ende';
     }
