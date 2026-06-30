@@ -30,33 +30,20 @@ class TripDetailQuickActions extends StatelessWidget {
         onTap: onEdit,
       ),
       _QuickActionData(
-        icon: Icons.archive_outlined,
+        icon: Icons.ios_share_rounded,
         label: 'Export',
         subtitle: 'ZIP weitergeben',
         onTap: onExport,
       ),
     ];
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final columns = constraints.maxWidth < 390 ? 2 : 3;
-        final spacing = 10.0;
-        final cardWidth =
-            (constraints.maxWidth - spacing * (columns - 1)) / columns;
-
-        return Wrap(
-          spacing: spacing,
-          runSpacing: spacing,
-          children: actions
-              .map(
-                (action) => SizedBox(
-                  width: cardWidth,
-                  child: _QuickActionCard(action: action),
-                ),
-              )
-              .toList(growable: false),
-        );
-      },
+    return Row(
+      children: [
+        for (var index = 0; index < actions.length; index++) ...[
+          Expanded(child: _QuickActionCard(action: actions[index])),
+          if (index < actions.length - 1) const SizedBox(width: 10),
+        ],
+      ],
     );
   }
 }
@@ -73,30 +60,30 @@ class _QuickActionCard extends StatelessWidget {
       label: action.label,
       child: Material(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(22),
         child: InkWell(
           onTap: action.onTap,
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(22),
           child: Container(
-            constraints: const BoxConstraints(minHeight: 102),
+            constraints: const BoxConstraints(minHeight: 112),
             padding: const EdgeInsets.all(13),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: BorderRadius.circular(22),
               border: Border.all(color: AppColors.border),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  width: 38,
-                  height: 38,
+                  width: 40,
+                  height: 40,
                   decoration: BoxDecoration(
                     color: AppColors.primarySoft,
-                    borderRadius: BorderRadius.circular(13),
+                    borderRadius: BorderRadius.circular(14),
                   ),
                   child: Icon(action.icon, size: 20, color: AppColors.primary),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 11),
                 Text(
                   action.label,
                   maxLines: 1,
@@ -106,14 +93,14 @@ class _QuickActionCard extends StatelessWidget {
                     fontWeight: FontWeight.w900,
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 3),
                 Text(
                   action.subtitle,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodySmall?.copyWith(color: AppColors.textMuted),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.textMuted,
+                  ),
                 ),
               ],
             ),

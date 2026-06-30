@@ -35,7 +35,7 @@ class PastTripsScreen extends StatelessWidget {
         bottom: false,
         child: ListView(
           key: const PageStorageKey<String>('past-trips'),
-          padding: const EdgeInsets.fromLTRB(16, 18, 16, 110),
+          padding: const EdgeInsets.fromLTRB(16, 18, 16, 150),
           children: [
             Text('Timeline', style: Theme.of(context).textTheme.headlineSmall),
             const SizedBox(height: 6),

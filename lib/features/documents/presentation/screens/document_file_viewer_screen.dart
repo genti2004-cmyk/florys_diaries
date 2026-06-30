@@ -79,7 +79,9 @@ class DocumentFileViewerScreen extends StatelessWidget {
     return value == 'jpg' ||
         value == 'jpeg' ||
         value == 'png' ||
-        value == 'webp';
+        value == 'webp' ||
+        value == 'heic' ||
+        value == 'heif';
   }
 
   static bool _isPdf(String extension) {

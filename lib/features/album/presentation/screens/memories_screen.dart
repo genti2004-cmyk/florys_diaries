@@ -40,7 +40,7 @@ class _MemoriesScreenState extends State<MemoriesScreen> {
         bottom: false,
         child: ListView(
           key: const PageStorageKey<String>('memories-screen'),
-          padding: const EdgeInsets.fromLTRB(16, 18, 16, 110),
+          padding: const EdgeInsets.fromLTRB(16, 18, 16, 150),
           children: [
             Text(
               'Erinnerungen',

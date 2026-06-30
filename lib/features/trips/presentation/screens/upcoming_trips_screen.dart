@@ -76,7 +76,7 @@ class UpcomingTripsScreen extends StatelessWidget {
         bottom: false,
         child: ListView(
           key: const PageStorageKey<String>('premium-home-v2'),
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 128),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 150),
           children: [
             _HomeHeader(
               onOpenAssistant: () => _openAssistant(context),

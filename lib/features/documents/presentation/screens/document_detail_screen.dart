@@ -5,9 +5,9 @@ import 'package:open_filex/open_filex.dart';
 import 'package:share_plus/share_plus.dart';
 
 import 'package:florys_diaries/app/theme/app_colors.dart';
-import 'package:florys_diaries/core/widgets/app_section_card.dart';
 import 'package:florys_diaries/features/documents/data/travel_file_service.dart';
 import 'package:florys_diaries/features/documents/domain/travel_document.dart';
+
 import 'document_file_viewer_screen.dart';
 
 enum DocumentDetailAction { edit, delete }
@@ -81,8 +81,7 @@ class DocumentDetailScreen extends StatelessWidget {
       return;
     }
 
-    final navigator = Navigator.of(context);
-    await navigator.push(
+    await Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => DocumentFileViewerScreen(document: document),
       ),
@@ -121,8 +120,9 @@ class DocumentDetailScreen extends StatelessWidget {
     final createdText = _formatDate(document.createdAt);
 
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Text(document.title),
+        title: const Text('Dokument'),
         actions: [
           IconButton(
             tooltip: 'Bearbeiten',
@@ -139,19 +139,14 @@ class DocumentDetailScreen extends StatelessWidget {
         ],
       ),
       body: SafeArea(
+        top: false,
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
           children: [
+            _DocumentHero(document: document),
+            const SizedBox(height: 14),
             _DocumentPreview(document: document),
-            const SizedBox(height: 16),
-            AppSectionCard(
-              icon: document.category.icon,
-              title: document.category.label,
-              subtitle: document.fileName.trim().isEmpty
-                  ? 'Kein Dateiname gespeichert.'
-                  : document.fileName,
-            ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
             Row(
               children: [
                 Expanded(
@@ -161,7 +156,7 @@ class DocumentDetailScreen extends StatelessWidget {
                     icon: Icons.insert_drive_file_outlined,
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 10),
                 Expanded(
                   child: _MetaCard(
                     label: 'Größe',
@@ -173,30 +168,44 @@ class DocumentDetailScreen extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             _MetaCard(
               label: 'Gespeichert am',
               value: createdText,
               icon: Icons.calendar_today_outlined,
             ),
             if (document.description.trim().isNotEmpty) ...[
-              const SizedBox(height: 12),
+              const SizedBox(height: 14),
               Card(
-                margin: EdgeInsets.zero,
                 child: Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(18),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Notiz',
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(
-                              color: AppColors.text,
-                              fontWeight: FontWeight.w900,
+                      Row(
+                        children: [
+                          Container(
+                            width: 38,
+                            height: 38,
+                            decoration: BoxDecoration(
+                              color: AppColors.primarySoft,
+                              borderRadius: BorderRadius.circular(13),
                             ),
+                            child: const Icon(
+                              Icons.notes_rounded,
+                              size: 19,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Text(
+                            'Notiz',
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(fontWeight: FontWeight.w900),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 12),
                       Text(
                         document.description,
                         style: const TextStyle(color: AppColors.textMuted),
@@ -212,19 +221,31 @@ class DocumentDetailScreen extends StatelessWidget {
                   ? () => _showIntegratedPreview(context)
                   : null,
               icon: const Icon(Icons.visibility_outlined),
-              label: const Text('Vorschau öffnen'),
+              label: const Text('In FlorysDiaries öffnen'),
             ),
             const SizedBox(height: 10),
-            OutlinedButton.icon(
-              onPressed: document.hasFile ? () => _openFile(context) : null,
-              icon: const Icon(Icons.open_in_new_rounded),
-              label: const Text('Extern öffnen'),
-            ),
-            const SizedBox(height: 10),
-            OutlinedButton.icon(
-              onPressed: document.hasFile ? () => _shareFile(context) : null,
-              icon: const Icon(Icons.share_outlined),
-              label: const Text('Teilen'),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: document.hasFile
+                        ? () => _openFile(context)
+                        : null,
+                    icon: const Icon(Icons.open_in_new_rounded),
+                    label: const Text('Extern'),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: document.hasFile
+                        ? () => _shareFile(context)
+                        : null,
+                    icon: const Icon(Icons.share_outlined),
+                    label: const Text('Teilen'),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -247,6 +268,87 @@ class DocumentDetailScreen extends StatelessWidget {
   }
 }
 
+class _DocumentHero extends StatelessWidget {
+  const _DocumentHero({required this.document});
+
+  final TravelDocument document;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF101F36), Color(0xFF2357D8)],
+        ),
+        borderRadius: BorderRadius.circular(30),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x1A173B68),
+            blurRadius: 24,
+            offset: Offset(0, 14),
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 58,
+            height: 58,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(19),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
+            ),
+            child: Icon(document.category.icon, color: Colors.white, size: 28),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  document.category.label,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Colors.white.withValues(alpha: 0.78),
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  document.title,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                if (document.fileName.trim().isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    document.fileName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Colors.white.withValues(alpha: 0.78),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          if (document.isFavorite)
+            const Icon(Icons.star_rounded, color: Color(0xFFFFD98B)),
+        ],
+      ),
+    );
+  }
+}
+
 class _DocumentPreview extends StatelessWidget {
   const _DocumentPreview({required this.document});
 
@@ -262,10 +364,9 @@ class _DocumentPreview extends StatelessWidget {
         final showImage = file != null && _isImage(document.fileExtension);
 
         return Card(
-          margin: EdgeInsets.zero,
           clipBehavior: Clip.antiAlias,
           child: SizedBox(
-            height: 230,
+            height: 240,
             width: double.infinity,
             child: showImage
                 ? Image.file(
@@ -301,18 +402,36 @@ class _PreviewFallback extends StatelessWidget {
     if (value == 'pdf') {
       return 'PDF kann direkt in FlorysDiaries angezeigt werden.';
     }
-    return 'Vorschau wird über passende Ansicht oder externe App geöffnet.';
+    return 'Vorschau wird über die passende Ansicht oder eine externe App geöffnet.';
   }
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: AppColors.primarySoft,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFFEAF1FF), Color(0xFFF7FAFF)],
+        ),
+      ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(document.category.icon, size: 54, color: AppColors.primary),
-          const SizedBox(height: 12),
+          Container(
+            width: 72,
+            height: 72,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+            ),
+            child: Icon(
+              document.category.icon,
+              size: 36,
+              color: AppColors.primary,
+            ),
+          ),
+          const SizedBox(height: 14),
           Text(
             document.fileTypeLabel,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -320,11 +439,14 @@ class _PreviewFallback extends StatelessWidget {
               fontWeight: FontWeight.w900,
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            _previewFallbackText(document.fileExtension),
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: AppColors.textMuted),
+          const SizedBox(height: 5),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Text(
+              _previewFallbackText(document.fileExtension),
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: AppColors.textMuted),
+            ),
           ),
         ],
       ),
@@ -346,13 +468,20 @@ class _MetaCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(15),
         child: Row(
           children: [
-            Icon(icon, color: AppColors.primary),
-            const SizedBox(width: 12),
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: AppColors.primarySoft,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(icon, size: 19, color: AppColors.primary),
+            ),
+            const SizedBox(width: 11),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

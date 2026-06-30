@@ -53,7 +53,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         bottom: false,
         child: ListView(
           key: const PageStorageKey<String>('travel-statistics'),
-          padding: const EdgeInsets.fromLTRB(16, 18, 16, 110),
+          padding: const EdgeInsets.fromLTRB(16, 18, 16, 150),
           children: [
             Text(
               'Statistiken',

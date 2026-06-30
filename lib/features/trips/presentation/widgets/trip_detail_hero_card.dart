@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:florys_diaries/app/theme/app_colors.dart';
+import 'package:florys_diaries/core/widgets/travel_visuals.dart';
 import 'package:florys_diaries/features/trips/domain/trip.dart';
 
 class TripDetailHeroCard extends StatelessWidget {
@@ -12,6 +12,9 @@ class TripDetailHeroCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final status = _status(now ?? DateTime.now());
+    final palette = TravelVisuals.forText(
+      '${trip.title} ${trip.destination} ${trip.country}',
+    );
 
     return Container(
       width: double.infinity,
@@ -19,123 +22,139 @@ class TripDetailHeroCard extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: trip.isPast
-              ? const [Color(0xFF244B54), Color(0xFF17363D)]
-              : const [AppColors.primary, Color(0xFF1D5965)],
+          colors: palette.gradient,
         ),
-        borderRadius: BorderRadius.circular(26),
+        borderRadius: BorderRadius.circular(32),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x220F4C5C),
-            blurRadius: 24,
-            offset: Offset(0, 10),
+            color: Color(0x1F0B1526),
+            blurRadius: 28,
+            offset: Offset(0, 16),
           ),
         ],
       ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final isNarrow = constraints.maxWidth < 340;
-
-          return Padding(
-            padding: EdgeInsets.all(isNarrow ? 16 : 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: 50,
-                      height: 50,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.14),
-                        borderRadius: BorderRadius.circular(17),
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.16),
-                        ),
-                      ),
-                      child: Icon(
-                        trip.isPast
-                            ? Icons.luggage_rounded
-                            : Icons.flight_takeoff_rounded,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(width: 13),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _StatusBadge(status: status),
-                          const SizedBox(height: 9),
-                          Text(
-                            trip.title,
-                            maxLines: 3,
-                            overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.headlineSmall
-                                ?.copyWith(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w900,
-                                ),
-                          ),
-                          const SizedBox(height: 5),
-                          Text(
-                            '${trip.destination}, ${trip.country}',
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.bodyLarge
-                                ?.copyWith(
-                                  color: Colors.white.withValues(alpha: 0.82),
-                                  fontWeight: FontWeight.w600,
-                                ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                _GlassBadge(
+                  icon: status.icon,
+                  label: status.label,
                 ),
-                const SizedBox(height: 18),
-                _TripDetailFacts(trip: trip, isNarrow: isNarrow),
-                const SizedBox(height: 16),
+                const Spacer(),
                 Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(13),
+                  width: 42,
+                  height: 42,
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.10),
+                    color: Colors.white.withValues(alpha: 0.14),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.14),
+                      color: Colors.white.withValues(alpha: 0.16),
                     ),
                   ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Icon(
-                        Icons.notes_rounded,
-                        size: 19,
-                        color: Colors.white,
-                      ),
-                      const SizedBox(width: 9),
-                      Expanded(
-                        child: Text(
-                          trip.notes.trim().isEmpty
-                              ? 'Noch keine persönlichen Notizen gespeichert.'
-                              : trip.notes,
-                          maxLines: 4,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(
-                                color: Colors.white.withValues(alpha: 0.88),
-                              ),
-                        ),
-                      ),
-                    ],
+                  child: Icon(palette.icon, color: Colors.white),
+                ),
+              ],
+            ),
+            const SizedBox(height: 22),
+            Text(
+              trip.title,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              '${trip.destination}, ${trip.country}',
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                color: Colors.white.withValues(alpha: 0.88),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(
+                  child: _HeroMetric(
+                    icon: Icons.calendar_today_outlined,
+                    title: 'Zeitraum',
+                    value: TravelVisuals.formatDateRange(
+                      trip.startDate,
+                      trip.endDate,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _HeroMetric(
+                    icon: Icons.timelapse_rounded,
+                    title: 'Dauer',
+                    value: '${trip.durationDays} Tage',
                   ),
                 ),
               ],
             ),
-          );
-        },
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: _HeroMetric(
+                    icon: Icons.description_outlined,
+                    title: 'Dokumente',
+                    value: '${trip.documentCount}',
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _HeroMetric(
+                    icon: Icons.favorite_outline_rounded,
+                    title: 'Erinnerungen',
+                    value: '${trip.albumEntryCount}',
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.11),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.14),
+                ),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.notes_rounded, size: 18, color: Colors.white),
+                  const SizedBox(width: 9),
+                  Expanded(
+                    child: Text(
+                      trip.notes.trim().isEmpty
+                          ? 'Noch keine persönlichen Notizen gespeichert.'
+                          : trip.notes,
+                      maxLines: 4,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Colors.white.withValues(alpha: 0.88),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -185,143 +204,92 @@ class TripDetailHeroCard extends StatelessWidget {
   }
 }
 
-class _TripDetailFacts extends StatelessWidget {
-  const _TripDetailFacts({required this.trip, required this.isNarrow});
+class _HeroMetric extends StatelessWidget {
+  const _HeroMetric({
+    required this.icon,
+    required this.title,
+    required this.value,
+  });
 
-  final Trip trip;
-  final bool isNarrow;
-
-  @override
-  Widget build(BuildContext context) {
-    final facts = [
-      _Fact(
-        icon: Icons.calendar_today_outlined,
-        label: '${_date(trip.startDate)} – ${_date(trip.endDate)}',
-      ),
-      _Fact(
-        icon: Icons.timelapse_rounded,
-        label: '${trip.durationDays} Reisetage',
-      ),
-      _Fact(
-        icon: Icons.description_outlined,
-        label: '${trip.documentCount} Dokumente',
-      ),
-      _Fact(
-        icon: Icons.auto_stories_outlined,
-        label: '${trip.albumEntryCount} Album',
-      ),
-    ];
-
-    if (isNarrow) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          for (var index = 0; index < facts.length; index++) ...[
-            _FactChip(fact: facts[index], expand: true),
-            if (index < facts.length - 1) const SizedBox(height: 8),
-          ],
-        ],
-      );
-    }
-
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: facts
-          .map((fact) => _FactChip(fact: fact, expand: false))
-          .toList(growable: false),
-    );
-  }
-
-  static String _date(DateTime value) {
-    final day = value.day.toString().padLeft(2, '0');
-    final month = value.month.toString().padLeft(2, '0');
-    return '$day.$month.${value.year}';
-  }
-}
-
-class _FactChip extends StatelessWidget {
-  const _FactChip({required this.fact, required this.expand});
-
-  final _Fact fact;
-  final bool expand;
+  final IconData icon;
+  final String title;
+  final String value;
 
   @override
   Widget build(BuildContext context) {
-    final content = Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+    return Container(
+      padding: const EdgeInsets.all(13),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.11),
-        borderRadius: BorderRadius.circular(999),
+        color: Colors.white.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
       ),
-      child: Row(
-        mainAxisSize: expand ? MainAxisSize.max : MainAxisSize.min,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(fact.icon, size: 16, color: Colors.white),
-          const SizedBox(width: 7),
-          Flexible(
-            child: Text(
-              fact.label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
+          Row(
+            children: [
+              Icon(icon, size: 15, color: Colors.white),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Colors.white.withValues(alpha: 0.78),
+                  ),
+                ),
               ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w900,
             ),
           ),
         ],
       ),
     );
-
-    return expand ? SizedBox(width: double.infinity, child: content) : content;
   }
 }
 
-class _StatusBadge extends StatelessWidget {
-  const _StatusBadge({required this.status});
-
-  final _TripStatus status;
-
-  @override
-  Widget build(BuildContext context) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.13),
-          borderRadius: BorderRadius.circular(999),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(status.icon, size: 15, color: const Color(0xFFD8F2DA)),
-            const SizedBox(width: 6),
-            Flexible(
-              child: Text(
-                status.label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _Fact {
-  const _Fact({required this.icon, required this.label});
+class _GlassBadge extends StatelessWidget {
+  const _GlassBadge({required this.icon, required this.label});
 
   final IconData icon;
   final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 15, color: Colors.white),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _TripStatus {

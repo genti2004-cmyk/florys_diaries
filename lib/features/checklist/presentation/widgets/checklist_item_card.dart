@@ -17,19 +17,24 @@ class ChecklistItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final warning = item.isOverdue || item.isDueSoon;
+
     return Card(
       margin: EdgeInsets.zero,
       child: InkWell(
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(28),
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 12, 14, 12),
+          padding: const EdgeInsets.fromLTRB(12, 14, 14, 14),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Checkbox(
                 value: item.isCompleted,
                 onChanged: (value) => onToggle(value ?? false),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(6),
+                ),
               ),
               const SizedBox(width: 4),
               Expanded(
@@ -48,10 +53,10 @@ class ChecklistItemCard extends StatelessWidget {
                             : null,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 9),
                     Wrap(
-                      spacing: 8,
-                      runSpacing: 6,
+                      spacing: 7,
+                      runSpacing: 7,
                       children: [
                         _InfoChip(
                           icon: item.category.icon,
@@ -69,12 +74,12 @@ class ChecklistItemCard extends StatelessWidget {
                             label: item.isOverdue
                                 ? 'Überfällig: ${_formatDate(item.dueDate!)}'
                                 : 'Fällig: ${_formatDate(item.dueDate!)}',
-                            emphasized: item.isOverdue || item.isDueSoon,
+                            emphasized: warning,
                           ),
                       ],
                     ),
                     if (item.notes.trim().isNotEmpty) ...[
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 9),
                       Text(
                         item.notes,
                         maxLines: 2,
@@ -117,15 +122,13 @@ class _InfoChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final foreground = emphasized
-        ? const Color(0xFF9A6414)
-        : AppColors.textMuted;
+    final foreground = emphasized ? AppColors.danger : AppColors.textMuted;
     final background = emphasized
-        ? const Color(0xFFFFF1D6)
+        ? const Color(0xFFFFECEE)
         : AppColors.surfaceSoft;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
       decoration: BoxDecoration(
         color: background,
         borderRadius: BorderRadius.circular(999),
@@ -133,7 +136,7 @@ class _InfoChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 15, color: foreground),
+          Icon(icon, size: 14, color: foreground),
           const SizedBox(width: 5),
           Text(
             label,

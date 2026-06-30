@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 
+import 'package:florys_diaries/app/theme/app_colors.dart';
+
 import 'package:florys_diaries/features/album/presentation/widgets/trip_album_section.dart';
 import 'package:florys_diaries/features/checklist/presentation/widgets/trip_checklist_section.dart';
 import 'package:florys_diaries/features/documents/application/trip_document_query.dart';
@@ -306,11 +308,19 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
     final visibleDocuments = _documentsFor(currentTrip.documents);
 
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Text(
-          currentTrip.title,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Reiseübersicht'),
+            Text(
+              currentTrip.title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
         ),
         actions: [
           PopupMenuButton<_TripDetailMenuAction>(
@@ -359,16 +369,11 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
           const SizedBox(width: 4),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _openDocumentEditor(context, currentTrip),
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('Dokument'),
-      ),
       body: SafeArea(
         top: false,
         child: ListView(
           key: PageStorageKey<String>('trip-detail-${currentTrip.id}'),
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 112),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 36),
           children: [
             TripDetailHeroCard(trip: currentTrip),
             const SizedBox(height: 14),
@@ -377,11 +382,11 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
               onEdit: () => _editTrip(context, currentTrip),
               onExport: () => _exportTrip(context, currentTrip),
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 24),
             TripChecklistSection(trip: currentTrip),
-            const SizedBox(height: 18),
+            const SizedBox(height: 24),
             TripAlbumSection(trip: currentTrip),
-            const SizedBox(height: 18),
+            const SizedBox(height: 24),
             TripVaultSection(
               trip: currentTrip,
               visibleDocuments: visibleDocuments,

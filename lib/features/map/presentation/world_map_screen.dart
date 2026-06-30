@@ -58,7 +58,7 @@ class _WorldMapScreenState extends State<WorldMapScreen> {
         bottom: false,
         child: ListView(
           key: const PageStorageKey<String>('world-map'),
-          padding: const EdgeInsets.fromLTRB(16, 18, 16, 110),
+          padding: const EdgeInsets.fromLTRB(16, 18, 16, 150),
           children: [
             Text(
               'Weltkarte',

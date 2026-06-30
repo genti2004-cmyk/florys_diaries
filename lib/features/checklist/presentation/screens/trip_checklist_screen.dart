@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import 'package:florys_diaries/app/theme/app_colors.dart';
-import 'package:florys_diaries/core/widgets/app_section_card.dart';
 import 'package:florys_diaries/features/checklist/application/travel_checklist_suggestion_service.dart';
 import 'package:florys_diaries/features/checklist/domain/trip_checklist_item.dart';
 import 'package:florys_diaries/features/checklist/presentation/screens/checklist_item_editor_screen.dart';
@@ -124,35 +123,50 @@ class _TripChecklistScreenState extends State<TripChecklistScreen> {
     final visibleItems = _visibleItems(trip.checklistItems);
 
     return Scaffold(
-      appBar: AppBar(title: Text('Checkliste: ${trip.destination}')),
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Reise-Checkliste'),
+            Text(
+              trip.destination,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
+        ),
+      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openEditor(trip),
         icon: const Icon(Icons.add_task_rounded),
         label: const Text('Aufgabe'),
       ),
       body: SafeArea(
+        top: false,
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 112),
           children: [
             ChecklistProgressCard(items: trip.checklistItems),
             const SizedBox(height: 14),
-            AppSectionCard(
-              icon: Icons.auto_awesome_rounded,
-              title: suggestions.isEmpty
-                  ? 'Vorbereitung geprüft'
-                  : '${suggestions.length} passende Vorschläge',
-              subtitle: suggestions.isEmpty
-                  ? 'Für die vorhandenen Reisedaten gibt es aktuell nichts Neues.'
-                  : 'Aus Reisedatum, Dokumenten und offenen Vorbereitungen.',
-              trailing: suggestions.isEmpty
-                  ? const Icon(
-                      Icons.check_circle_rounded,
-                      color: AppColors.sage,
-                    )
-                  : const Icon(Icons.chevron_right_rounded),
+            _SuggestionCard(
+              suggestionCount: suggestions.length,
               onTap: suggestions.isEmpty ? null : () => _addSuggestions(trip),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 18),
+            Text(
+              'Aufgaben',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 5),
+            Text(
+              'Sortiert nach Status, Priorität und Fälligkeit.',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppColors.textMuted,
+              ),
+            ),
+            const SizedBox(height: 12),
             _CategoryFilter(
               selected: _categoryFilter,
               onChanged: (value) => setState(() => _categoryFilter = value),
@@ -202,6 +216,75 @@ class _TripChecklistScreenState extends State<TripChecklistScreen> {
   }
 }
 
+class _SuggestionCard extends StatelessWidget {
+  const _SuggestionCard({required this.suggestionCount, required this.onTap});
+
+  final int suggestionCount;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(28),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: AppColors.primarySoft,
+                  borderRadius: BorderRadius.circular(17),
+                ),
+                child: const Icon(
+                  Icons.auto_awesome_rounded,
+                  color: AppColors.primary,
+                ),
+              ),
+              const SizedBox(width: 13),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      suggestionCount == 0
+                          ? 'Vorbereitung geprüft'
+                          : '$suggestionCount passende Vorschläge',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      suggestionCount == 0
+                          ? 'Für diese Reise gibt es aktuell nichts Neues.'
+                          : 'Automatisch aus Reisedatum, Dokumenten und offenen Vorbereitungen.',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                suggestionCount == 0
+                    ? Icons.check_circle_rounded
+                    : Icons.chevron_right_rounded,
+                color: suggestionCount == 0
+                    ? AppColors.success
+                    : AppColors.primary,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _CategoryFilter extends StatelessWidget {
   const _CategoryFilter({required this.selected, required this.onChanged});
 
@@ -246,27 +329,33 @@ class _EmptyChecklistState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.all(22),
+        padding: const EdgeInsets.all(24),
         child: Column(
           children: [
-            const Icon(
-              Icons.checklist_rounded,
-              size: 46,
-              color: AppColors.primary,
+            Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                color: AppColors.primarySoft,
+                borderRadius: BorderRadius.circular(22),
+              ),
+              child: const Icon(
+                Icons.checklist_rounded,
+                size: 32,
+                color: AppColors.primary,
+              ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 14),
             Text(
               hasAnyItems
                   ? 'Keine Aufgabe in dieser Kategorie'
                   : 'Checkliste starten',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: AppColors.text,
                 fontWeight: FontWeight.w900,
               ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 7),
             Text(
               hasAnyItems
                   ? 'Wähle eine andere Kategorie oder lege eine neue Aufgabe an.'
@@ -274,7 +363,7 @@ class _EmptyChecklistState extends StatelessWidget {
               textAlign: TextAlign.center,
               style: const TextStyle(color: AppColors.textMuted),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 16),
             OutlinedButton.icon(
               onPressed: onAdd,
               icon: const Icon(Icons.add_rounded),

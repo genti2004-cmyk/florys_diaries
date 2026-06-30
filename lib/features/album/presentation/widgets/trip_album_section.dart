@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 import 'package:florys_diaries/app/theme/app_colors.dart';
@@ -5,7 +7,9 @@ import 'package:florys_diaries/core/widgets/app_section_card.dart';
 import 'package:florys_diaries/core/widgets/app_section_title.dart';
 import 'package:florys_diaries/features/album/domain/trip_album_entry.dart';
 import 'package:florys_diaries/features/album/presentation/screens/album_entry_editor_screen.dart';
+import 'package:florys_diaries/features/album/presentation/screens/trip_photo_gallery_screen.dart';
 import 'package:florys_diaries/features/album/presentation/widgets/album_entry_card.dart';
+import 'package:florys_diaries/features/documents/data/travel_file_service.dart';
 import 'package:florys_diaries/features/documents/domain/document_category.dart';
 import 'package:florys_diaries/features/documents/domain/travel_document.dart';
 import 'package:florys_diaries/features/trips/application/trip_store_scope.dart';
@@ -65,6 +69,17 @@ class _TripAlbumSectionState extends State<TripAlbumSection> {
     await store.updateTrip(widget.trip.copyWith(albumEntries: entries));
   }
 
+  void _openGallery(List<TravelDocument> photos, int initialIndex) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => TripPhotoGalleryScreen(
+          photos: photos,
+          initialIndex: initialIndex,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final photos = _photoDocuments(widget.trip.documents);
@@ -85,8 +100,10 @@ class _TripAlbumSectionState extends State<TripAlbumSection> {
             Expanded(
               child: AppSectionCard(
                 icon: Icons.auto_stories_outlined,
-                title: '${widget.trip.albumEntryCount} Einträge',
-                subtitle: '$favoriteCount Lieblingsmomente',
+                title: _entryCountLabel(widget.trip.albumEntryCount),
+                subtitle: favoriteCount == 1
+                    ? '1 Lieblingsmoment'
+                    : '$favoriteCount Lieblingsmomente',
                 onTap: () => _openEditor(),
               ),
             ),
@@ -94,17 +111,21 @@ class _TripAlbumSectionState extends State<TripAlbumSection> {
             Expanded(
               child: AppSectionCard(
                 icon: Icons.photo_library_outlined,
-                title: '${photos.length} Fotos',
+                title: photos.length == 1 ? '1 Foto' : '${photos.length} Fotos',
                 subtitle: photos.isEmpty
                     ? 'Noch keine Foto-Dateien'
-                    : 'Aus Travel Vault',
+                    : 'Zum Vergrößern antippen',
+                onTap: photos.isEmpty ? null : () => _openGallery(photos, 0),
               ),
             ),
           ],
         ),
         const SizedBox(height: 12),
         if (photos.isNotEmpty) ...[
-          _PhotoPreviewStrip(photos: photos),
+          _PhotoPreviewStrip(
+            photos: photos,
+            onPhotoTap: (index) => _openGallery(photos, index),
+          ),
           const SizedBox(height: 12),
         ],
         _AlbumToolsRow(
@@ -158,9 +179,20 @@ class _TripAlbumSectionState extends State<TripAlbumSection> {
         .where((document) {
           final extension = document.fileExtension.toLowerCase();
           return document.categoryId == DocumentCategories.photo.id ||
-              const ['jpg', 'jpeg', 'png', 'webp'].contains(extension);
+              const <String>{
+                'jpg',
+                'jpeg',
+                'png',
+                'webp',
+                'heic',
+                'heif',
+              }.contains(extension);
         })
         .toList(growable: false);
+  }
+
+  static String _entryCountLabel(int count) {
+    return count == 1 ? '1 Eintrag' : '$count Einträge';
   }
 }
 
@@ -180,19 +212,24 @@ class _AlbumToolsRow extends StatelessWidget {
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.fromLTRB(14, 10, 12, 10),
         child: Row(
           children: [
+            const Icon(Icons.favorite_border_rounded),
+            const SizedBox(width: 10),
             Expanded(
-              child: SwitchListTile.adaptive(
-                contentPadding: EdgeInsets.zero,
-                value: favoritesOnly,
-                onChanged: onFavoritesChanged,
-                title: const Text('Nur Lieblingsmomente'),
-                secondary: const Icon(Icons.favorite_border_rounded),
+              child: Text(
+                'Nur Favoriten',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodyLarge,
               ),
             ),
-            const SizedBox(width: 8),
+            Switch.adaptive(
+              value: favoritesOnly,
+              onChanged: onFavoritesChanged,
+            ),
+            const SizedBox(width: 6),
             FilledButton.icon(
               onPressed: onAdd,
               icon: const Icon(Icons.add_rounded),
@@ -206,51 +243,195 @@ class _AlbumToolsRow extends StatelessWidget {
 }
 
 class _PhotoPreviewStrip extends StatelessWidget {
-  const _PhotoPreviewStrip({required this.photos});
+  const _PhotoPreviewStrip({
+    required this.photos,
+    required this.onPhotoTap,
+  });
 
   final List<TravelDocument> photos;
+  final ValueChanged<int> onPhotoTap;
 
   @override
   Widget build(BuildContext context) {
-    final visibleCount = photos.length > 8 ? 8 : photos.length;
+    final visibleCount = photos.length > 10 ? 10 : photos.length;
 
     return SizedBox(
-      height: 86,
+      height: 176,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: visibleCount,
-        separatorBuilder: (context, index) => const SizedBox(width: 10),
+        separatorBuilder: (context, index) => const SizedBox(width: 12),
         itemBuilder: (context, index) {
-          final photo = photos[index];
-          return Container(
-            width: 86,
-            decoration: BoxDecoration(
-              color: AppColors.primarySoft,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: AppColors.border),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.image_outlined, color: AppColors.primary),
-                const SizedBox(height: 6),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: Text(
-                    photo.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: AppColors.text,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+          return _PhotoPreviewTile(
+            photo: photos[index],
+            index: index,
+            totalCount: photos.length,
+            onTap: () => onPhotoTap(index),
           );
         },
+      ),
+    );
+  }
+}
+
+class _PhotoPreviewTile extends StatelessWidget {
+  const _PhotoPreviewTile({
+    required this.photo,
+    required this.index,
+    required this.totalCount,
+    required this.onTap,
+  });
+
+  final TravelDocument photo;
+  final int index;
+  final int totalCount;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<File?>(
+      future: const TravelFileService().resolveDocumentFile(photo),
+      builder: (context, snapshot) {
+        final file = snapshot.data;
+        final hasPreview = file != null && file.existsSync();
+
+        return Material(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(26),
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(26),
+            child: Ink(
+              width: 222,
+              decoration: BoxDecoration(
+                color: AppColors.primarySoft,
+                borderRadius: BorderRadius.circular(26),
+                border: Border.all(color: AppColors.border),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x100D1728),
+                    blurRadius: 16,
+                    offset: Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(25),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    if (hasPreview)
+                      Image.file(
+                        file,
+                        fit: BoxFit.cover,
+                        cacheWidth: 900,
+                        errorBuilder: (context, error, stackTrace) {
+                          return const _PhotoPlaceholder();
+                        },
+                      )
+                    else
+                      const _PhotoPlaceholder(),
+                    const DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [Colors.transparent, Color(0xD9000000)],
+                          stops: [0.38, 1],
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      top: 12,
+                      right: 12,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 9,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.46),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.fullscreen_rounded,
+                              size: 16,
+                              color: Colors.white,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${index + 1}/$totalCount',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Align(
+                      alignment: Alignment.bottomLeft,
+                      child: Padding(
+                        padding: const EdgeInsets.all(14),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              photo.title.trim().isEmpty
+                                  ? 'Reisefoto ${index + 1}'
+                                  : photo.title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.titleSmall
+                                  ?.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                            ),
+                            if (photo.fileName.trim().isNotEmpty) ...[
+                              const SizedBox(height: 3),
+                              Text(
+                                photo.fileName,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(color: Colors.white70),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _PhotoPlaceholder extends StatelessWidget {
+  const _PhotoPlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    return const ColoredBox(
+      color: AppColors.primarySoft,
+      child: Center(
+        child: Icon(
+          Icons.image_outlined,
+          color: AppColors.primary,
+          size: 42,
+        ),
       ),
     );
   }
