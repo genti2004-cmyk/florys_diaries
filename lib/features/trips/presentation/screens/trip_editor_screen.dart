@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 
 import 'package:florys_diaries/app/theme/app_colors.dart';
+import 'package:florys_diaries/core/widgets/premium_date_picker.dart';
 import 'package:florys_diaries/core/widgets/unsaved_changes_guard.dart';
 import 'package:florys_diaries/features/trips/application/trip_store_scope.dart';
 import 'package:florys_diaries/features/trips/domain/trip.dart';
@@ -87,15 +88,21 @@ class _TripEditorScreenState extends State<TripEditorScreen> {
     final picked = await _pickDate(
       initialDate: _startDate,
       firstDate: DateTime(2000),
+      title: 'Reisebeginn',
+      subtitle: 'Wähle den ersten Tag deiner Reise.',
     );
     if (picked == null || !mounted) {
       return;
     }
 
     final previousDuration = _endDate.difference(_startDate);
+    final latestAllowedDate = DateTime(2100, 12, 31);
+    final proposedEndDate = picked.add(previousDuration);
     setState(() {
       _startDate = picked;
-      _endDate = picked.add(previousDuration);
+      _endDate = proposedEndDate.isAfter(latestAllowedDate)
+          ? latestAllowedDate
+          : proposedEndDate;
       _hasUnsavedChanges = true;
     });
   }
@@ -104,6 +111,8 @@ class _TripEditorScreenState extends State<TripEditorScreen> {
     final picked = await _pickDate(
       initialDate: _endDate,
       firstDate: _startDate,
+      title: 'Reiseende',
+      subtitle: 'Wähle den letzten Tag deiner Reise.',
     );
     if (picked == null || !mounted) {
       return;
@@ -117,15 +126,19 @@ class _TripEditorScreenState extends State<TripEditorScreen> {
   Future<DateTime?> _pickDate({
     required DateTime initialDate,
     required DateTime firstDate,
+    required String title,
+    required String subtitle,
   }) {
     final safeInitialDate = initialDate.isBefore(firstDate)
         ? firstDate
         : initialDate;
-    return showDatePicker(
+    return showPremiumDatePicker(
       context: context,
       initialDate: safeInitialDate,
       firstDate: firstDate,
-      lastDate: DateTime(2100),
+      lastDate: DateTime(2100, 12, 31),
+      title: title,
+      subtitle: subtitle,
     );
   }
 

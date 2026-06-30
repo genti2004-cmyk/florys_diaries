@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:florys_diaries/app/theme/app_colors.dart';
+import 'package:florys_diaries/core/widgets/premium_date_picker.dart';
 import 'package:florys_diaries/core/widgets/unsaved_changes_guard.dart';
 import 'package:florys_diaries/features/album/domain/trip_album_entry.dart';
 
@@ -81,11 +82,13 @@ class _AlbumEntryEditorScreenState extends State<AlbumEntryEditorScreen> {
   }
 
   Future<void> _pickDate() async {
-    final pickedDate = await showDatePicker(
+    final pickedDate = await showPremiumDatePicker(
       context: context,
       initialDate: _date,
       firstDate: DateTime(1900),
-      lastDate: DateTime(2100),
+      lastDate: DateTime(2100, 12, 31),
+      title: 'Datum des Moments',
+      subtitle: 'Wann ist diese Erinnerung entstanden?',
     );
     if (pickedDate == null || !mounted || pickedDate == _date) {
       return;

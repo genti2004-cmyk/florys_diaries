@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:florys_diaries/app/theme/app_colors.dart';
+import 'package:florys_diaries/core/widgets/premium_date_picker.dart';
 import 'package:florys_diaries/core/widgets/unsaved_changes_guard.dart';
 import 'package:florys_diaries/features/checklist/domain/trip_checklist_item.dart';
 
@@ -78,11 +79,13 @@ class _ChecklistItemEditorScreenState extends State<ChecklistItemEditorScreen> {
 
   Future<void> _pickDueDate() async {
     final initialDate = _dueDate ?? widget.tripStartDate;
-    final pickedDate = await showDatePicker(
+    final pickedDate = await showPremiumDatePicker(
       context: context,
       initialDate: initialDate,
       firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
+      lastDate: DateTime(2100, 12, 31),
+      title: 'Fälligkeitsdatum',
+      subtitle: 'Bis wann möchtest du diese Aufgabe erledigen?',
     );
     if (pickedDate == null || !mounted || pickedDate == _dueDate) {
       return;
