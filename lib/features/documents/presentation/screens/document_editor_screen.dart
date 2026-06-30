@@ -234,7 +234,7 @@ class _DocumentEditorScreenState extends State<DocumentEditorScreen> {
           'Die Änderungen an diesem Dokument wurden noch nicht gespeichert.',
       child: Scaffold(
         appBar: AppBar(
-          title: Text(_isEditing ? 'Dokument bearbeiten' : 'Dokument anlegen'),
+          title: Text(_isEditing ? 'Dokument bearbeiten' : 'Dokument hinzufügen'),
           actions: [
             if (_isEditing)
               IconButton(
@@ -245,105 +245,120 @@ class _DocumentEditorScreenState extends State<DocumentEditorScreen> {
           ],
         ),
         body: SafeArea(
+          bottom: false,
           child: Form(
             key: _formKey,
             child: ListView(
-              key: const PageStorageKey<String>('document-editor-form'),
-              padding: const EdgeInsets.all(16),
+              key: const PageStorageKey<String>('document-editor-form-v63'),
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
               keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
               children: [
-                DropdownButtonFormField<String>(
-                  key: const ValueKey<String>('document-editor-category'),
-                  initialValue: _categoryId,
-                  decoration: const InputDecoration(
-                    labelText: 'Kategorie',
-                    prefixIcon: Icon(Icons.folder_outlined),
-                  ),
-                  items: DocumentCategories.values
-                      .map((category) {
-                        return DropdownMenuItem<String>(
-                          value: category.id,
-                          child: Row(
-                            children: [
-                              Icon(
-                                category.icon,
-                                size: 20,
-                                color: AppColors.primary,
-                              ),
-                              const SizedBox(width: 10),
-                              Text(category.label),
-                            ],
-                          ),
-                        );
-                      })
-                      .toList(growable: false),
-                  onChanged: _isSaving
-                      ? null
-                      : (value) {
-                          if (value == null || value == _categoryId) {
-                            return;
+                _DocumentEditorIntroCard(isEditing: _isEditing),
+                const SizedBox(height: 16),
+                _DocumentEditorSection(
+                  icon: Icons.description_outlined,
+                  title: 'Dokumentdetails',
+                  subtitle: 'Kategorie und Titel helfen dir beim schnellen Wiederfinden.',
+                  child: Column(
+                    children: [
+                      DropdownButtonFormField<String>(
+                        key: const ValueKey<String>('document-editor-category'),
+                        initialValue: _categoryId,
+                        isExpanded: true,
+                        decoration: const InputDecoration(
+                          labelText: 'Kategorie',
+                          prefixIcon: Icon(Icons.folder_outlined),
+                        ),
+                        items: DocumentCategories.values
+                            .map((category) {
+                              return DropdownMenuItem<String>(
+                                value: category.id,
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      category.icon,
+                                      size: 20,
+                                      color: AppColors.primary,
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Text(category.label),
+                                  ],
+                                ),
+                              );
+                            })
+                            .toList(growable: false),
+                        onChanged: _isSaving
+                            ? null
+                            : (value) {
+                                if (value == null || value == _categoryId) {
+                                  return;
+                                }
+                                setState(() {
+                                  _categoryId = value;
+                                  _hasUnsavedChanges = true;
+                                });
+                              },
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        key: const ValueKey<String>('document-editor-title'),
+                        controller: _titleController,
+                        enabled: !_isSaving,
+                        textInputAction: TextInputAction.next,
+                        decoration: const InputDecoration(
+                          labelText: 'Titel',
+                          hintText: 'z. B. Flugticket Lufthansa',
+                          prefixIcon: Icon(Icons.title_rounded),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Bitte Titel eintragen';
                           }
-                          setState(() {
-                            _categoryId = value;
-                            _hasUnsavedChanges = true;
-                          });
+                          return null;
                         },
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  key: const ValueKey<String>('document-editor-title'),
-                  controller: _titleController,
-                  enabled: !_isSaving,
-                  textInputAction: TextInputAction.next,
-                  decoration: const InputDecoration(
-                    labelText: 'Titel',
-                    hintText: 'z. B. Flugticket Lufthansa',
-                    prefixIcon: Icon(Icons.title_rounded),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Bitte Titel eintragen';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 12),
-                _FilePickerCard(
-                  fileName: selectedFileText,
-                  hasFile: _selectedFileName.trim().isNotEmpty,
-                  isBusy: _isSaving,
-                  onPickFile: _pickFile,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  key: const ValueKey<String>('document-editor-description'),
-                  controller: _descriptionController,
-                  enabled: !_isSaving,
-                  minLines: 4,
-                  maxLines: 7,
-                  decoration: const InputDecoration(
-                    labelText: 'Beschreibung / Notiz',
-                    hintText: 'Buchungsnummer, Strecke, Check-in, Details ...',
-                    prefixIcon: Icon(Icons.notes_outlined),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 20),
-                FilledButton.icon(
-                  key: const ValueKey<String>('document-editor-save'),
-                  onPressed: _isSaving ? null : _save,
-                  icon: _isSaving
-                      ? const SizedBox.square(
-                          dimension: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.check_rounded),
-                  label: Text(
-                    _isEditing ? 'Änderungen speichern' : 'Dokument speichern',
+                const SizedBox(height: 14),
+                _DocumentEditorSection(
+                  icon: Icons.attach_file_rounded,
+                  title: 'Datei',
+                  subtitle: 'Wähle ein Ticket, PDF, Bild oder eine andere Reisedatei.',
+                  child: _FilePickerCard(
+                    fileName: selectedFileText,
+                    hasFile: _selectedFileName.trim().isNotEmpty,
+                    isBusy: _isSaving,
+                    onPickFile: _pickFile,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                _DocumentEditorSection(
+                  icon: Icons.notes_outlined,
+                  title: 'Notiz',
+                  subtitle: 'Optional: Buchungsnummer, Strecke oder wichtige Hinweise.',
+                  optional: true,
+                  child: TextFormField(
+                    key: const ValueKey<String>('document-editor-description'),
+                    controller: _descriptionController,
+                    enabled: !_isSaving,
+                    minLines: 3,
+                    maxLines: 6,
+                    textCapitalization: TextCapitalization.sentences,
+                    decoration: const InputDecoration(
+                      hintText: 'Was möchtest du zu dieser Datei festhalten?',
+                      prefixIcon: Icon(Icons.edit_note_rounded),
+                    ),
                   ),
                 ),
               ],
             ),
           ),
+        ),
+        bottomNavigationBar: _DocumentSaveBar(
+          isEditing: _isEditing,
+          isSaving: _isSaving,
+          onSave: _save,
         ),
       ),
     );
@@ -362,6 +377,191 @@ class _DocumentEditorScreenState extends State<DocumentEditorScreen> {
     final withoutExtension = fileName.replaceFirst(RegExp(r'\.[^.]+$'), '');
     final title = withoutExtension.replaceAll(RegExp(r'[_-]+'), ' ').trim();
     return title.isEmpty ? fileName : title;
+  }
+}
+
+class _DocumentEditorIntroCard extends StatelessWidget {
+  const _DocumentEditorIntroCard({required this.isEditing});
+
+  final bool isEditing;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF173A70), Color(0xFF285FD5)],
+        ),
+        borderRadius: BorderRadius.circular(26),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
+            ),
+            child: const Icon(Icons.folder_copy_outlined, color: Colors.white),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isEditing ? 'Datei aktualisieren' : 'Datei sicher ablegen',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  isEditing
+                      ? 'Passe Kategorie, Titel, Datei oder Notiz an.'
+                      : 'Gib der Datei einen klaren Titel und ordne sie einer Kategorie zu.',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Colors.white.withValues(alpha: 0.84),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DocumentEditorSection extends StatelessWidget {
+  const _DocumentEditorSection({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.child,
+    this.optional = false,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Widget child;
+  final bool optional;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: AppColors.primarySoft,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Icon(icon, color: AppColors.primary, size: 21),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              title,
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(fontWeight: FontWeight.w900),
+                            ),
+                          ),
+                          if (optional) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.surfaceSoft,
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: Text(
+                                'Optional',
+                                style: Theme.of(context).textTheme.labelSmall
+                                    ?.copyWith(color: AppColors.textMuted),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 3),
+                      Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            child,
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DocumentSaveBar extends StatelessWidget {
+  const _DocumentSaveBar({
+    required this.isEditing,
+    required this.isSaving,
+    required this.onSave,
+  });
+
+  final bool isEditing;
+  final bool isSaving;
+  final VoidCallback onSave;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.surface,
+      elevation: 10,
+      shadowColor: const Color(0x220D1728),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+          child: FilledButton.icon(
+            key: const ValueKey<String>('document-editor-save'),
+            onPressed: isSaving ? null : onSave,
+            icon: isSaving
+                ? const SizedBox.square(
+                    dimension: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.check_rounded),
+            label: Text(
+              isEditing ? 'Änderungen speichern' : 'Dokument speichern',
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 

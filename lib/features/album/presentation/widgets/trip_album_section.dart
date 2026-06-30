@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 
 import 'package:florys_diaries/app/theme/app_colors.dart';
-import 'package:florys_diaries/core/widgets/app_section_card.dart';
 import 'package:florys_diaries/features/album/domain/trip_album_entry.dart';
 import 'package:florys_diaries/features/album/presentation/screens/album_entry_editor_screen.dart';
 import 'package:florys_diaries/features/album/presentation/screens/trip_photo_gallery_screen.dart';
@@ -88,96 +87,81 @@ class _TripAlbumSectionState extends State<TripAlbumSection> {
         .length;
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        _MomentsOverviewCard(
+          momentCount: widget.trip.albumEntryCount,
+          photoCount: photos.length,
+          favoriteCount: favoriteCount,
+          onAddMoment: () => _openEditor(),
+        ),
+        if (photos.isNotEmpty) ...[
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Reisefotos',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: () => _openGallery(photos, 0),
+                child: Text('Alle ${photos.length}'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          _PhotoMosaic(
+            photos: photos,
+            onPhotoTap: (index) => _openGallery(photos, index),
+          ),
+        ],
+        const SizedBox(height: 18),
         Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Momente', style: Theme.of(context).textTheme.titleLarge),
-                  const SizedBox(height: 4),
                   Text(
-                    'Fotos, Highlights, Orte und persönliche Momente.',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.textMuted,
+                    'Reisetagebuch',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w900,
                     ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    'Notizen, Orte und besondere Erlebnisse.',
+                    style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ],
               ),
             ),
-            const SizedBox(width: 10),
-            FilledButton.icon(
-              onPressed: () => _openEditor(),
-              icon: const Icon(Icons.add_rounded),
-              label: const Text('Eintrag'),
-            ),
-          ],
-        ),
-        const SizedBox(height: 14),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            _SummaryChip(
-              icon: Icons.auto_stories_outlined,
-              label: _entryCountLabel(widget.trip.albumEntryCount),
-            ),
-            _SummaryChip(
-              icon: Icons.photo_library_outlined,
-              label: photos.length == 1 ? '1 Foto' : '${photos.length} Fotos',
-              onTap: photos.isEmpty ? null : () => _openGallery(photos, 0),
-            ),
-            _SummaryChip(
-              icon: Icons.favorite_outline_rounded,
-              label: favoriteCount == 1
-                  ? '1 Favorit'
-                  : '$favoriteCount Favoriten',
-            ),
-          ],
-        ),
-        if (photos.isNotEmpty) ...[
-          const SizedBox(height: 14),
-          _PhotoPreviewStrip(
-            photos: photos,
-            onPhotoTap: (index) => _openGallery(photos, index),
-          ),
-        ],
-        if (widget.trip.albumEntries.isNotEmpty) ...[
-          const SizedBox(height: 14),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: FilterChip(
-              selected: _showFavoritesOnly,
-              onSelected: (value) {
-                setState(() => _showFavoritesOnly = value);
-              },
-              avatar: Icon(
-                _showFavoritesOnly
-                    ? Icons.favorite_rounded
-                    : Icons.favorite_border_rounded,
-                size: 17,
+            if (widget.trip.albumEntries.isNotEmpty)
+              FilterChip(
+                selected: _showFavoritesOnly,
+                onSelected: (value) {
+                  setState(() => _showFavoritesOnly = value);
+                },
+                avatar: Icon(
+                  _showFavoritesOnly
+                      ? Icons.favorite_rounded
+                      : Icons.favorite_border_rounded,
+                  size: 17,
+                ),
+                label: const Text('Favoriten'),
               ),
-              label: const Text('Nur Favoriten'),
-            ),
-          ),
-        ],
-        const SizedBox(height: 14),
+          ],
+        ),
+        const SizedBox(height: 12),
         if (widget.trip.albumEntries.isEmpty)
-          AppSectionCard(
-            icon: Icons.add_circle_outline_rounded,
-            title: 'Noch keine Momente',
-            subtitle: 'Halte Tagesnotizen, Highlights und Orte fest.',
-            onTap: () => _openEditor(),
-          )
+          _EmptyMomentsCard(onAddMoment: () => _openEditor())
         else if (entries.isEmpty)
-          AppSectionCard(
-            icon: Icons.favorite_border_rounded,
-            title: 'Keine Favoriten vorhanden',
-            subtitle: 'Deaktiviere den Filter oder markiere einen Moment.',
-            onTap: () => setState(() => _showFavoritesOnly = false),
+          _NoFavoriteMomentsCard(
+            onShowAll: () => setState(() => _showFavoritesOnly = false),
           )
         else
           ...entries.map(
@@ -218,100 +202,228 @@ class _TripAlbumSectionState extends State<TripAlbumSection> {
         })
         .toList(growable: false);
   }
-
-  static String _entryCountLabel(int count) {
-    return count == 1 ? '1 Eintrag' : '$count Einträge';
-  }
 }
 
-class _SummaryChip extends StatelessWidget {
-  const _SummaryChip({required this.icon, required this.label, this.onTap});
+class _MomentsOverviewCard extends StatelessWidget {
+  const _MomentsOverviewCard({
+    required this.momentCount,
+    required this.photoCount,
+    required this.favoriteCount,
+    required this.onAddMoment,
+  });
 
-  final IconData icon;
-  final String label;
-  final VoidCallback? onTap;
+  final int momentCount;
+  final int photoCount;
+  final int favoriteCount;
+  final VoidCallback onAddMoment;
 
   @override
   Widget build(BuildContext context) {
-    final content = Container(
-      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceSoft,
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 15, color: AppColors.primary),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: AppColors.text,
-              fontWeight: FontWeight.w800,
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: AppColors.primarySoft,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: const Icon(
+                    Icons.auto_stories_rounded,
+                    color: AppColors.primary,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Momente',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Fotos, Erlebnisse und Lieblingsorte aus dieser Reise.',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ),
-        ],
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: _OverviewMetric(
+                    value: '$momentCount',
+                    label: 'Einträge',
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _OverviewMetric(
+                    value: '$photoCount',
+                    label: 'Fotos',
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _OverviewMetric(
+                    value: '$favoriteCount',
+                    label: 'Favoriten',
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: onAddMoment,
+                icon: const Icon(Icons.add_rounded),
+                label: const Text('Moment hinzufügen'),
+              ),
+            ),
+          ],
+        ),
       ),
-    );
-
-    if (onTap == null) {
-      return content;
-    }
-
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(999),
-      child: content,
     );
   }
 }
 
-class _PhotoPreviewStrip extends StatelessWidget {
-  const _PhotoPreviewStrip({
-    required this.photos,
-    required this.onPhotoTap,
-  });
+class _OverviewMetric extends StatelessWidget {
+  const _OverviewMetric({required this.value, required this.label});
+
+  final String value;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceSoft,
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Column(
+        children: [
+          Text(
+            value,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(label, style: Theme.of(context).textTheme.bodySmall),
+        ],
+      ),
+    );
+  }
+}
+
+class _PhotoMosaic extends StatelessWidget {
+  const _PhotoMosaic({required this.photos, required this.onPhotoTap});
 
   final List<TravelDocument> photos;
   final ValueChanged<int> onPhotoTap;
 
   @override
   Widget build(BuildContext context) {
-    final visibleCount = photos.length > 10 ? 10 : photos.length;
+    final visible = photos.take(3).toList(growable: false);
+
+    if (visible.length == 1) {
+      return SizedBox(
+        height: 190,
+        child: _PhotoTile(
+          photo: visible.first,
+          onTap: () => onPhotoTap(0),
+          remainingCount: photos.length - 1,
+        ),
+      );
+    }
+
+    if (visible.length == 2) {
+      return SizedBox(
+        height: 176,
+        child: Row(
+          children: [
+            Expanded(
+              child: _PhotoTile(
+                photo: visible[0],
+                onTap: () => onPhotoTap(0),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _PhotoTile(
+                photo: visible[1],
+                onTap: () => onPhotoTap(1),
+                remainingCount: photos.length - 2,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
     return SizedBox(
-      height: 156,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: visibleCount,
-        separatorBuilder: (context, index) => const SizedBox(width: 10),
-        itemBuilder: (context, index) {
-          return _PhotoPreviewTile(
-            photo: photos[index],
-            index: index,
-            totalCount: photos.length,
-            onTap: () => onPhotoTap(index),
-          );
-        },
+      height: 196,
+      child: Row(
+        children: [
+          Expanded(
+            flex: 3,
+            child: _PhotoTile(
+              photo: visible[0],
+              onTap: () => onPhotoTap(0),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            flex: 2,
+            child: Column(
+              children: [
+                Expanded(
+                  child: _PhotoTile(
+                    photo: visible[1],
+                    onTap: () => onPhotoTap(1),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Expanded(
+                  child: _PhotoTile(
+                    photo: visible[2],
+                    onTap: () => onPhotoTap(2),
+                    remainingCount: photos.length - 3,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _PhotoPreviewTile extends StatelessWidget {
-  const _PhotoPreviewTile({
+class _PhotoTile extends StatelessWidget {
+  const _PhotoTile({
     required this.photo,
-    required this.index,
-    required this.totalCount,
     required this.onTap,
+    this.remainingCount = 0,
   });
 
   final TravelDocument photo;
-  final int index;
-  final int totalCount;
   final VoidCallback onTap;
+  final int remainingCount;
 
   @override
   Widget build(BuildContext context) {
@@ -323,84 +435,75 @@ class _PhotoPreviewTile extends StatelessWidget {
 
         return Material(
           color: Colors.transparent,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(22),
+          clipBehavior: Clip.antiAlias,
           child: InkWell(
             onTap: onTap,
-            borderRadius: BorderRadius.circular(24),
             child: Ink(
-              width: 202,
               decoration: BoxDecoration(
                 color: AppColors.primarySoft,
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(22),
                 border: Border.all(color: AppColors.border),
               ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(23),
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    if (hasPreview)
-                      Image.file(
-                        file,
-                        fit: BoxFit.cover,
-                        cacheWidth: 900,
-                        errorBuilder: (context, error, stackTrace) {
-                          return const _PhotoPlaceholder();
-                        },
-                      )
-                    else
-                      const _PhotoPlaceholder(),
-                    const DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [Colors.transparent, Color(0xD9000000)],
-                          stops: [0.42, 1],
-                        ),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  if (hasPreview)
+                    Image.file(
+                      file,
+                      fit: BoxFit.cover,
+                      cacheWidth: 900,
+                      errorBuilder: (context, error, stackTrace) {
+                        return const _PhotoPlaceholder();
+                      },
+                    )
+                  else
+                    const _PhotoPlaceholder(),
+                  const DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Colors.transparent, Color(0xB8000000)],
+                        stops: [0.5, 1],
                       ),
                     ),
-                    Positioned(
-                      top: 10,
-                      right: 10,
+                  ),
+                  Positioned(
+                    left: 10,
+                    right: 10,
+                    bottom: 9,
+                    child: Text(
+                      photo.title.trim().isEmpty ? 'Reisefoto' : photo.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                  if (remainingCount > 0)
+                    Center(
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 5,
+                          horizontal: 12,
+                          vertical: 8,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.46),
+                          color: Colors.black.withValues(alpha: 0.5),
                           borderRadius: BorderRadius.circular(999),
                         ),
                         child: Text(
-                          '${index + 1}/$totalCount',
+                          '+$remainingCount',
                           style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w800,
-                            fontSize: 11,
-                          ),
-                        ),
-                      ),
-                    ),
-                    Align(
-                      alignment: Alignment.bottomLeft,
-                      child: Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Text(
-                          photo.title.trim().isEmpty
-                              ? 'Reisefoto ${index + 1}'
-                              : photo.title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
                             color: Colors.white,
                             fontWeight: FontWeight.w900,
                           ),
                         ),
                       ),
                     ),
-                  ],
-                ),
+                ],
               ),
             ),
           ),
@@ -421,7 +524,92 @@ class _PhotoPlaceholder extends StatelessWidget {
         child: Icon(
           Icons.image_outlined,
           color: AppColors.primary,
-          size: 42,
+          size: 38,
+        ),
+      ),
+    );
+  }
+}
+
+class _EmptyMomentsCard extends StatelessWidget {
+  const _EmptyMomentsCard({required this.onAddMoment});
+
+  final VoidCallback onAddMoment;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(22),
+        child: Column(
+          children: [
+            const Icon(
+              Icons.auto_stories_outlined,
+              size: 42,
+              color: AppColors.primary,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Noch kein Reisetagebuch',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 7),
+            const Text(
+              'Halte einen besonderen Ort, ein Essen, ein Highlight oder eine Tagesnotiz fest.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppColors.textMuted),
+            ),
+            const SizedBox(height: 12),
+            TextButton.icon(
+              onPressed: onAddMoment,
+              icon: const Icon(Icons.add_rounded),
+              label: const Text('Ersten Moment anlegen'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _NoFavoriteMomentsCard extends StatelessWidget {
+  const _NoFavoriteMomentsCard({required this.onShowAll});
+
+  final VoidCallback onShowAll;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(22),
+        child: Column(
+          children: [
+            const Icon(
+              Icons.favorite_border_rounded,
+              size: 42,
+              color: AppColors.primary,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Noch keine Favoriten',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'Markiere einen Moment als Favorit oder zeige wieder alle Einträge.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppColors.textMuted),
+            ),
+            const SizedBox(height: 12),
+            TextButton(
+              onPressed: onShowAll,
+              child: const Text('Alle Momente anzeigen'),
+            ),
+          ],
         ),
       ),
     );

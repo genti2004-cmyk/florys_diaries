@@ -657,35 +657,80 @@ class _OverviewPage extends StatelessWidget {
           onExport: onExport,
         ),
         const SizedBox(height: 20),
-        Text('Reise vorbereiten', style: Theme.of(context).textTheme.titleLarge),
-        const SizedBox(height: 10),
-        _OverviewDestinationCard(
-          icon: Icons.checklist_rounded,
-          title: 'Planung',
-          subtitle: _planningLabel(trip),
-          onTap: onOpenPlanning,
+        Text(
+          'Reise organisieren',
+          style: Theme.of(context).textTheme.titleLarge,
+        ),
+        const SizedBox(height: 5),
+        Text(
+          'Planung, Dateien und Momente sind hier direkt erreichbar.',
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: AppColors.textMuted,
+          ),
         ),
         const SizedBox(height: 10),
-        _OverviewDestinationCard(
-          icon: Icons.folder_outlined,
-          title: 'Dokumente',
-          subtitle: trip.documentCount == 1
-              ? '1 Dokument gespeichert'
-              : '${trip.documentCount} Dokumente gespeichert',
-          onTap: onOpenDocuments,
+        _JourneyHubCard(
+          trip: trip,
+          onOpenPlanning: onOpenPlanning,
+          onOpenDocuments: onOpenDocuments,
+          onOpenMemories: onOpenMemories,
         ),
-        const SizedBox(height: 10),
-        _OverviewDestinationCard(
-          icon: Icons.favorite_border_rounded,
-          title: 'Momente',
-          subtitle: trip.albumEntryCount == 1
-              ? '1 Moment im Reisealbum'
-              : '${trip.albumEntryCount} Momente im Reisealbum',
-          onTap: onOpenMemories,
-        ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 18),
         _NotesCard(trip: trip, onEdit: onEdit),
       ],
+    );
+  }
+}
+
+class _JourneyHubCard extends StatelessWidget {
+  const _JourneyHubCard({
+    required this.trip,
+    required this.onOpenPlanning,
+    required this.onOpenDocuments,
+    required this.onOpenMemories,
+  });
+
+  final Trip trip;
+  final VoidCallback onOpenPlanning;
+  final VoidCallback onOpenDocuments;
+  final VoidCallback onOpenMemories;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Column(
+        children: [
+          _JourneyHubRow(
+            icon: Icons.checklist_rounded,
+            title: 'Planung',
+            subtitle: _planningLabel(trip),
+            status: trip.checklistItems.isEmpty
+                ? 'Starten'
+                : '${(trip.checklistProgress * 100).round()} %',
+            onTap: onOpenPlanning,
+          ),
+          const Divider(height: 1),
+          _JourneyHubRow(
+            icon: Icons.folder_outlined,
+            title: 'Dokumente',
+            subtitle: trip.documentCount == 1
+                ? '1 Datei sicher gespeichert'
+                : '${trip.documentCount} Dateien sicher gespeichert',
+            status: '${trip.documentCount}',
+            onTap: onOpenDocuments,
+          ),
+          const Divider(height: 1),
+          _JourneyHubRow(
+            icon: Icons.favorite_border_rounded,
+            title: 'Momente',
+            subtitle: trip.albumEntryCount == 1
+                ? '1 Eintrag im Reisetagebuch'
+                : '${trip.albumEntryCount} Einträge im Reisetagebuch',
+            status: '${trip.albumEntryCount}',
+            onTap: onOpenMemories,
+          ),
+        ],
+      ),
     );
   }
 
@@ -698,66 +743,80 @@ class _OverviewPage extends StatelessWidget {
   }
 }
 
-class _OverviewDestinationCard extends StatelessWidget {
-  const _OverviewDestinationCard({
+class _JourneyHubRow extends StatelessWidget {
+  const _JourneyHubRow({
     required this.icon,
     required this.title,
     required this.subtitle,
+    required this.status,
     required this.onTap,
   });
 
   final IconData icon;
   final String title;
   final String subtitle;
+  final String status;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(28),
-        child: Padding(
-          padding: const EdgeInsets.all(15),
-          child: Row(
-            children: [
-              Container(
-                width: 46,
-                height: 46,
-                decoration: BoxDecoration(
-                  color: AppColors.primarySoft,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Icon(icon, color: AppColors.primary),
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: AppColors.primarySoft,
+                borderRadius: BorderRadius.circular(15),
               ),
-              const SizedBox(width: 13),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w900,
-                      ),
+              child: Icon(icon, color: AppColors.primary, size: 21),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w900,
                     ),
-                    const SizedBox(height: 3),
-                    Text(
-                      subtitle,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ],
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    subtitle,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceSoft,
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Text(
+                status,
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w900,
                 ),
               ),
-              const SizedBox(width: 8),
-              const Icon(
-                Icons.chevron_right_rounded,
-                color: AppColors.textMuted,
-              ),
-            ],
-          ),
+            ),
+            const SizedBox(width: 4),
+            const Icon(
+              Icons.chevron_right_rounded,
+              color: AppColors.textMuted,
+            ),
+          ],
         ),
       ),
     );

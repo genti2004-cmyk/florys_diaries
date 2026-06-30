@@ -18,10 +18,11 @@ class AlbumEntryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final type = TripAlbumEntryTypes.byId(entry.typeId);
+
     return Card(
       margin: EdgeInsets.zero,
       child: InkWell(
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(28),
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.all(14),
@@ -29,11 +30,11 @@ class AlbumEntryCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                width: 48,
-                height: 48,
+                width: 50,
+                height: 50,
                 decoration: BoxDecoration(
                   color: AppColors.primarySoft,
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(17),
                 ),
                 child: Icon(
                   _iconForType(entry.typeId),
@@ -45,52 +46,30 @@ class AlbumEntryCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            entry.title,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.titleMedium
-                                ?.copyWith(
-                                  fontWeight: FontWeight.w900,
-                                  color: AppColors.text,
-                                ),
-                          ),
-                        ),
-                        IconButton(
-                          tooltip: entry.isFavorite
-                              ? 'Lieblingsmoment entfernen'
-                              : 'Als Lieblingsmoment markieren',
-                          onPressed: onFavoriteToggle,
-                          icon: Icon(
-                            entry.isFavorite
-                                ? Icons.favorite_rounded
-                                : Icons.favorite_border_rounded,
-                            color: entry.isFavorite
-                                ? AppColors.sand
-                                : AppColors.textMuted,
-                          ),
-                        ),
-                      ],
+                    Text(
+                      entry.title.trim().isEmpty ? 'Moment' : entry.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.text,
+                      ),
                     ),
                     const SizedBox(height: 4),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 6,
-                      children: [
-                        _AlbumChip(label: type.label),
-                        _AlbumChip(label: _formatDate(entry.date)),
-                        if (entry.location.trim().isNotEmpty)
-                          _AlbumChip(label: entry.location.trim()),
-                      ],
+                    Text(
+                      _subtitle(type.label),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.textMuted,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     if (entry.description.trim().isNotEmpty) ...[
                       const SizedBox(height: 8),
                       Text(
                         entry.description,
-                        maxLines: 2,
+                        maxLines: 3,
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: AppColors.textMuted,
@@ -100,11 +79,35 @@ class AlbumEntryCard extends StatelessWidget {
                   ],
                 ),
               ),
+              const SizedBox(width: 6),
+              IconButton(
+                tooltip: entry.isFavorite
+                    ? 'Lieblingsmoment entfernen'
+                    : 'Als Lieblingsmoment markieren',
+                onPressed: onFavoriteToggle,
+                visualDensity: VisualDensity.compact,
+                icon: Icon(
+                  entry.isFavorite
+                      ? Icons.favorite_rounded
+                      : Icons.favorite_border_rounded,
+                  color: entry.isFavorite
+                      ? AppColors.sand
+                      : AppColors.textMuted,
+                ),
+              ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  String _subtitle(String typeLabel) {
+    final parts = <String>[typeLabel, _formatDate(entry.date)];
+    if (entry.location.trim().isNotEmpty) {
+      parts.add(entry.location.trim());
+    }
+    return parts.join(' · ');
   }
 
   static IconData _iconForType(String typeId) {
@@ -121,30 +124,5 @@ class AlbumEntryCard extends StatelessWidget {
     final day = date.day.toString().padLeft(2, '0');
     final month = date.month.toString().padLeft(2, '0');
     return '$day.$month.${date.year}';
-  }
-}
-
-class _AlbumChip extends StatelessWidget {
-  const _AlbumChip({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceSoft,
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.labelMedium?.copyWith(
-          color: AppColors.text,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-    );
   }
 }

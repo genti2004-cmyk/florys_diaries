@@ -21,92 +21,78 @@ class TravelDocumentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final meta = _metaText(document);
-
     return Card(
       child: InkWell(
         borderRadius: BorderRadius.circular(28),
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.all(15),
+          padding: const EdgeInsets.all(14),
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _DocumentLeading(document: document),
-              const SizedBox(width: 13),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            document.title,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.titleSmall
-                                ?.copyWith(
-                                  color: AppColors.text,
-                                  fontWeight: FontWeight.w900,
-                                ),
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        IconButton(
-                          tooltip: document.isFavorite
-                              ? 'Favorit entfernen'
-                              : 'Als Favorit markieren',
-                          onPressed: onFavoriteToggle,
-                          visualDensity: VisualDensity.compact,
-                          icon: Icon(
-                            document.isFavorite
-                                ? Icons.star_rounded
-                                : Icons.star_border_rounded,
-                            color: document.isFavorite
-                                ? AppColors.sand
-                                : AppColors.textMuted,
-                          ),
-                        ),
-                      ],
-                    ),
                     Text(
-                      document.category.label,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.w800,
+                      document.title.trim().isEmpty
+                          ? 'Dokument'
+                          : document.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        color: AppColors.text,
+                        fontWeight: FontWeight.w900,
                       ),
                     ),
-                    if (document.fileName.trim().isNotEmpty) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        document.fileName,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.textMuted,
-                        ),
+                    const SizedBox(height: 5),
+                    Text(
+                      _subtitle(document),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.textMuted,
+                        fontWeight: FontWeight.w700,
                       ),
-                    ],
-                    if (meta.isNotEmpty) ...[
-                      const SizedBox(height: 9),
-                      Wrap(
-                        spacing: 6,
-                        runSpacing: 6,
-                        children: meta.map(_DocumentMetaChip.new).toList(),
+                    ),
+                    if (document.description.trim().isNotEmpty) ...[
+                      const SizedBox(height: 7),
+                      Text(
+                        document.description,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ],
                   ],
                 ),
               ),
-              const SizedBox(width: 4),
-              const Padding(
-                padding: EdgeInsets.only(top: 22),
-                child: Icon(
-                  Icons.chevron_right_rounded,
-                  color: AppColors.textMuted,
-                ),
+              const SizedBox(width: 8),
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    tooltip: document.isFavorite
+                        ? 'Favorit entfernen'
+                        : 'Als Favorit markieren',
+                    onPressed: onFavoriteToggle,
+                    visualDensity: VisualDensity.compact,
+                    icon: Icon(
+                      document.isFavorite
+                          ? Icons.star_rounded
+                          : Icons.star_border_rounded,
+                      color: document.isFavorite
+                          ? AppColors.sand
+                          : AppColors.textMuted,
+                    ),
+                  ),
+                  const Icon(
+                    Icons.chevron_right_rounded,
+                    size: 20,
+                    color: AppColors.textMuted,
+                  ),
+                ],
               ),
             ],
           ),
@@ -115,15 +101,18 @@ class TravelDocumentCard extends StatelessWidget {
     );
   }
 
-  static List<String> _metaText(TravelDocument document) {
-    final items = <String>[];
-    if (document.hasFile) {
-      items.add(document.fileTypeLabel);
+  static String _subtitle(TravelDocument document) {
+    final parts = <String>[document.category.label];
+    if (document.hasFile && document.fileTypeLabel.trim().isNotEmpty) {
+      parts.add(document.fileTypeLabel);
     }
-    if (document.sizeLabel.isNotEmpty) {
-      items.add(document.sizeLabel);
+    if (document.sizeLabel.trim().isNotEmpty) {
+      parts.add(document.sizeLabel);
     }
-    return items;
+    if (document.fileName.trim().isNotEmpty) {
+      parts.add(document.fileName.trim());
+    }
+    return parts.join(' · ');
   }
 }
 
@@ -149,8 +138,8 @@ class _DocumentLeading extends StatelessWidget {
         }
 
         return Container(
-          width: 76,
-          height: 76,
+          width: 66,
+          height: 66,
           decoration: BoxDecoration(
             color: AppColors.primarySoft,
             borderRadius: BorderRadius.circular(20),
@@ -193,8 +182,8 @@ class _DocumentIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: compact ? double.infinity : 76,
-      height: compact ? double.infinity : 76,
+      width: compact ? double.infinity : 66,
+      height: compact ? double.infinity : 66,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
@@ -206,31 +195,7 @@ class _DocumentIcon extends StatelessWidget {
       child: Icon(
         document.category.icon,
         color: AppColors.primary,
-        size: compact ? 28 : 30,
-      ),
-    );
-  }
-}
-
-class _DocumentMetaChip extends StatelessWidget {
-  const _DocumentMetaChip(this.label);
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceSoft,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-          color: AppColors.text,
-          fontWeight: FontWeight.w800,
-        ),
+        size: compact ? 26 : 28,
       ),
     );
   }

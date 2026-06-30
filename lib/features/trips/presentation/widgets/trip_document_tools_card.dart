@@ -12,6 +12,7 @@ class TripDocumentToolsCard extends StatelessWidget {
     required this.onCategoryChanged,
     required this.onSortChanged,
     required this.onFavoritesChanged,
+    required this.onResetFilters,
     super.key,
   });
 
@@ -21,6 +22,7 @@ class TripDocumentToolsCard extends StatelessWidget {
   final ValueChanged<String> onCategoryChanged;
   final ValueChanged<DocumentSortMode> onSortChanged;
   final ValueChanged<bool> onFavoritesChanged;
+  final VoidCallback onResetFilters;
 
   @override
   Widget build(BuildContext context) {
@@ -30,41 +32,69 @@ class TripDocumentToolsCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            TextField(
-              controller: controller,
-              onChanged: onSearchChanged,
-              decoration: InputDecoration(
-                prefixIcon: const Icon(Icons.search_rounded),
-                hintText: 'Dokumente durchsuchen',
-                suffixIcon: IconButton(
-                  tooltip: 'Filter und Sortierung',
-                  onPressed: () => _openFilters(context),
-                  icon: Badge(
-                    isLabelVisible: _hasActiveFilter,
-                    child: const Icon(Icons.tune_rounded),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: controller,
+                    onChanged: onSearchChanged,
+                    textInputAction: TextInputAction.search,
+                    decoration: InputDecoration(
+                      prefixIcon: const Icon(Icons.search_rounded),
+                      hintText: 'Dokument suchen',
+                      suffixIcon: query.searchText.trim().isEmpty
+                          ? null
+                          : IconButton(
+                              tooltip: 'Suche löschen',
+                              onPressed: () {
+                                controller.clear();
+                                onSearchChanged('');
+                              },
+                              icon: const Icon(Icons.close_rounded),
+                            ),
+                    ),
                   ),
                 ),
-              ),
+                const SizedBox(width: 8),
+                _ToolButton(
+                  tooltip: query.favoritesOnly
+                      ? 'Alle Dokumente anzeigen'
+                      : 'Nur Favoriten anzeigen',
+                  selected: query.favoritesOnly,
+                  icon: query.favoritesOnly
+                      ? Icons.star_rounded
+                      : Icons.star_border_rounded,
+                  onPressed: () => onFavoritesChanged(!query.favoritesOnly),
+                ),
+                const SizedBox(width: 8),
+                _ToolButton(
+                  tooltip: 'Filtern und sortieren',
+                  selected: _hasAdvancedFilter,
+                  showBadge: _hasAdvancedFilter,
+                  icon: Icons.tune_rounded,
+                  onPressed: () => _openFilters(context),
+                ),
+              ],
             ),
-            if (_hasActiveFilter) ...[
+            if (_hasAnyFilter) ...[
               const SizedBox(height: 10),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
+              Row(
                 children: [
-                  if (query.categoryId != TripDocumentQuery.allCategoriesId)
-                    _ActiveFilterChip(
-                      icon: Icons.category_outlined,
-                      label: DocumentCategories.byId(query.categoryId).label,
+                  Expanded(
+                    child: Text(
+                      _filterSummary,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.textMuted,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
-                  if (query.favoritesOnly)
-                    const _ActiveFilterChip(
-                      icon: Icons.star_rounded,
-                      label: 'Nur Favoriten',
-                    ),
-                  _ActiveFilterChip(
-                    icon: Icons.sort_rounded,
-                    label: _sortLabel(query.sortMode),
+                  ),
+                  const SizedBox(width: 8),
+                  TextButton(
+                    onPressed: onResetFilters,
+                    child: const Text('Zurücksetzen'),
                   ),
                 ],
               ),
@@ -75,16 +105,37 @@ class TripDocumentToolsCard extends StatelessWidget {
     );
   }
 
-  bool get _hasActiveFilter {
+  bool get _hasAdvancedFilter {
     return query.categoryId != TripDocumentQuery.allCategoriesId ||
-        query.favoritesOnly ||
         query.sortMode != DocumentSortMode.newest;
+  }
+
+  bool get _hasAnyFilter {
+    return query.searchText.trim().isNotEmpty ||
+        query.favoritesOnly ||
+        _hasAdvancedFilter;
+  }
+
+  String get _filterSummary {
+    final parts = <String>[];
+    if (query.searchText.trim().isNotEmpty) {
+      parts.add('Suche: „${query.searchText.trim()}“');
+    }
+    if (query.categoryId != TripDocumentQuery.allCategoriesId) {
+      parts.add(DocumentCategories.byId(query.categoryId).label);
+    }
+    if (query.favoritesOnly) {
+      parts.add('Nur Favoriten');
+    }
+    if (query.sortMode != DocumentSortMode.newest) {
+      parts.add(_sortLabel(query.sortMode));
+    }
+    return parts.join(' · ');
   }
 
   Future<void> _openFilters(BuildContext context) async {
     var categoryId = query.categoryId;
     var sortMode = query.sortMode;
-    var favoritesOnly = query.favoritesOnly;
 
     await showModalBottomSheet<void>(
       context: context,
@@ -106,8 +157,15 @@ class TripDocumentToolsCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text(
-                      'Dokumente filtern',
+                      'Dokumente ordnen',
                       style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      'Wähle eine Kategorie und die gewünschte Reihenfolge.',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppColors.textMuted,
+                      ),
                     ),
                     const SizedBox(height: 16),
                     DropdownButtonFormField<String>(
@@ -130,11 +188,9 @@ class TripDocumentToolsCard extends StatelessWidget {
                         ),
                       ],
                       onChanged: (value) {
-                        if (value == null) {
-                          return;
+                        if (value != null) {
+                          setSheetState(() => categoryId = value);
                         }
-                        setSheetState(() => categoryId = value);
-                        onCategoryChanged(value);
                       },
                     ),
                     const SizedBox(height: 12),
@@ -164,36 +220,38 @@ class TripDocumentToolsCard extends StatelessWidget {
                         ),
                       ],
                       onChanged: (value) {
-                        if (value == null) {
-                          return;
+                        if (value != null) {
+                          setSheetState(() => sortMode = value);
                         }
-                        setSheetState(() => sortMode = value);
-                        onSortChanged(value);
                       },
                     ),
-                    const SizedBox(height: 12),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: AppColors.surfaceSoft,
-                        borderRadius: BorderRadius.circular(18),
-                      ),
-                      child: SwitchListTile.adaptive(
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                        ),
-                        value: favoritesOnly,
-                        onChanged: (value) {
-                          setSheetState(() => favoritesOnly = value);
-                          onFavoritesChanged(value);
-                        },
-                        title: const Text('Nur Favoriten'),
-                        secondary: const Icon(Icons.star_border_rounded),
-                      ),
-                    ),
                     const SizedBox(height: 16),
-                    FilledButton(
-                      onPressed: () => Navigator.of(sheetContext).pop(),
-                      child: const Text('Fertig'),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () {
+                              onCategoryChanged(
+                                TripDocumentQuery.allCategoriesId,
+                              );
+                              onSortChanged(DocumentSortMode.newest);
+                              Navigator.of(sheetContext).pop();
+                            },
+                            child: const Text('Standard'),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: FilledButton(
+                            onPressed: () {
+                              onCategoryChanged(categoryId);
+                              onSortChanged(sortMode);
+                              Navigator.of(sheetContext).pop();
+                            },
+                            child: const Text('Übernehmen'),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -219,33 +277,45 @@ class TripDocumentToolsCard extends StatelessWidget {
   }
 }
 
-class _ActiveFilterChip extends StatelessWidget {
-  const _ActiveFilterChip({required this.icon, required this.label});
+class _ToolButton extends StatelessWidget {
+  const _ToolButton({
+    required this.tooltip,
+    required this.selected,
+    required this.icon,
+    required this.onPressed,
+    this.showBadge = false,
+  });
 
+  final String tooltip;
+  final bool selected;
   final IconData icon;
-  final String label;
+  final VoidCallback onPressed;
+  final bool showBadge;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-      decoration: BoxDecoration(
-        color: AppColors.primarySoft,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: AppColors.primary),
-          const SizedBox(width: 5),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: AppColors.primary,
-              fontWeight: FontWeight.w800,
+    return Material(
+      color: selected ? AppColors.primarySoft : AppColors.surfaceSoft,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(16),
+        child: Tooltip(
+          message: tooltip,
+          child: SizedBox(
+            width: 48,
+            height: 48,
+            child: Center(
+              child: Badge(
+                isLabelVisible: showBadge,
+                child: Icon(
+                  icon,
+                  color: selected ? AppColors.primary : AppColors.textMuted,
+                ),
+              ),
             ),
           ),
-        ],
+        ),
       ),
     );
   }
