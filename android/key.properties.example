@@ -1,0 +1,6 @@
+# Copy this file locally to android/key.properties.
+# Never commit or share android/key.properties.
+storePassword=YOUR_KEYSTORE_PASSWORD
+keyPassword=YOUR_KEY_PASSWORD
+keyAlias=florysdiaries-upload
+storeFile=C:/Users/YOUR_USER/Documents/FlorysDiaries-Keys/florysdiaries-upload.jks

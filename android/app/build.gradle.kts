@@ -5,7 +5,6 @@ import org.gradle.api.GradleException
 plugins {
     id("com.android.application")
     id("kotlin-android")
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
 
@@ -22,9 +21,33 @@ if (keystorePropertiesFile.exists()) {
     FileInputStream(keystorePropertiesFile).use { input ->
         keystoreProperties.load(input)
     }
-} else if (releaseTaskRequested) {
+}
+
+fun releaseProperty(name: String): String? {
+    val value = keystoreProperties.getProperty(name)?.trim()
+    if (value.isNullOrEmpty() || value.startsWith("DEIN_") || value.startsWith("YOUR_")) {
+        return null
+    }
+    return value
+}
+
+val storePasswordValue = releaseProperty("storePassword")
+val keyPasswordValue = releaseProperty("keyPassword")
+val keyAliasValue = releaseProperty("keyAlias")
+val storeFileValue = releaseProperty("storeFile")
+val releaseStoreFile = storeFileValue?.let { value -> rootProject.file(value) }
+
+val hasCompleteReleaseSigning =
+    storePasswordValue != null &&
+        keyPasswordValue != null &&
+        keyAliasValue != null &&
+        releaseStoreFile != null &&
+        releaseStoreFile.exists()
+
+if (releaseTaskRequested && !hasCompleteReleaseSigning) {
     throw GradleException(
-        "Release-Signierung fehlt: android/key.properties wurde nicht gefunden.",
+        "Release-Signierung ist unvollständig. Prüfe android/key.properties " +
+            "und den dort angegebenen Keystore-Pfad.",
     )
 }
 
@@ -52,33 +75,12 @@ android {
     }
 
     signingConfigs {
-        if (keystorePropertiesFile.exists()) {
+        if (hasCompleteReleaseSigning) {
             create("release") {
-                val storePasswordValue =
-                    keystoreProperties.getProperty("storePassword")
-                        ?: throw GradleException(
-                            "storePassword fehlt in android/key.properties.",
-                        )
-                val keyPasswordValue =
-                    keystoreProperties.getProperty("keyPassword")
-                        ?: throw GradleException(
-                            "keyPassword fehlt in android/key.properties.",
-                        )
-                val keyAliasValue =
-                    keystoreProperties.getProperty("keyAlias")
-                        ?: throw GradleException(
-                            "keyAlias fehlt in android/key.properties.",
-                        )
-                val storeFileValue =
-                    keystoreProperties.getProperty("storeFile")
-                        ?: throw GradleException(
-                            "storeFile fehlt in android/key.properties.",
-                        )
-
                 storePassword = storePasswordValue
                 keyPassword = keyPasswordValue
                 keyAlias = keyAliasValue
-                storeFile = file(storeFileValue)
+                storeFile = releaseStoreFile
             }
         }
     }
@@ -92,7 +94,7 @@ android {
 
         release {
             manifestPlaceholders["appLabel"] = releaseAppLabel
-            if (keystorePropertiesFile.exists()) {
+            if (hasCompleteReleaseSigning) {
                 signingConfig = signingConfigs.getByName("release")
             }
         }

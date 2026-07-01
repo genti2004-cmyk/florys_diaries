@@ -1,7 +1,6 @@
 # Flutter / Dart
 .dart_tool/
 .packages
-.pub-cache/
 .pub/
 build/
 coverage/
@@ -13,20 +12,23 @@ coverage/
 *.iml
 .vscode/
 
-# Platform generated files
+# Android generated and local files
 android/.gradle/
+android/.kotlin/
 android/local.properties
-ios/Flutter/.last_build_id
+android/captures/
+android/app/.cxx/
+android/app/build/
 
-# Signing secrets
+# Signing secrets - never commit or share
 **/key.properties
 **/*.jks
 **/*.keystore
 
-# Local environment and temporary files
-.env
-.env.*
-*.log
-*.tmp
+# OS files
 .DS_Store
 Thumbs.db
+
+# Temporary release verification files
+release_tmp/
+*.log
