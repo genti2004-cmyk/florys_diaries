@@ -5,6 +5,7 @@ import 'package:florys_diaries/core/widgets/travel_visuals.dart';
 import 'package:florys_diaries/core/widgets/trip_cover_image.dart';
 import 'package:florys_diaries/features/assistant/presentation/travel_assistant_screen.dart';
 import 'package:florys_diaries/features/map/presentation/world_map_screen.dart';
+import 'package:florys_diaries/features/search/presentation/global_search_screen.dart';
 import 'package:florys_diaries/features/settings/presentation/settings_screen.dart';
 import 'package:florys_diaries/features/statistics/presentation/statistics_screen.dart';
 import 'package:florys_diaries/features/trips/application/trip_store_scope.dart';
@@ -42,6 +43,12 @@ class UpcomingTripsScreen extends StatelessWidget {
     return Navigator.of(
       context,
     ).push(MaterialPageRoute<void>(builder: (_) => const SettingsScreen()));
+  }
+
+  Future<void> _openSearch(BuildContext context) {
+    return Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => const GlobalSearchScreen()),
+    );
   }
 
   Future<void> _openStatistics(BuildContext context) {
@@ -104,6 +111,7 @@ class UpcomingTripsScreen extends StatelessWidget {
           children: [
             _HomeHeader(
               onOpenAssistant: () => _openAssistant(context),
+              onOpenSearch: () => _openSearch(context),
               onOpenSettings: () => _openSettings(context),
             ),
             const SizedBox(height: 18),
@@ -175,10 +183,12 @@ class UpcomingTripsScreen extends StatelessWidget {
 class _HomeHeader extends StatelessWidget {
   const _HomeHeader({
     required this.onOpenAssistant,
+    required this.onOpenSearch,
     required this.onOpenSettings,
   });
 
   final VoidCallback onOpenAssistant;
+  final VoidCallback onOpenSearch;
   final VoidCallback onOpenSettings;
 
   @override
@@ -217,6 +227,12 @@ class _HomeHeader extends StatelessWidget {
           tooltip: 'Reiseassistent',
           icon: Icons.auto_awesome_rounded,
           onTap: onOpenAssistant,
+        ),
+        const SizedBox(width: 8),
+        _HeaderIconButton(
+          tooltip: 'Globale Suche',
+          icon: Icons.search_rounded,
+          onTap: onOpenSearch,
         ),
         const SizedBox(width: 8),
         _HeaderIconButton(

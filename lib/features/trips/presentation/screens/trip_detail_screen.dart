@@ -22,19 +22,21 @@ import 'package:florys_diaries/features/trips/presentation/widgets/trip_vault_se
 import 'trip_editor_screen.dart';
 
 enum _TripDetailMenuAction { edit, export, delete }
-enum _TripDetailSection { overview, planning, documents, memories }
+enum TripDetailSection { overview, planning, documents, memories }
 
 class TripDetailScreen extends StatefulWidget {
   const TripDetailScreen({
     required this.trip,
     this.fileService = const TravelFileService(),
     this.exportService = const TripExportService(),
+    this.initialSection = TripDetailSection.overview,
     super.key,
   });
 
   final Trip trip;
   final TravelFileService fileService;
   final TripExportService exportService;
+  final TripDetailSection initialSection;
 
   @override
   State<TripDetailScreen> createState() => _TripDetailScreenState();
@@ -43,11 +45,17 @@ class TripDetailScreen extends StatefulWidget {
 class _TripDetailScreenState extends State<TripDetailScreen> {
   final TextEditingController _searchController = TextEditingController();
 
-  _TripDetailSection _section = _TripDetailSection.overview;
+  late TripDetailSection _section;
   TripDocumentQuery _documentQuery = const TripDocumentQuery();
   List<TravelDocument>? _lastDocumentSource;
   TripDocumentQuery? _lastAppliedQuery;
   List<TravelDocument> _visibleDocuments = const <TravelDocument>[];
+
+  @override
+  void initState() {
+    super.initState();
+    _section = widget.initialSection;
+  }
 
   @override
   void dispose() {
@@ -379,13 +387,13 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
                   onEdit: () => _editTrip(context, currentTrip),
                   onExport: () => _exportTrip(context, currentTrip),
                   onOpenPlanning: () => _selectSection(
-                    _TripDetailSection.planning,
+                    TripDetailSection.planning,
                   ),
                   onOpenDocuments: () => _selectSection(
-                    _TripDetailSection.documents,
+                    TripDetailSection.documents,
                   ),
                   onOpenMemories: () => _selectSection(
-                    _TripDetailSection.memories,
+                    TripDetailSection.memories,
                   ),
                 ),
                 _SectionListView(
@@ -442,7 +450,7 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
     );
   }
 
-  void _selectSection(_TripDetailSection section) {
+  void _selectSection(TripDetailSection section) {
     setState(() => _section = section);
   }
 
@@ -505,8 +513,8 @@ class _TripSectionNavigation extends StatelessWidget {
     required this.onSelected,
   });
 
-  final _TripDetailSection selected;
-  final ValueChanged<_TripDetailSection> onSelected;
+  final TripDetailSection selected;
+  final ValueChanged<TripDetailSection> onSelected;
 
   @override
   Widget build(BuildContext context) {
@@ -525,8 +533,8 @@ class _TripSectionNavigation extends StatelessWidget {
                 icon: Icons.dashboard_outlined,
                 selectedIcon: Icons.dashboard_rounded,
                 label: 'Übersicht',
-                selected: selected == _TripDetailSection.overview,
-                onTap: () => onSelected(_TripDetailSection.overview),
+                selected: selected == TripDetailSection.overview,
+                onTap: () => onSelected(TripDetailSection.overview),
               ),
             ),
             const SizedBox(width: 6),
@@ -535,8 +543,8 @@ class _TripSectionNavigation extends StatelessWidget {
                 icon: Icons.event_note_outlined,
                 selectedIcon: Icons.event_note_rounded,
                 label: 'Planung',
-                selected: selected == _TripDetailSection.planning,
-                onTap: () => onSelected(_TripDetailSection.planning),
+                selected: selected == TripDetailSection.planning,
+                onTap: () => onSelected(TripDetailSection.planning),
               ),
             ),
             const SizedBox(width: 6),
@@ -545,8 +553,8 @@ class _TripSectionNavigation extends StatelessWidget {
                 icon: Icons.folder_outlined,
                 selectedIcon: Icons.folder_rounded,
                 label: 'Dokumente',
-                selected: selected == _TripDetailSection.documents,
-                onTap: () => onSelected(_TripDetailSection.documents),
+                selected: selected == TripDetailSection.documents,
+                onTap: () => onSelected(TripDetailSection.documents),
               ),
             ),
             const SizedBox(width: 6),
@@ -555,8 +563,8 @@ class _TripSectionNavigation extends StatelessWidget {
                 icon: Icons.favorite_border_rounded,
                 selectedIcon: Icons.favorite_rounded,
                 label: 'Momente',
-                selected: selected == _TripDetailSection.memories,
-                onTap: () => onSelected(_TripDetailSection.memories),
+                selected: selected == TripDetailSection.memories,
+                onTap: () => onSelected(TripDetailSection.memories),
               ),
             ),
           ],
