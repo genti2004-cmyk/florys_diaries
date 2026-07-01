@@ -48,6 +48,8 @@ class _BudgetExpenseEditorScreenState
   late DateTime _date;
   late TripExpenseCategory _category;
   late TripExpenseStatus _status;
+  String? _paidByParticipantId;
+  late Set<String> _participantIds;
   bool _hasUnsavedChanges = false;
   bool _isSaving = false;
 
@@ -71,6 +73,16 @@ class _BudgetExpenseEditorScreenState
     );
     _category = expense?.category ?? TripExpenseCategory.other;
     _status = expense?.status ?? TripExpenseStatus.planned;
+    _paidByParticipantId = expense?.paidByParticipantId;
+    _participantIds = expense == null
+        ? widget.trip.participants.map((item) => item.id).toSet()
+        : expense.participantIds.toSet();
+    if (_paidByParticipantId != null &&
+        !widget.trip.participants.any(
+          (item) => item.id == _paidByParticipantId,
+        )) {
+      _paidByParticipantId = null;
+    }
 
     _titleController.addListener(_markChanged);
     _amountController.addListener(_markChanged);
@@ -133,6 +145,8 @@ class _BudgetExpenseEditorScreenState
             category: _category,
             status: _status,
             notes: _notesController.text.trim(),
+            paidByParticipantId: _paidByParticipantId,
+            participantIds: _participantIds.toList(growable: false),
           )
         : oldExpense.copyWith(
             title: _titleController.text.trim(),
@@ -141,6 +155,8 @@ class _BudgetExpenseEditorScreenState
             category: _category,
             status: _status,
             notes: _notesController.text.trim(),
+            paidByParticipantId: _paidByParticipantId,
+            participantIds: _participantIds.toList(growable: false),
           );
 
     setState(() {
@@ -327,6 +343,86 @@ class _BudgetExpenseEditorScreenState
                                   });
                                 },
                         ),
+                        if (widget.trip.participants.isNotEmpty) ...[
+                          const SizedBox(height: 14),
+                          DropdownButtonFormField<String>(
+                            key: const ValueKey<String>(
+                              'expense-editor-payer',
+                            ),
+                            initialValue: _paidByParticipantId ?? '',
+                            isExpanded: true,
+                            decoration: const InputDecoration(
+                              labelText: 'Bezahlt von',
+                              prefixIcon: Icon(Icons.person_outline_rounded),
+                            ),
+                            items: <DropdownMenuItem<String>>[
+                              const DropdownMenuItem<String>(
+                                value: '',
+                                child: Text('Nicht zugeordnet'),
+                              ),
+                              ...widget.trip.participants.map(
+                                (participant) => DropdownMenuItem<String>(
+                                  value: participant.id,
+                                  child: Text(participant.name),
+                                ),
+                              ),
+                            ],
+                            onChanged: _isSaving
+                                ? null
+                                : (value) {
+                                    setState(() {
+                                      _paidByParticipantId =
+                                          value == null || value.isEmpty
+                                          ? null
+                                          : value;
+                                      _hasUnsavedChanges = true;
+                                    });
+                                  },
+                          ),
+                          const SizedBox(height: 14),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              'Für wen gilt diese Ausgabe?',
+                              style: Theme.of(context).textTheme.titleSmall
+                                  ?.copyWith(fontWeight: FontWeight.w900),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: widget.trip.participants.map((participant) {
+                              final selected = _participantIds.contains(
+                                participant.id,
+                              );
+                              return FilterChip(
+                                selected: selected,
+                                label: Text(participant.name),
+                                avatar: Icon(
+                                  selected
+                                      ? Icons.check_circle_rounded
+                                      : Icons.person_outline_rounded,
+                                  size: 17,
+                                ),
+                                onSelected: _isSaving
+                                    ? null
+                                    : (value) {
+                                        setState(() {
+                                          if (value) {
+                                            _participantIds.add(participant.id);
+                                          } else {
+                                            _participantIds.remove(
+                                              participant.id,
+                                            );
+                                          }
+                                          _hasUnsavedChanges = true;
+                                        });
+                                      },
+                              );
+                            }).toList(growable: false),
+                          ),
+                        ],
                         const SizedBox(height: 14),
                         _DateButton(
                           date: _date,

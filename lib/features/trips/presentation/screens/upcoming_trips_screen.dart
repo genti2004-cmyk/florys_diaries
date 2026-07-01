@@ -8,6 +8,7 @@ import 'package:florys_diaries/features/map/presentation/world_map_screen.dart';
 import 'package:florys_diaries/features/search/presentation/global_search_screen.dart';
 import 'package:florys_diaries/features/settings/presentation/settings_screen.dart';
 import 'package:florys_diaries/features/statistics/presentation/statistics_screen.dart';
+import 'package:florys_diaries/features/templates/presentation/screens/trip_templates_screen.dart';
 import 'package:florys_diaries/features/trips/application/trip_store_scope.dart';
 import 'package:florys_diaries/features/trips/domain/trip.dart';
 import 'package:florys_diaries/features/trips/presentation/widgets/trip_empty_state.dart';
@@ -48,6 +49,13 @@ class UpcomingTripsScreen extends StatelessWidget {
   Future<void> _openSearch(BuildContext context) {
     return Navigator.of(context).push(
       MaterialPageRoute<void>(builder: (_) => const GlobalSearchScreen()),
+    );
+  }
+
+
+  Future<void> _openTemplates(BuildContext context) {
+    return Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => const TripTemplatesScreen()),
     );
   }
 
@@ -126,6 +134,7 @@ class UpcomingTripsScreen extends StatelessWidget {
                 onCreateTrip: () => _openEditor(context),
                 onOpenTrips: () => _showTrips(context),
                 onOpenStatistics: () => _openStatistics(context),
+                onOpenTemplates: () => _openTemplates(context),
               ),
               const SizedBox(height: 18),
               _CompactOverviewCard(
@@ -145,6 +154,7 @@ class UpcomingTripsScreen extends StatelessWidget {
                 onCreateTrip: () => _openEditor(context),
                 onOpenTrips: () => _showTrips(context),
                 onOpenStatistics: () => _openStatistics(context),
+                onOpenTemplates: () => _openTemplates(context),
               ),
               const SizedBox(height: 18),
               _CompactOverviewCard(
@@ -286,41 +296,53 @@ class _HomeQuickActions extends StatelessWidget {
     required this.onCreateTrip,
     required this.onOpenTrips,
     required this.onOpenStatistics,
+    required this.onOpenTemplates,
   });
 
   final VoidCallback onCreateTrip;
   final VoidCallback onOpenTrips;
   final VoidCallback onOpenStatistics;
+  final VoidCallback onOpenTemplates;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: _QuickAction(
-            icon: Icons.add_rounded,
-            label: 'Neue Reise',
-            onTap: onCreateTrip,
-            emphasized: true,
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _QuickAction(
-            icon: Icons.luggage_outlined,
-            label: 'Reisen',
-            onTap: onOpenTrips,
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _QuickAction(
-            icon: Icons.bar_chart_rounded,
-            label: 'Statistik',
-            onTap: onOpenStatistics,
-          ),
-        ),
-      ],
+    final actions = <Widget>[
+      _QuickAction(
+        icon: Icons.add_rounded,
+        label: 'Neue Reise',
+        onTap: onCreateTrip,
+        emphasized: true,
+      ),
+      _QuickAction(
+        icon: Icons.luggage_outlined,
+        label: 'Reisen',
+        onTap: onOpenTrips,
+      ),
+      _QuickAction(
+        icon: Icons.collections_bookmark_outlined,
+        label: 'Vorlagen',
+        onTap: onOpenTemplates,
+      ),
+      _QuickAction(
+        icon: Icons.bar_chart_rounded,
+        label: 'Statistik',
+        onTap: onOpenStatistics,
+      ),
+    ];
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = constraints.maxWidth < 390 ? 2 : 4;
+        final width =
+            (constraints.maxWidth - ((columns - 1) * 10)) / columns;
+        return Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: actions
+              .map((action) => SizedBox(width: width, child: action))
+              .toList(growable: false),
+        );
+      },
     );
   }
 }

@@ -4,6 +4,7 @@ import 'package:florys_diaries/app/theme/app_colors.dart';
 import 'package:florys_diaries/features/budget/domain/trip_budget_expense.dart';
 import 'package:florys_diaries/features/budget/presentation/screens/budget_expense_editor_screen.dart';
 import 'package:florys_diaries/features/budget/presentation/screens/trip_budget_settings_screen.dart';
+import 'package:florys_diaries/features/participants/presentation/screens/trip_expense_split_screen.dart';
 import 'package:florys_diaries/features/trips/application/trip_store_scope.dart';
 import 'package:florys_diaries/features/trips/domain/trip.dart';
 
@@ -17,6 +18,15 @@ class TripBudgetSection extends StatefulWidget {
 }
 
 class _TripBudgetSectionState extends State<TripBudgetSection> {
+
+  Future<void> _openExpenseSplit() {
+    return Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => TripExpenseSplitScreen(trip: widget.trip),
+      ),
+    );
+  }
+
   Future<void> _openBudgetSettings() async {
     final result = await Navigator.of(context).push<TripBudgetSettingsResult>(
       MaterialPageRoute<TripBudgetSettingsResult>(
@@ -170,6 +180,24 @@ class _TripBudgetSectionState extends State<TripBudgetSection> {
           trip: widget.trip,
           onEditBudget: _openBudgetSettings,
           onAddExpense: () => _openExpenseEditor(),
+        ),
+        const SizedBox(height: 12),
+        Card(
+          child: ListTile(
+            key: const ValueKey<String>('budget-open-split'),
+            leading: const Icon(
+              Icons.groups_rounded,
+              color: AppColors.primary,
+            ),
+            title: const Text('Reisekasse aufteilen'),
+            subtitle: Text(
+              widget.trip.participants.isEmpty
+                  ? 'Teilnehmer anlegen und Kosten gemeinsam abrechnen'
+                  : '${widget.trip.participants.length} Teilnehmer · Ausgleich berechnen',
+            ),
+            trailing: const Icon(Icons.chevron_right_rounded),
+            onTap: _openExpenseSplit,
+          ),
         ),
         if (coveredPlannedIds.isNotEmpty) ...[
           const SizedBox(height: 12),

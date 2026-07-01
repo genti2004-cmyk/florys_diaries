@@ -3,6 +3,7 @@ import 'package:florys_diaries/features/budget/domain/trip_budget_expense.dart';
 import 'package:florys_diaries/features/checklist/domain/trip_checklist_item.dart';
 import 'package:florys_diaries/features/documents/domain/travel_document.dart';
 import 'package:florys_diaries/features/planner/domain/trip_plan_item.dart';
+import 'package:florys_diaries/features/participants/domain/trip_participant.dart';
 
 class Trip {
   const Trip({
@@ -20,6 +21,7 @@ class Trip {
     this.budgetAmountCents = 0,
     this.budgetCurrency = 'EUR',
     this.budgetExpenses = const [],
+    this.participants = const [],
     this.photoCount = 0,
   });
 
@@ -37,6 +39,7 @@ class Trip {
   final int budgetAmountCents;
   final String budgetCurrency;
   final List<TripBudgetExpense> budgetExpenses;
+  final List<TripParticipant> participants;
   final int photoCount;
 
   int get documentCount => documents.length;
@@ -163,6 +166,9 @@ class Trip {
       'budgetExpenses': budgetExpenses
           .map((expense) => expense.toJson())
           .toList(),
+      'participants': participants
+          .map((participant) => participant.toJson())
+          .toList(),
       'photoCount': photoCount,
     };
   }
@@ -185,6 +191,7 @@ class Trip {
         (json['budgetCurrency'] as String?) ?? 'EUR',
       ),
       budgetExpenses: _parseBudgetExpenses(json['budgetExpenses']),
+      participants: _parseParticipants(json['participants']),
       photoCount: (json['photoCount'] as num?)?.toInt() ?? 0,
     );
   }
@@ -204,6 +211,7 @@ class Trip {
     int? budgetAmountCents,
     String? budgetCurrency,
     List<TripBudgetExpense>? budgetExpenses,
+    List<TripParticipant>? participants,
     int? photoCount,
   }) {
     return Trip(
@@ -221,6 +229,7 @@ class Trip {
       budgetAmountCents: budgetAmountCents ?? this.budgetAmountCents,
       budgetCurrency: budgetCurrency ?? this.budgetCurrency,
       budgetExpenses: budgetExpenses ?? this.budgetExpenses,
+      participants: participants ?? this.participants,
       photoCount: photoCount ?? this.photoCount,
     );
   }
@@ -283,6 +292,25 @@ class Trip {
       return left.sortValue.compareTo(right.sortValue);
     });
     return List<TripPlanItem>.unmodifiable(items);
+  }
+
+
+  static List<TripParticipant> _parseParticipants(Object? value) {
+    if (value is! List) {
+      return const [];
+    }
+    final participants = value
+        .whereType<Map<String, dynamic>>()
+        .map(TripParticipant.fromJson)
+        .where(
+          (participant) =>
+              participant.id.trim().isNotEmpty &&
+              participant.name.trim().isNotEmpty,
+        )
+        .toList(growable: true);
+    final ids = <String>{};
+    participants.removeWhere((participant) => !ids.add(participant.id));
+    return List<TripParticipant>.unmodifiable(participants);
   }
 
   static List<TripBudgetExpense> _parseBudgetExpenses(Object? value) {

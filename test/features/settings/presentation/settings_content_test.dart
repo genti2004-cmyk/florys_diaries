@@ -83,14 +83,14 @@ void main() {
     expect(find.textContaining('bleiben vorbereitet'), findsNothing);
 
     await tester.scrollUntilVisible(
-      find.text('Sicherheit'),
+      find.text('App-Schutz'),
       350,
       scrollable: scrollable,
     );
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
-    expect(find.text('Sicherheit'), findsOneWidget);
+    expect(find.text('App-Schutz'), findsOneWidget);
 
     await tester.scrollUntilVisible(
       find.text('Version'),

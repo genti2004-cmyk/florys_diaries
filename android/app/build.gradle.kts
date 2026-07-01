@@ -69,7 +69,7 @@ android {
     defaultConfig {
         applicationId = "com.florysdiaries.app"
         multiDexEnabled = true
-        minSdk = flutter.minSdkVersion
+        minSdk = 24
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
@@ -105,6 +105,7 @@ android {
 
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+    implementation("androidx.appcompat:appcompat:1.7.1")
 }
 
 flutter {

@@ -6,6 +6,8 @@ import 'package:florys_diaries/app/theme/app_colors.dart';
 import 'package:florys_diaries/core/widgets/travel_document_image.dart';
 import 'package:florys_diaries/features/documents/data/travel_file_service.dart';
 import 'package:florys_diaries/features/documents/domain/travel_document.dart';
+import 'package:florys_diaries/features/security/application/app_lock_scope.dart';
+import 'package:florys_diaries/features/security/presentation/widgets/app_lock_gate.dart';
 
 import 'document_file_viewer_screen.dart';
 
@@ -17,7 +19,19 @@ class DocumentDetailScreen extends StatelessWidget {
   final TravelDocument document;
   static const _fileService = TravelFileService();
 
+
+  Future<bool> _authorize(BuildContext context) async {
+    final controller = AppLockScope.maybeOf(context);
+    if (controller == null || !controller.protectsDocuments) {
+      return true;
+    }
+    return showProtectedContentUnlockDialog(context, controller);
+  }
+
   Future<void> _openFile(BuildContext context) async {
+    if (!await _authorize(context) || !context.mounted) {
+      return;
+    }
     final messenger = ScaffoldMessenger.of(context);
     final file = await _fileService.resolveExistingDocumentFile(document);
     if (!context.mounted) {
@@ -36,6 +50,9 @@ class DocumentDetailScreen extends StatelessWidget {
   }
 
   Future<void> _shareFile(BuildContext context) async {
+    if (!await _authorize(context) || !context.mounted) {
+      return;
+    }
     final messenger = ScaffoldMessenger.of(context);
     final box = context.findRenderObject() as RenderBox?;
     final file = await _fileService.resolveExistingDocumentFile(document);
@@ -69,6 +86,9 @@ class DocumentDetailScreen extends StatelessWidget {
   }
 
   Future<void> _showIntegratedPreview(BuildContext context) async {
+    if (!await _authorize(context) || !context.mounted) {
+      return;
+    }
     final messenger = ScaffoldMessenger.of(context);
     final file = await _fileService.resolveExistingDocumentFile(document);
     if (!context.mounted) {
@@ -87,7 +107,17 @@ class DocumentDetailScreen extends StatelessWidget {
     );
   }
 
+  Future<void> _edit(BuildContext context) async {
+    if (!await _authorize(context) || !context.mounted) {
+      return;
+    }
+    Navigator.of(context).pop(DocumentDetailAction.edit);
+  }
+
   Future<void> _delete(BuildContext context) async {
+    if (!await _authorize(context) || !context.mounted) {
+      return;
+    }
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
@@ -125,9 +155,7 @@ class DocumentDetailScreen extends StatelessWidget {
         actions: [
           IconButton(
             tooltip: 'Bearbeiten',
-            onPressed: () {
-              Navigator.of(context).pop(DocumentDetailAction.edit);
-            },
+            onPressed: () => _edit(context),
             icon: const Icon(Icons.edit_outlined),
           ),
           IconButton(

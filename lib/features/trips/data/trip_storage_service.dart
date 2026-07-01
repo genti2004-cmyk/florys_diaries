@@ -323,6 +323,22 @@ class TripStorageService {
         }
       },
     );
+    final participantIds = <String>{};
+    _validateNestedList(
+      tripJson['participants'],
+      label: 'Reiseteilnehmer',
+      validate: (entry, ids) {
+        _requireUniqueId(entry, ids, label: 'Reiseteilnehmer');
+        final id = entry['id'] as String;
+        final name = entry['name'];
+        if (name is! String || name.trim().isEmpty) {
+          throw const FormatException(
+            'Ein lokaler Teilnehmername ist ungültig.',
+          );
+        }
+        participantIds.add(id);
+      },
+    );
     _validateNestedList(
       tripJson['budgetExpenses'],
       label: 'Budget-Ausgabe',
@@ -380,6 +396,27 @@ class TripStorageService {
           throw const FormatException(
             'Der Status einer lokalen Budget-Ausgabe ist ungültig.',
           );
+        }
+
+
+        final payer = entry['paidByParticipantId'];
+        if (payer != null &&
+            (payer is! String || !participantIds.contains(payer))) {
+          throw const FormatException(
+            'Der Zahler einer lokalen Budget-Ausgabe ist ungültig.',
+          );
+        }
+        final splitParticipants = entry['participantIds'];
+        if (splitParticipants != null) {
+          if (splitParticipants is! List ||
+              splitParticipants.any(
+                (value) =>
+                    value is! String || !participantIds.contains(value),
+              )) {
+            throw const FormatException(
+              'Die Aufteilung einer lokalen Budget-Ausgabe ist ungültig.',
+            );
+          }
         }
       },
     );

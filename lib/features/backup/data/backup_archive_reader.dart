@@ -301,6 +301,22 @@ class BackupArchiveReader {
         }
       },
     );
+    final participantIds = <String>{};
+    _validateNestedList(
+      tripJson['participants'],
+      label: 'Reiseteilnehmer',
+      validate: (entry, ids) {
+        _requireUniqueId(entry, ids, label: 'Reiseteilnehmer');
+        final id = entry['id'] as String;
+        final name = entry['name'];
+        if (name is! String || name.trim().isEmpty) {
+          throw const FormatException(
+            'Ein Teilnehmername im Backup ist ungültig.',
+          );
+        }
+        participantIds.add(id);
+      },
+    );
     _validateNestedList(
       tripJson['budgetExpenses'],
       label: 'Budget-Ausgabe',
@@ -357,6 +373,26 @@ class BackupArchiveReader {
             !const <String>{'planned', 'paid'}.contains(status)) {
           throw const FormatException(
             'Ein Ausgabenstatus im Backup ist ungültig.',
+          );
+        }
+
+        final payer = entry['paidByParticipantId'];
+        if (payer != null &&
+            (payer is! String || !participantIds.contains(payer))) {
+          throw const FormatException(
+            'Der Zahler einer Budget-Ausgabe im Backup ist ungültig.',
+          );
+        }
+
+        final splitParticipants = entry['participantIds'];
+        if (splitParticipants != null &&
+            (splitParticipants is! List ||
+                splitParticipants.any(
+                  (value) =>
+                      value is! String || !participantIds.contains(value),
+                ))) {
+          throw const FormatException(
+            'Die Aufteilung einer Budget-Ausgabe im Backup ist ungültig.',
           );
         }
       },

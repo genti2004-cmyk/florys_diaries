@@ -134,8 +134,9 @@ class GlobalSearchEngine {
         trip.destination,
         trip.country,
         trip.notes,
+        ...trip.participants.map((participant) => participant.name),
         subtitle,
-        'Reise Urlaub Trip',
+        'Reise Urlaub Trip Reiseteilnehmer',
       ]),
       date: trip.startDate,
     );
@@ -281,6 +282,7 @@ class GlobalSearchEngine {
         trip.title,
         trip.destination,
         trip.country,
+        ...trip.participants.map((participant) => participant.name),
         subtitle,
       ]),
       date: expense.dateOnly,

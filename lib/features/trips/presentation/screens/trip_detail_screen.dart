@@ -12,6 +12,10 @@ import 'package:florys_diaries/features/documents/presentation/screens/document_
 import 'package:florys_diaries/features/documents/presentation/screens/document_editor_screen.dart';
 import 'package:florys_diaries/features/planner/presentation/widgets/trip_planning_section.dart';
 import 'package:florys_diaries/features/replay/presentation/screens/travel_replay_screen.dart';
+import 'package:florys_diaries/features/report/presentation/screens/travel_report_screen.dart';
+import 'package:florys_diaries/features/templates/data/trip_template_service.dart';
+import 'package:florys_diaries/features/templates/domain/trip_template.dart';
+import 'package:florys_diaries/features/templates/presentation/screens/trip_duplicate_screen.dart';
 import 'package:florys_diaries/features/trips/application/trip_store_scope.dart';
 import 'package:florys_diaries/features/trips/data/trip_export_service.dart';
 import 'package:florys_diaries/features/trips/domain/trip.dart';
@@ -21,7 +25,14 @@ import 'package:florys_diaries/features/trips/presentation/widgets/trip_vault_se
 
 import 'trip_editor_screen.dart';
 
-enum _TripDetailMenuAction { edit, export, delete }
+enum _TripDetailMenuAction {
+  edit,
+  report,
+  export,
+  duplicate,
+  saveTemplate,
+  delete,
+}
 enum TripDetailSection { overview, planning, documents, memories }
 
 class TripDetailScreen extends StatefulWidget {
@@ -61,6 +72,79 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+
+  Future<void> _openReport(BuildContext context, Trip currentTrip) {
+    return Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => TravelReportScreen(trip: currentTrip),
+      ),
+    );
+  }
+
+  Future<void> _duplicateTrip(BuildContext context, Trip currentTrip) {
+    return Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => TripDuplicateScreen(sourceTrip: currentTrip),
+      ),
+    );
+  }
+
+  Future<void> _saveAsTemplate(
+    BuildContext context,
+    Trip currentTrip,
+  ) async {
+    final nameController = TextEditingController(
+      text: '${currentTrip.title} Vorlage',
+    );
+    final name = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Als Vorlage speichern'),
+        content: TextField(
+          controller: nameController,
+          autofocus: true,
+          textCapitalization: TextCapitalization.words,
+          decoration: const InputDecoration(labelText: 'Vorlagenname'),
+          onSubmitted: (value) =>
+              Navigator.of(dialogContext).pop(value.trim()),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Abbrechen'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(
+              dialogContext,
+            ).pop(nameController.text.trim()),
+            child: const Text('Speichern'),
+          ),
+        ],
+      ),
+    );
+    nameController.dispose();
+    if (!context.mounted || name == null || name.trim().isEmpty) {
+      return;
+    }
+    try {
+      await const TripTemplateService().add(
+        TripTemplate(
+          id: DateTime.now().microsecondsSinceEpoch.toString(),
+          name: name.trim(),
+          createdAt: DateTime.now(),
+          sourceTrip: currentTrip,
+        ),
+      );
+      if (context.mounted) {
+        _showMessage(context, 'Reisevorlage wurde gespeichert.');
+      }
+    } catch (_) {
+      if (context.mounted) {
+        _showMessage(context, 'Die Reisevorlage konnte nicht gespeichert werden.');
+      }
+    }
   }
 
   Future<void> _openReplay(BuildContext context, Trip currentTrip) {
@@ -332,8 +416,17 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
                 case _TripDetailMenuAction.edit:
                   unawaited(_editTrip(context, currentTrip));
                   break;
+                case _TripDetailMenuAction.report:
+                  unawaited(_openReport(context, currentTrip));
+                  break;
                 case _TripDetailMenuAction.export:
                   unawaited(_exportTrip(context, currentTrip));
+                  break;
+                case _TripDetailMenuAction.duplicate:
+                  unawaited(_duplicateTrip(context, currentTrip));
+                  break;
+                case _TripDetailMenuAction.saveTemplate:
+                  unawaited(_saveAsTemplate(context, currentTrip));
                   break;
                 case _TripDetailMenuAction.delete:
                   unawaited(_deleteTrip(context, currentTrip));
@@ -350,10 +443,34 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
                 ),
               ),
               PopupMenuItem(
+                value: _TripDetailMenuAction.report,
+                child: ListTile(
+                  leading: Icon(Icons.picture_as_pdf_outlined),
+                  title: Text('Reisebericht & PDF'),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+              PopupMenuItem(
                 value: _TripDetailMenuAction.export,
                 child: ListTile(
                   leading: Icon(Icons.archive_outlined),
                   title: Text('Reise exportieren'),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+              PopupMenuItem(
+                value: _TripDetailMenuAction.duplicate,
+                child: ListTile(
+                  leading: Icon(Icons.copy_all_outlined),
+                  title: Text('Reise duplizieren'),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+              PopupMenuItem(
+                value: _TripDetailMenuAction.saveTemplate,
+                child: ListTile(
+                  leading: Icon(Icons.collections_bookmark_outlined),
+                  title: Text('Als Vorlage speichern'),
                   contentPadding: EdgeInsets.zero,
                 ),
               ),

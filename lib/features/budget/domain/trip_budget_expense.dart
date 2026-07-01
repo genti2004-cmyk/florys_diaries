@@ -63,6 +63,8 @@ class TripBudgetExpense {
     required this.category,
     this.status = TripExpenseStatus.planned,
     this.notes = '',
+    this.paidByParticipantId,
+    this.participantIds = const [],
   });
 
   final String id;
@@ -72,6 +74,8 @@ class TripBudgetExpense {
   final TripExpenseCategory category;
   final TripExpenseStatus status;
   final String notes;
+  final String? paidByParticipantId;
+  final List<String> participantIds;
 
   DateTime get dateOnly => DateTime(date.year, date.month, date.day);
 
@@ -86,6 +90,8 @@ class TripBudgetExpense {
       'category': category.name,
       'status': status.name,
       'notes': notes,
+      'paidByParticipantId': paidByParticipantId,
+      'participantIds': participantIds,
     };
   }
 
@@ -98,6 +104,10 @@ class TripBudgetExpense {
       category: _parseCategory(json['category']),
       status: _parseStatus(json['status']),
       notes: (json['notes'] as String?) ?? '',
+      paidByParticipantId: _parseOptionalString(
+        json['paidByParticipantId'],
+      ),
+      participantIds: _parseParticipantIds(json['participantIds']),
     );
   }
 
@@ -109,6 +119,8 @@ class TripBudgetExpense {
     TripExpenseCategory? category,
     TripExpenseStatus? status,
     String? notes,
+    Object? paidByParticipantId = _unset,
+    List<String>? participantIds,
   }) {
     return TripBudgetExpense(
       id: id ?? this.id,
@@ -118,7 +130,32 @@ class TripBudgetExpense {
       category: category ?? this.category,
       status: status ?? this.status,
       notes: notes ?? this.notes,
+      paidByParticipantId: identical(paidByParticipantId, _unset)
+          ? this.paidByParticipantId
+          : paidByParticipantId as String?,
+      participantIds: participantIds ?? this.participantIds,
     );
+  }
+
+
+  static String? _parseOptionalString(Object? value) {
+    if (value is! String || value.trim().isEmpty) {
+      return null;
+    }
+    return value.trim();
+  }
+
+  static List<String> _parseParticipantIds(Object? value) {
+    if (value is! List) {
+      return const [];
+    }
+    final ids = <String>[];
+    for (final item in value) {
+      if (item is String && item.trim().isNotEmpty && !ids.contains(item)) {
+        ids.add(item.trim());
+      }
+    }
+    return List<String>.unmodifiable(ids);
   }
 
   static DateTime? _parseDate(Object? value) {
@@ -152,6 +189,8 @@ class TripBudgetExpense {
     );
   }
 }
+
+const Object _unset = Object();
 
 class TripMoney {
   const TripMoney._();

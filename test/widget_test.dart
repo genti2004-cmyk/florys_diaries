@@ -9,7 +9,10 @@ void main() {
     await tester.pumpWidget(const FlorysDiariesApp());
 
     expect(find.byType(MaterialApp), findsOneWidget);
-    expect(find.byType(MainShellScreen), findsOneWidget);
+    expect(
+      find.byType(MainShellScreen, skipOffstage: false),
+      findsOneWidget,
+    );
 
     final app = tester.widget<MaterialApp>(find.byType(MaterialApp));
     expect(app.title, AppMetadata.name);

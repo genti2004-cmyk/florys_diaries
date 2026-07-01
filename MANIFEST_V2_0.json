@@ -1,0 +1,231 @@
+{
+  "package": "FlorysDiaries DEV v2.0 Complete Travel Suite",
+  "fileCount": 45,
+  "files": [
+    {
+      "path": "README_FLORYSDIARIES_DEV_V2_0.txt",
+      "sha256": "f4147c4fa4e789e2653678391c2490530bb5e73b0a622cce4051de8bad46406b",
+      "bytes": 3555
+    },
+    {
+      "path": "android/app/build.gradle.kts",
+      "sha256": "cf62f9aab0bd19d035210a8aaa2a298f779ac05a2329e8221ba4680eebaf2004",
+      "bytes": 3265
+    },
+    {
+      "path": "android/app/src/main/AndroidManifest.xml",
+      "sha256": "5dbbecd5d61adee838890626787bd8b40be0de2242f6d1fcbd902cd0977c93cd",
+      "bytes": 2699
+    },
+    {
+      "path": "android/app/src/main/kotlin/com/florysdiaries/app/MainActivity.kt",
+      "sha256": "961ab8389747dc4981405b900efec18942977f2f89039eeb494ff52debb0270d",
+      "bytes": 139
+    },
+    {
+      "path": "android/app/src/main/res/values-night/styles.xml",
+      "sha256": "c9e27081553bc8fa19ee363ed03c644f829ccfd2c8ab17f8307ef4e8bb70df09",
+      "bytes": 993
+    },
+    {
+      "path": "android/app/src/main/res/values/styles.xml",
+      "sha256": "aa9835d21e8fcf399fd8143c51a7c2914a56bcfd425813903a532f5f25fd1a6a",
+      "bytes": 994
+    },
+    {
+      "path": "lib/app/florys_diaries_app.dart",
+      "sha256": "e7925f3e139e2affd3b355f0ea2b6309dabb69c2e5e550a2f83cacd3ce0e25fa",
+      "bytes": 6640
+    },
+    {
+      "path": "lib/features/backup/data/backup_archive_reader.dart",
+      "sha256": "caf33e393dd0ecfa7cee5417a94d4798a3f7c352ea341810dd1c0e9120f95790",
+      "bytes": 19509
+    },
+    {
+      "path": "lib/features/budget/domain/trip_budget_expense.dart",
+      "sha256": "71c62fd050a2738a7819d5f46a24387505ac3098c8d56c098902910a6047e546",
+      "bytes": 7749
+    },
+    {
+      "path": "lib/features/budget/presentation/screens/budget_expense_editor_screen.dart",
+      "sha256": "1ccdb07b8f0aa6c13a3dcd3a3ac50e4f645c55e04792d6bcef10c79ce5cebf2a",
+      "bytes": 21219
+    },
+    {
+      "path": "lib/features/budget/presentation/widgets/trip_budget_section.dart",
+      "sha256": "86a41de7fb54ff02694d7df233b27f38b32d27501067e57adec1b29540cec0a9",
+      "bytes": 36586
+    },
+    {
+      "path": "lib/features/documents/presentation/screens/document_detail_screen.dart",
+      "sha256": "5be5b86c59636b57a0a73843d7943b777c6624667e309ef7bc79b38be27bcaa3",
+      "bytes": 17470
+    },
+    {
+      "path": "lib/features/participants/application/trip_settlement_calculator.dart",
+      "sha256": "3de20b933bcbcf881c87d76b518f3dc44ec82a30bdb9b9902eb1ce74f5d11cad",
+      "bytes": 3954
+    },
+    {
+      "path": "lib/features/participants/domain/trip_participant.dart",
+      "sha256": "9ebc2465a7ef1e4e3f4f217c850b771396b179c06f48b993db47b65c388a2019",
+      "bytes": 517
+    },
+    {
+      "path": "lib/features/participants/presentation/screens/trip_expense_split_screen.dart",
+      "sha256": "b82b9ca7af499bfa5f7ea1d22fadd7d860e45fed86195b3d423fa034ce92e707",
+      "bytes": 13704
+    },
+    {
+      "path": "lib/features/report/data/travel_report_service.dart",
+      "sha256": "d1d4cb5ae9511b9178ad29ddc71c25b5bc43f7753e88513fcc4280707287f7cd",
+      "bytes": 18241
+    },
+    {
+      "path": "lib/features/report/domain/travel_report_options.dart",
+      "sha256": "36817e1e1c1c854d798632bc2b005a4cc824e9c039600b556d700e92ebcea96e",
+      "bytes": 1323
+    },
+    {
+      "path": "lib/features/report/presentation/screens/travel_report_screen.dart",
+      "sha256": "c81e9dad0f1d28dd1c61e534d65c16cd059ca8fd8264756d42c72569cbf9b9c3",
+      "bytes": 9682
+    },
+    {
+      "path": "lib/features/search/application/global_search_engine.dart",
+      "sha256": "781569133bde03292c9cd417891f24eb906481361de8b27b8d0b92588ee2b683",
+      "bytes": 14180
+    },
+    {
+      "path": "lib/features/security/application/app_lock_controller.dart",
+      "sha256": "de478766edc61b466023d7b44e597ad7d0cb9ff767db9a97707d1c1647e6436d",
+      "bytes": 5684
+    },
+    {
+      "path": "lib/features/security/application/app_lock_scope.dart",
+      "sha256": "74ff8f61003847e1d6fafead17c64d85d1ca470f23ae7a94e0798a75bb519280",
+      "bytes": 735
+    },
+    {
+      "path": "lib/features/security/data/app_lock_settings_service.dart",
+      "sha256": "c8946501c529b262eec15863e2c12071ed762a3b88dbfccec363a1e56629c5f2",
+      "bytes": 1615
+    },
+    {
+      "path": "lib/features/security/domain/app_lock_settings.dart",
+      "sha256": "c7cb6bc69f9b26da294ea452cd3fb6e67e2a5ab69366aa3a828e70c7e1de0099",
+      "bytes": 2006
+    },
+    {
+      "path": "lib/features/security/presentation/screens/security_settings_screen.dart",
+      "sha256": "e6766dcbb91587122e9fcc3932ddc1e9b275235c76df6e868d2e759eb93c3b13",
+      "bytes": 13787
+    },
+    {
+      "path": "lib/features/security/presentation/widgets/app_lock_gate.dart",
+      "sha256": "e5ff2d34666f80b1c5a96e7d3f5680d7c8dfddb47177c218be2d8b066acc18b6",
+      "bytes": 9889
+    },
+    {
+      "path": "lib/features/settings/presentation/settings_screen.dart",
+      "sha256": "4e2cbb7b5d58347854794b365fe0c3aa1292be03e0994d00f81232a772f14813",
+      "bytes": 27047
+    },
+    {
+      "path": "lib/features/settings/presentation/widgets/settings_content.dart",
+      "sha256": "f44d47e35f519ace52b0d67ae858623763f628f6046854974487453034171ae2",
+      "bytes": 10513
+    },
+    {
+      "path": "lib/features/templates/application/trip_clone_service.dart",
+      "sha256": "6f78596b2b967158ffee1ef7a34a7d335aceace14b4ab0059e5475dbd6bc262a",
+      "bytes": 4520
+    },
+    {
+      "path": "lib/features/templates/data/trip_template_service.dart",
+      "sha256": "537e6aff405c2da9545f98dc241a0dec523e02ad2bc90a13b1c009e78b950427",
+      "bytes": 2872
+    },
+    {
+      "path": "lib/features/templates/domain/trip_template.dart",
+      "sha256": "0bbb7ec3671ab1bb20976b04d602aaaf05388589b4e0e8990f78310dffab68ac",
+      "bytes": 1136
+    },
+    {
+      "path": "lib/features/templates/presentation/screens/trip_duplicate_screen.dart",
+      "sha256": "6afc15f38f85cdd2d3b8578e1cc531b064a84071ace33af09cb511ce8b1b11f3",
+      "bytes": 7461
+    },
+    {
+      "path": "lib/features/templates/presentation/screens/trip_templates_screen.dart",
+      "sha256": "f3635cc7b876f68ed78aa06df7f5b639cfc78172afdda48b7445147f670cde68",
+      "bytes": 5888
+    },
+    {
+      "path": "lib/features/trips/data/trip_storage_service.dart",
+      "sha256": "eb11c14fe396a7d365404bcca7daacfc6e725c04ef7d1858956662934306416d",
+      "bytes": 18094
+    },
+    {
+      "path": "lib/features/trips/domain/trip.dart",
+      "sha256": "3a7e5aab673b7f3e2c279a65a6afe67a820f8d1e082a5cfd01f375d9860f5afd",
+      "bytes": 11351
+    },
+    {
+      "path": "lib/features/trips/presentation/screens/trip_detail_screen.dart",
+      "sha256": "96f53c8d9cf91420868c754cca951a06cad16e44c5dc3edc3ade3c0c91f1ddd1",
+      "bytes": 32385
+    },
+    {
+      "path": "lib/features/trips/presentation/screens/upcoming_trips_screen.dart",
+      "sha256": "be2b94f569b23347f4b268ef23e9e81032a6051b21121a615b513113dd8e9475",
+      "bytes": 23083
+    },
+    {
+      "path": "pubspec.yaml",
+      "sha256": "6a189ae6f804c8e74a1f3deba59c3db493ea51b80eed4d9c6086d54c8c386529",
+      "bytes": 685
+    },
+    {
+      "path": "test/features/participants/application/trip_settlement_calculator_test.dart",
+      "sha256": "840954e34e6ce08e920b4cd679358c23dced4bd84fc53e6f549f21c789a912d6",
+      "bytes": 2407
+    },
+    {
+      "path": "test/features/participants/domain/trip_participant_storage_test.dart",
+      "sha256": "75511d1ac09897416c69a691dc637610b400c680e77824c8e626f079d997fb76",
+      "bytes": 1489
+    },
+    {
+      "path": "test/features/report/data/travel_report_service_test.dart",
+      "sha256": "8a10351cae0272db52f42dafbcc600db8956527c88e2e08326e6b25a97bbdeea",
+      "bytes": 1389
+    },
+    {
+      "path": "test/features/report/domain/travel_report_options_test.dart",
+      "sha256": "34773ca953fc768390592d81fdc48ed73e7036e32a94adae5ca55ed721b6f01b",
+      "bytes": 600
+    },
+    {
+      "path": "test/features/security/application/app_lock_controller_test.dart",
+      "sha256": "222f9bd115701b8ba7bab116d3768d1e136ff5f1c622cd4a94fd5421b0dd95a5",
+      "bytes": 1236
+    },
+    {
+      "path": "test/features/security/domain/app_lock_settings_test.dart",
+      "sha256": "0dbc83fd3eed2f099bd561b0bbb1460e6fd5b152f1a409fb417262db056f796b",
+      "bytes": 962
+    },
+    {
+      "path": "test/features/templates/application/trip_clone_service_test.dart",
+      "sha256": "36604edfe704e3872856a30b9f4bc488044ab39fa4a8b58f12e31259976d73e6",
+      "bytes": 3137
+    },
+    {
+      "path": "test/features/templates/data/trip_template_service_test.dart",
+      "sha256": "5ec76efb5d6bc0b04189f3054eb9dd1c07435f167ff1a3659ff3cf3a5f2aa812",
+      "bytes": 2036
+    }
+  ]
+}

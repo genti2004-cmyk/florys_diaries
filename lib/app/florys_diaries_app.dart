@@ -10,6 +10,9 @@ import '../features/backup/data/automatic_google_drive_backup_service.dart';
 import '../features/backup/data/local_backup_service.dart';
 import '../features/backup/domain/backup_sync_status.dart';
 import '../features/reminders/application/trip_reminder_coordinator.dart';
+import '../features/security/application/app_lock_controller.dart';
+import '../features/security/application/app_lock_scope.dart';
+import '../features/security/presentation/widgets/app_lock_gate.dart';
 import '../features/shell/presentation/main_shell_screen.dart';
 import '../features/trips/application/trip_store.dart';
 import '../features/trips/application/trip_store_scope.dart';
@@ -35,6 +38,7 @@ class _FlorysDiariesAppState extends State<FlorysDiariesApp>
   late final BackupSyncStatusStore _backupSyncStatusStore;
   late final BackupSyncCoordinator _backupSyncCoordinator;
   late final TripReminderCoordinator _reminderCoordinator;
+  late final AppLockController _appLockController;
 
   bool _storeListenerAttached = false;
   bool _isDisposed = false;
@@ -49,6 +53,8 @@ class _FlorysDiariesAppState extends State<FlorysDiariesApp>
     unawaited(_themeController.load());
     _backupSyncStatusStore = BackupSyncStatusStore();
     _reminderCoordinator = TripReminderCoordinator();
+    _appLockController = AppLockController();
+    unawaited(_appLockController.load());
     _backupSyncCoordinator = BackupSyncCoordinator(
       localBackupOperation: (trips) async {
         final created = await _localBackupService.createAutomaticBackupIfDue(
@@ -101,6 +107,8 @@ class _FlorysDiariesAppState extends State<FlorysDiariesApp>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    _appLockController.handleLifecycle(state);
+
     if (_isDisposed || _tripStore.isLoading || _tripStore.hasLoadError) {
       return;
     }
@@ -134,6 +142,7 @@ class _FlorysDiariesAppState extends State<FlorysDiariesApp>
     _backupSyncStatusStore.dispose();
     _tripStore.dispose();
     _themeController.dispose();
+    _appLockController.dispose();
     super.dispose();
   }
 
@@ -143,19 +152,25 @@ class _FlorysDiariesAppState extends State<FlorysDiariesApp>
       store: _backupSyncStatusStore,
       child: TripStoreScope(
         store: _tripStore,
-        child: AnimatedBuilder(
-          animation: _themeController,
-          builder: (context, child) {
-            return AppThemeScope(
-              controller: _themeController,
-              child: MaterialApp(
-                title: AppMetadata.name,
-                debugShowCheckedModeBanner: false,
-                theme: AppTheme.forPreset(_themeController.preset),
-                home: const MainShellScreen(),
-              ),
-            );
-          },
+        child: AppLockScope(
+          controller: _appLockController,
+          child: AnimatedBuilder(
+            animation: _themeController,
+            builder: (context, child) {
+              return AppThemeScope(
+                controller: _themeController,
+                child: MaterialApp(
+                  title: AppMetadata.name,
+                  debugShowCheckedModeBanner: false,
+                  theme: AppTheme.forPreset(_themeController.preset),
+                  home: AppLockGate(
+                    controller: _appLockController,
+                    child: const MainShellScreen(),
+                  ),
+                ),
+              );
+            },
+          ),
         ),
       ),
     );

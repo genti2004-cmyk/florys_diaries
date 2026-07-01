@@ -53,6 +53,7 @@ class SettingsContent extends StatelessWidget {
     required this.onDeleteLocalBackup,
     this.onRunDataSafetyCheck,
     this.onOpenReminders,
+    this.onOpenSecurity,
     required this.onOpenPrivacy,
   });
 
@@ -87,6 +88,7 @@ class SettingsContent extends StatelessWidget {
   final Future<void> Function(LocalBackupEntry entry) onDeleteLocalBackup;
   final VoidCallback? onRunDataSafetyCheck;
   final VoidCallback? onOpenReminders;
+  final VoidCallback? onOpenSecurity;
   final VoidCallback onOpenPrivacy;
 
   @override
@@ -215,11 +217,17 @@ class SettingsContent extends StatelessWidget {
             onTap: onOpenPrivacy,
           ),
           const SizedBox(height: 12),
-          const AppSectionCard(
+          AppSectionCard(
+            key: const ValueKey<String>('open-app-security'),
             icon: Icons.lock_outline_rounded,
-            title: 'Sicherheit',
+            title: 'App-Schutz',
             subtitle:
-                'Reisedaten liegen im privaten App-Bereich. Wiederherstellungen werden geprüft und erhalten vorher automatisch eine lokale Sicherheitskopie.',
+                'PIN, Fingerabdruck oder Gesichtserkennung für die gesamte App oder nur Dokumente.',
+            trailing: Icon(
+              Icons.chevron_right_rounded,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+            onTap: onOpenSecurity,
           ),
           const SizedBox(height: 12),
           const AppSectionCard(
