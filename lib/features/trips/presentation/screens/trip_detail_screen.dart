@@ -5,12 +5,12 @@ import 'package:share_plus/share_plus.dart';
 
 import 'package:florys_diaries/app/theme/app_colors.dart';
 import 'package:florys_diaries/features/album/presentation/widgets/trip_album_section.dart';
-import 'package:florys_diaries/features/checklist/presentation/widgets/trip_checklist_section.dart';
 import 'package:florys_diaries/features/documents/application/trip_document_query.dart';
 import 'package:florys_diaries/features/documents/data/travel_file_service.dart';
 import 'package:florys_diaries/features/documents/domain/travel_document.dart';
 import 'package:florys_diaries/features/documents/presentation/screens/document_detail_screen.dart';
 import 'package:florys_diaries/features/documents/presentation/screens/document_editor_screen.dart';
+import 'package:florys_diaries/features/planner/presentation/widgets/trip_planning_section.dart';
 import 'package:florys_diaries/features/replay/presentation/screens/travel_replay_screen.dart';
 import 'package:florys_diaries/features/trips/application/trip_store_scope.dart';
 import 'package:florys_diaries/features/trips/data/trip_export_service.dart';
@@ -390,7 +390,7 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
                 ),
                 _SectionListView(
                   keyValue: 'planning-${currentTrip.id}',
-                  child: TripChecklistSection(trip: currentTrip),
+                  child: TripPlanningSection(trip: currentTrip),
                 ),
                 _SectionListView(
                   keyValue: 'documents-${currentTrip.id}',
@@ -532,8 +532,8 @@ class _TripSectionNavigation extends StatelessWidget {
             const SizedBox(width: 6),
             Expanded(
               child: _SectionTab(
-                icon: Icons.checklist_outlined,
-                selectedIcon: Icons.checklist_rounded,
+                icon: Icons.event_note_outlined,
+                selectedIcon: Icons.event_note_rounded,
                 label: 'Planung',
                 selected: selected == _TripDetailSection.planning,
                 onTap: () => onSelected(_TripDetailSection.planning),
@@ -701,12 +701,12 @@ class _JourneyHubCard extends StatelessWidget {
       child: Column(
         children: [
           _JourneyHubRow(
-            icon: Icons.checklist_rounded,
+            icon: Icons.calendar_view_day_rounded,
             title: 'Planung',
             subtitle: _planningLabel(trip),
-            status: trip.checklistItems.isEmpty
+            status: trip.planItemCount == 0
                 ? 'Starten'
-                : '${(trip.checklistProgress * 100).round()} %',
+                : '${trip.planItemCount}',
             onTap: onOpenPlanning,
           ),
           const Divider(height: 1),
@@ -735,11 +735,20 @@ class _JourneyHubCard extends StatelessWidget {
   }
 
   static String _planningLabel(Trip trip) {
-    final total = trip.checklistItems.length;
-    if (total == 0) {
-      return 'Noch keine Aufgaben angelegt';
+    final programCount = trip.planItemCount;
+    final taskCount = trip.checklistItems.length;
+    if (programCount == 0 && taskCount == 0) {
+      return 'Tagesplan und Checkliste vorbereiten';
     }
-    return '${trip.checklistCompletedCount} von $total Aufgaben erledigt';
+    if (programCount == 0) {
+      return '${trip.checklistCompletedCount} von $taskCount Aufgaben erledigt';
+    }
+    if (taskCount == 0) {
+      return programCount == 1
+          ? '1 Programmpunkt im Tagesplan'
+          : '$programCount Programmpunkte im Tagesplan';
+    }
+    return '$programCount Programmpunkte · $taskCount Aufgaben';
   }
 }
 

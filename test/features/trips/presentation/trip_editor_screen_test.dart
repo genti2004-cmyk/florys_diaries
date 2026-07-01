@@ -5,6 +5,7 @@ import 'package:florys_diaries/features/album/domain/trip_album_entry.dart';
 import 'package:florys_diaries/features/checklist/domain/trip_checklist_item.dart';
 import 'package:florys_diaries/features/documents/domain/document_category.dart';
 import 'package:florys_diaries/features/documents/domain/travel_document.dart';
+import 'package:florys_diaries/features/planner/domain/trip_plan_item.dart';
 import 'package:florys_diaries/features/trips/application/trip_store.dart';
 import 'package:florys_diaries/features/trips/application/trip_store_scope.dart';
 import 'package:florys_diaries/features/trips/data/trip_storage_service.dart';
@@ -46,6 +47,7 @@ void main() {
     expect(saved.documents.map((item) => item.id), ['document-1']);
     expect(saved.albumEntries.map((item) => item.id), ['album-1']);
     expect(saved.checklistItems.map((item) => item.id), ['checklist-1']);
+    expect(saved.planItems.map((item) => item.id), ['plan-1']);
     expect(saved.photoCount, 7);
     expect(storage.saveCalls, 1);
     expect(find.text('Editor öffnen'), findsOneWidget);
@@ -171,6 +173,15 @@ Trip _tripWithNestedContent() {
         category: TripChecklistCategory.documents,
         priority: TripChecklistPriority.high,
         createdAt: DateTime(2026, 6, 1),
+      ),
+    ],
+    planItems: [
+      TripPlanItem(
+        id: 'plan-1',
+        title: 'Stadtführung',
+        date: DateTime(2026, 7, 2),
+        startMinutes: 10 * 60,
+        type: TripPlanItemType.sight,
       ),
     ],
     photoCount: 7,

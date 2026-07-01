@@ -1,6 +1,7 @@
 import 'package:florys_diaries/features/album/domain/trip_album_entry.dart';
 import 'package:florys_diaries/features/checklist/domain/trip_checklist_item.dart';
 import 'package:florys_diaries/features/documents/domain/travel_document.dart';
+import 'package:florys_diaries/features/planner/domain/trip_plan_item.dart';
 
 class Trip {
   const Trip({
@@ -14,6 +15,7 @@ class Trip {
     this.documents = const [],
     this.albumEntries = const [],
     this.checklistItems = const [],
+    this.planItems = const [],
     this.photoCount = 0,
   });
 
@@ -27,6 +29,7 @@ class Trip {
   final List<TravelDocument> documents;
   final List<TripAlbumEntry> albumEntries;
   final List<TripChecklistItem> checklistItems;
+  final List<TripPlanItem> planItems;
   final int photoCount;
 
   int get documentCount => documents.length;
@@ -42,6 +45,16 @@ class Trip {
   }
 
   int get checklistOpenCount => checklistItems.length - checklistCompletedCount;
+
+  int get planItemCount => planItems.length;
+
+  int get planCompletedCount {
+    return planItems.where((item) => item.isCompleted).length;
+  }
+
+  int get plannedDayCount {
+    return planItems.map((item) => item.dateOnly).toSet().length;
+  }
 
   int get checklistOverdueCount {
     return checklistItems.where((item) => item.isOverdue).length;
@@ -78,6 +91,7 @@ class Trip {
       'documents': documents.map((document) => document.toJson()).toList(),
       'albumEntries': albumEntries.map((entry) => entry.toJson()).toList(),
       'checklistItems': checklistItems.map((item) => item.toJson()).toList(),
+      'planItems': planItems.map((item) => item.toJson()).toList(),
       'photoCount': photoCount,
     };
   }
@@ -94,6 +108,7 @@ class Trip {
       documents: _parseDocuments(json['documents']),
       albumEntries: _parseAlbumEntries(json['albumEntries']),
       checklistItems: _parseChecklistItems(json['checklistItems']),
+      planItems: _parsePlanItems(json['planItems']),
       photoCount: (json['photoCount'] as num?)?.toInt() ?? 0,
     );
   }
@@ -109,6 +124,7 @@ class Trip {
     List<TravelDocument>? documents,
     List<TripAlbumEntry>? albumEntries,
     List<TripChecklistItem>? checklistItems,
+    List<TripPlanItem>? planItems,
     int? photoCount,
   }) {
     return Trip(
@@ -122,6 +138,7 @@ class Trip {
       documents: documents ?? this.documents,
       albumEntries: albumEntries ?? this.albumEntries,
       checklistItems: checklistItems ?? this.checklistItems,
+      planItems: planItems ?? this.planItems,
       photoCount: photoCount ?? this.photoCount,
     );
   }
@@ -155,6 +172,29 @@ class Trip {
         .map(TripAlbumEntry.fromJson)
         .where((entry) => entry.id.trim().isNotEmpty)
         .toList(growable: false);
+  }
+
+
+  static List<TripPlanItem> _parsePlanItems(Object? value) {
+    if (value is! List) {
+      return const [];
+    }
+
+    final items = value
+        .whereType<Map<String, dynamic>>()
+        .map(TripPlanItem.fromJson)
+        .where(
+          (item) => item.id.trim().isNotEmpty && item.title.trim().isNotEmpty,
+        )
+        .toList(growable: true);
+    items.sort((left, right) {
+      final dateComparison = left.dateOnly.compareTo(right.dateOnly);
+      if (dateComparison != 0) {
+        return dateComparison;
+      }
+      return left.sortValue.compareTo(right.sortValue);
+    });
+    return List<TripPlanItem>.unmodifiable(items);
   }
 
   static List<TripChecklistItem> _parseChecklistItems(Object? value) {

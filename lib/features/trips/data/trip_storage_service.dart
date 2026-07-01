@@ -205,6 +205,8 @@ class TripStorageService {
       _validateNestedEntries(
         rawTrip,
         tripId: id,
+        startDate: startDate,
+        endDate: endDate,
         documentPathKeys: documentPathKeys,
       );
 
@@ -225,6 +227,8 @@ class TripStorageService {
   static void _validateNestedEntries(
     Map<String, dynamic> tripJson, {
     required String tripId,
+    required DateTime startDate,
+    required DateTime endDate,
     required Set<String> documentPathKeys,
   }) {
     _validateNestedList(
@@ -300,6 +304,54 @@ class TripStorageService {
         }
       },
     );
+    _validateNestedList(
+      tripJson['planItems'],
+      label: 'Tagesplan-Eintrag',
+      validate: (entry, ids) {
+        _requireUniqueId(entry, ids, label: 'Tagesplan-Eintrag');
+        final title = entry['title'];
+        if (title is! String || title.trim().isEmpty) {
+          throw const FormatException(
+            'Ein lokaler Tagesplan-Titel ist ungültig.',
+          );
+        }
+
+        final dateValue = entry['date'];
+        _requireValidDate(dateValue, label: 'Tagesplan-Datum');
+        final date = DateTime.parse(dateValue as String);
+        final dateOnly = DateTime(date.year, date.month, date.day);
+        final startOnly = DateTime(
+          startDate.year,
+          startDate.month,
+          startDate.day,
+        );
+        final endOnly = DateTime(endDate.year, endDate.month, endDate.day);
+        if (dateOnly.isBefore(startOnly) || dateOnly.isAfter(endOnly)) {
+          throw const FormatException(
+            'Ein Tagesplan-Eintrag liegt außerhalb des Reisezeitraums.',
+          );
+        }
+
+        _requireValidMinutes(
+          entry['startMinutes'],
+          label: 'Startzeit des Tagesplans',
+        );
+        final endMinutes = entry['endMinutes'];
+        if (endMinutes != null) {
+          _requireValidMinutes(
+            endMinutes,
+            label: 'Endzeit des Tagesplans',
+          );
+        }
+
+        final linkedDocumentId = entry['linkedDocumentId'];
+        if (linkedDocumentId != null && linkedDocumentId is! String) {
+          throw const FormatException(
+            'Die Dokumentverknüpfung des Tagesplans ist ungültig.',
+          );
+        }
+      },
+    );
   }
 
   static void _validateNestedList(
@@ -338,6 +390,12 @@ class TripStorageService {
   static void _requireValidDate(Object? value, {required String label}) {
     if (value is! String || DateTime.tryParse(value) == null) {
       throw FormatException('Das lokale $label ist ungültig.');
+    }
+  }
+
+  static void _requireValidMinutes(Object? value, {required String label}) {
+    if (value is! num || value.toInt() < 0 || value.toInt() > 1439) {
+      throw FormatException('Die lokale $label ist ungültig.');
     }
   }
 

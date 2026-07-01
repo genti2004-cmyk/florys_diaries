@@ -200,7 +200,13 @@ class BackupArchiveReader {
         throw const FormatException('Ein Enddatum im Backup ist ungültig.');
       }
 
-      _validateNestedEntries(value);
+      final parsedStartDate = DateTime.parse(startDate);
+      final parsedEndDate = DateTime.parse(endDate);
+      _validateNestedEntries(
+        value,
+        startDate: parsedStartDate,
+        endDate: parsedEndDate,
+      );
 
       final trip = Trip.fromJson(value);
       if (trip.endDate.isBefore(trip.startDate)) {
@@ -214,7 +220,11 @@ class BackupArchiveReader {
     return trips;
   }
 
-  static void _validateNestedEntries(Map<String, dynamic> tripJson) {
+  static void _validateNestedEntries(
+    Map<String, dynamic> tripJson, {
+    required DateTime startDate,
+    required DateTime endDate,
+  }) {
     _validateNestedList(
       tripJson['documents'],
       label: 'Dokument',
@@ -272,6 +282,45 @@ class BackupArchiveReader {
         }
       },
     );
+    _validateNestedList(
+      tripJson['planItems'],
+      label: 'Tagesplan-Eintrag',
+      validate: (entry, ids) {
+        _requireUniqueId(entry, ids, label: 'Tagesplan-Eintrag');
+        final title = entry['title'];
+        if (title is! String || title.trim().isEmpty) {
+          throw const FormatException(
+            'Ein Tagesplan-Titel im Backup ist ungültig.',
+          );
+        }
+        final dateValue = entry['date'];
+        _requireValidDate(dateValue, label: 'Tagesplan-Datum');
+        final date = DateTime.parse(dateValue as String);
+        final dateOnly = DateTime(date.year, date.month, date.day);
+        final startOnly = DateTime(
+          startDate.year,
+          startDate.month,
+          startDate.day,
+        );
+        final endOnly = DateTime(endDate.year, endDate.month, endDate.day);
+        if (dateOnly.isBefore(startOnly) || dateOnly.isAfter(endOnly)) {
+          throw const FormatException(
+            'Ein Tagesplan-Eintrag im Backup liegt außerhalb der Reise.',
+          );
+        }
+        _requireValidMinutes(
+          entry['startMinutes'],
+          label: 'Startzeit des Tagesplans',
+        );
+        final endMinutes = entry['endMinutes'];
+        if (endMinutes != null) {
+          _requireValidMinutes(
+            endMinutes,
+            label: 'Endzeit des Tagesplans',
+          );
+        }
+      },
+    );
   }
 
   static void _validateNestedList(
@@ -311,6 +360,12 @@ class BackupArchiveReader {
 
   static void _requireValidDate(Object? value, {required String label}) {
     if (value is! String || DateTime.tryParse(value) == null) {
+      throw FormatException('$label im Backup ist ungültig.');
+    }
+  }
+
+  static void _requireValidMinutes(Object? value, {required String label}) {
+    if (value is! num || value.toInt() < 0 || value.toInt() > 1439) {
       throw FormatException('$label im Backup ist ungültig.');
     }
   }

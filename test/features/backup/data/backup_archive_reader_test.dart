@@ -173,6 +173,19 @@ void main() {
         'sourceKey': 'passport',
       },
     ];
+    tripJson['planItems'] = [
+      {
+        'id': 'plan-1',
+        'title': 'Altstadt-Rundgang',
+        'date': '2026-07-01T00:00:00.000',
+        'startMinutes': 600,
+        'endMinutes': 720,
+        'type': 'sight',
+        'location': 'Prizren',
+        'notes': 'Kamera mitnehmen',
+        'isCompleted': false,
+      },
+    ];
     tripJson['photoCount'] = 9;
 
     final backup = await _createBackup(
@@ -191,6 +204,9 @@ void main() {
     expect(restored.checklistItems.single.id, 'checklist-1');
     expect(restored.checklistItems.single.sourceKey, 'passport');
     expect(restored.checklistItems.single.isCompleted, isTrue);
+    expect(restored.planItems.single.id, 'plan-1');
+    expect(restored.planItems.single.title, 'Altstadt-Rundgang');
+    expect(restored.planItems.single.startMinutes, 600);
     expect(restored.photoCount, 9);
   });
   test('rejects a document path assigned to the wrong trip', () async {
