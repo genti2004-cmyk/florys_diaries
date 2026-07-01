@@ -13,6 +13,10 @@ void main() {
       tripCount: 3,
       fileCount: 5,
       contentBytes: 4096,
+      tripsSha256: 'a'.padRight(64, 'a'),
+      fileSha256ByPath: {
+        'Reisen/trip-1/documents/ticket.pdf': 'b'.padRight(64, 'b'),
+      },
     );
 
     expect(manifest['format'], BackupArchiveReader.formatId);
@@ -22,6 +26,13 @@ void main() {
     expect(manifest['tripCount'], 3);
     expect(manifest['fileCount'], 5);
     expect(manifest['contentBytes'], 4096);
+    expect(manifest['integrity'], {
+      'algorithm': 'sha256',
+      'trips': 'a'.padRight(64, 'a'),
+      'files': {
+        'Reisen/trip-1/documents/ticket.pdf': 'b'.padRight(64, 'b'),
+      },
+    });
   });
 
   test('pubspec version matches central metadata', () {

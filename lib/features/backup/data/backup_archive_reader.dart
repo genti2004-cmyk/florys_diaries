@@ -4,6 +4,8 @@ import 'dart:typed_data';
 
 import 'package:archive/archive_io.dart';
 
+import 'package:florys_diaries/features/backup/data/backup_integrity_service.dart';
+import 'package:florys_diaries/features/backup/domain/backup_integrity_level.dart';
 import 'package:florys_diaries/features/documents/data/travel_document_path_policy.dart';
 import 'package:florys_diaries/features/trips/domain/trip.dart';
 
@@ -13,19 +15,28 @@ class BackupArchivePackage {
     required this.appVersion,
     required this.trips,
     required this.fileEntries,
+    required this.schemaVersion,
+    required this.integrityLevel,
   });
 
   final DateTime createdAt;
   final String appVersion;
   final List<Trip> trips;
   final List<ArchiveFile> fileEntries;
+  final int schemaVersion;
+  final BackupIntegrityLevel integrityLevel;
 }
 
 class BackupArchiveReader {
-  const BackupArchiveReader();
+  const BackupArchiveReader({
+    this.integrityService = const BackupIntegrityService(),
+  });
+
+  final BackupIntegrityService integrityService;
 
   static const String formatId = 'florys_diaries_backup';
-  static const int schemaVersion = 1;
+  static const int legacySchemaVersion = 1;
+  static const int schemaVersion = 2;
   static const int _maxArchiveEntries = 10000;
   static const int _maxUncompressedBytes = 2 * 1024 * 1024 * 1024;
 
@@ -84,11 +95,16 @@ class BackupArchiveReader {
     if (manifest['format'] != formatId) {
       throw const FormatException('Die Datei ist kein FlorysDiaries-Backup.');
     }
-    if ((manifest['schemaVersion'] as num?)?.toInt() != schemaVersion) {
+    final manifestSchemaVersion =
+        (manifest['schemaVersion'] as num?)?.toInt();
+    if (manifestSchemaVersion != legacySchemaVersion &&
+        manifestSchemaVersion != schemaVersion) {
       throw const FormatException(
         'Diese Backup-Version wird noch nicht unterstützt.',
       );
     }
+
+    final validatedSchemaVersion = manifestSchemaVersion!;
 
     final createdAtValue = manifest['createdAt'];
     final createdAt = createdAtValue is String
@@ -103,6 +119,12 @@ class BackupArchiveReader {
     final trips = _decodeTrips(tripsEntry);
     _validateManifestCounts(manifest, trips: trips, fileEntries: fileEntries);
     _validateDocumentPaths(trips, fileEntries: fileEntries);
+    final integrityLevel = _validateIntegrity(
+      manifest,
+      schemaVersion: validatedSchemaVersion,
+      tripsEntry: tripsEntry,
+      fileEntries: fileEntries,
+    );
 
     final appVersion = manifest['appVersion']?.toString().trim();
 
@@ -113,6 +135,8 @@ class BackupArchiveReader {
           : appVersion,
       trips: List<Trip>.unmodifiable(trips),
       fileEntries: List<ArchiveFile>.unmodifiable(fileEntries),
+      schemaVersion: validatedSchemaVersion,
+      integrityLevel: integrityLevel,
     );
   }
 
@@ -515,6 +539,91 @@ class BackupArchiveReader {
         'Die Dateigröße im Backup ist widersprüchlich.',
       );
     }
+  }
+
+  BackupIntegrityLevel _validateIntegrity(
+    Map<String, dynamic> manifest, {
+    required int schemaVersion,
+    required ArchiveFile tripsEntry,
+    required List<ArchiveFile> fileEntries,
+  }) {
+    if (schemaVersion == legacySchemaVersion) {
+      return BackupIntegrityLevel.structural;
+    }
+
+    final integrity = manifest['integrity'];
+    if (integrity is! Map<String, dynamic> ||
+        integrity['algorithm'] != 'sha256') {
+      throw const FormatException(
+        'Die kryptografische Backup-Prüfung fehlt oder ist ungültig.',
+      );
+    }
+
+    final declaredTripsHash = BackupIntegrityService.normalizeSha256(
+      integrity['trips'],
+      label: 'Die Prüfsumme der Reisedaten',
+    );
+    final actualTripsHash = integrityService.hashBytes(_entryBytes(tripsEntry));
+    if (declaredTripsHash != actualTripsHash) {
+      throw const FormatException(
+        'Die Reisedaten im Backup wurden verändert oder sind beschädigt.',
+      );
+    }
+
+    final rawFileHashes = integrity['files'];
+    if (rawFileHashes is! Map) {
+      throw const FormatException(
+        'Die Datei-Prüfsummen im Backup fehlen oder sind ungültig.',
+      );
+    }
+
+    final declaredFileHashes = <String, String>{};
+    for (final entry in rawFileHashes.entries) {
+      final rawPath = entry.key;
+      if (rawPath is! String) {
+        throw const FormatException(
+          'Ein Dateipfad der Backup-Prüfung ist ungültig.',
+        );
+      }
+      final path = _normalizePath(rawPath);
+      if (!_isSafePath(path) || path.startsWith('files/')) {
+        throw const FormatException(
+          'Ein Dateipfad der Backup-Prüfung ist unsicher.',
+        );
+      }
+      if (declaredFileHashes.containsKey(path)) {
+        throw FormatException(
+          'Eine Datei-Prüfsumme ist doppelt vorhanden: $path',
+        );
+      }
+      declaredFileHashes[path] = BackupIntegrityService.normalizeSha256(
+        entry.value,
+        label: 'Die Prüfsumme für $path',
+      );
+    }
+
+    final archivedByPath = <String, ArchiveFile>{
+      for (final entry in fileEntries)
+        _normalizePath(entry.name).substring('files/'.length): entry,
+    };
+    if (declaredFileHashes.length != archivedByPath.length ||
+        !declaredFileHashes.keys.toSet().containsAll(archivedByPath.keys) ||
+        !archivedByPath.keys.toSet().containsAll(declaredFileHashes.keys)) {
+      throw const FormatException(
+        'Die Datei-Prüfsummen passen nicht zum Inhalt des Backups.',
+      );
+    }
+
+    for (final entry in archivedByPath.entries) {
+      final actualHash = integrityService.hashBytes(_entryBytes(entry.value));
+      if (declaredFileHashes[entry.key] != actualHash) {
+        throw FormatException(
+          'Die Datei ${entry.key} wurde verändert oder ist beschädigt.',
+        );
+      }
+    }
+
+    return BackupIntegrityLevel.sha256;
   }
 
   static void _validateDocumentPaths(

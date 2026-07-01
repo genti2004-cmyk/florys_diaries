@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:florys_diaries/features/backup/domain/app_backup_result.dart';
+import 'package:florys_diaries/features/backup/domain/backup_integrity_level.dart';
 import 'package:florys_diaries/features/settings/presentation/widgets/backup_restore_preview.dart';
 
 void main() {
@@ -26,6 +27,7 @@ void main() {
         checklistItemCount: 9,
         firstTripStartAt: DateTime(2024, 1, 1),
         lastTripEndAt: DateTime(2026, 12, 31),
+        integrityLevel: BackupIntegrityLevel.sha256,
       );
 
       await tester.pumpWidget(
@@ -50,6 +52,11 @@ void main() {
       expect(find.text('Konto: test@example.com'), findsOneWidget);
       expect(find.text('Reiseinhalt'), findsOneWidget);
       expect(find.text('Gesicherte Inhalte'), findsOneWidget);
+      expect(find.text('Sicherheitsprüfung'), findsOneWidget);
+      expect(
+        find.text('SHA-256-Integrität geprüft'),
+        findsNWidgets(2),
+      );
       expect(find.text('App-Version: 0.19.0 · 2.0 KB'), findsOneWidget);
       expect(find.text('01.01.2024 – 31.12.2026'), findsOneWidget);
     },

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:florys_diaries/app/theme/app_colors.dart';
 import 'package:florys_diaries/features/backup/domain/app_backup_result.dart';
+import 'package:florys_diaries/features/backup/domain/backup_integrity_level.dart';
 import 'package:florys_diaries/features/settings/presentation/settings_backup_formatter.dart';
 
 class BackupRestorePreview extends StatelessWidget {
@@ -72,6 +73,27 @@ class BackupRestorePreview extends StatelessWidget {
             _DetailRow(
               label: 'Dateien im Archiv',
               value: inspection.fileCount.toString(),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        _SectionCard(
+          title: 'Sicherheitsprüfung',
+          icon: Icons.shield_outlined,
+          children: [
+            _DetailRow(
+              label: 'Integrität',
+              value: inspection.integrityLevel.displayName,
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 5),
+              child: Text(
+                inspection.integrityLevel.description,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColors.textMuted,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
           ],
         ),
@@ -190,7 +212,7 @@ class _HeaderCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(999),
                       ),
                       child: Text(
-                        'Inhalt geprüft',
+                        inspection.integrityLevel.displayName,
                         style: Theme.of(context).textTheme.labelMedium
                             ?.copyWith(
                               color: AppColors.sage,

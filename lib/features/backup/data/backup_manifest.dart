@@ -9,8 +9,15 @@ class BackupManifest {
     required int tripCount,
     required int fileCount,
     required int contentBytes,
+    required String tripsSha256,
+    required Map<String, String> fileSha256ByPath,
     String appVersion = AppMetadata.version,
   }) {
+    final orderedFileHashes = <String, String>{
+      for (final key in (fileSha256ByPath.keys.toList()..sort()))
+        key: fileSha256ByPath[key]!,
+    };
+
     return {
       'format': BackupArchiveReader.formatId,
       'schemaVersion': BackupArchiveReader.schemaVersion,
@@ -19,6 +26,11 @@ class BackupManifest {
       'tripCount': tripCount,
       'fileCount': fileCount,
       'contentBytes': contentBytes,
+      'integrity': {
+        'algorithm': 'sha256',
+        'trips': tripsSha256,
+        'files': orderedFileHashes,
+      },
     };
   }
 }

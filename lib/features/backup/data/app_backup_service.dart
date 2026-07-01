@@ -6,6 +6,7 @@ import 'package:path_provider/path_provider.dart';
 
 import 'package:florys_diaries/features/backup/data/backup_archive_reader.dart';
 import 'package:florys_diaries/features/backup/data/backup_file_manager.dart';
+import 'package:florys_diaries/features/backup/data/backup_integrity_service.dart';
 import 'package:florys_diaries/features/backup/data/backup_manifest.dart';
 import 'package:florys_diaries/features/backup/domain/app_backup_result.dart';
 import 'package:florys_diaries/features/trips/domain/trip.dart';
@@ -16,11 +17,13 @@ class AppBackupService {
   const AppBackupService({
     this.archiveReader = const BackupArchiveReader(),
     this.fileManager = const BackupFileManager(),
+    this.integrityService = const BackupIntegrityService(),
     this.temporaryDirectoryProvider,
   });
 
   final BackupArchiveReader archiveReader;
   final BackupFileManager fileManager;
+  final BackupIntegrityService integrityService;
   final BackupTemporaryDirectoryProvider? temporaryDirectoryProvider;
 
   Future<AppBackupCreateResult> createBackup(
@@ -46,13 +49,18 @@ class AppBackupService {
         sourceRoot,
         filesDirectory,
       );
-      await _writeTripsFile(workspace, trips);
+      final tripsSha256 = await _writeTripsFile(workspace, trips);
+      final fileSha256ByPath = await integrityService.hashDirectory(
+        filesDirectory,
+      );
       await _writeManifest(
         workspace,
         createdAt: now,
         tripCount: trips.length,
         fileCount: copied.fileCount,
         contentBytes: copied.totalBytes,
+        tripsSha256: tripsSha256,
+        fileSha256ByPath: fileSha256ByPath,
       );
 
       final backupTarget = await _targetBackupFile(
@@ -101,6 +109,7 @@ class AppBackupService {
       fileCount: package.fileEntries.length,
       sizeBytes: await backupFile.length(),
       appVersion: package.appVersion,
+      integrityLevel: package.integrityLevel,
     );
   }
 
@@ -138,13 +147,17 @@ class AppBackupService {
     }
   }
 
-  Future<void> _writeTripsFile(Directory workspace, List<Trip> trips) async {
+  Future<String> _writeTripsFile(
+    Directory workspace,
+    List<Trip> trips,
+  ) async {
     final encoder = const JsonEncoder.withIndent('  ');
     final file = File(_join(workspace.path, 'trips.json'));
     await file.writeAsString(
       encoder.convert(trips.map((trip) => trip.toJson()).toList()),
       flush: true,
     );
+    return integrityService.hashFile(file);
   }
 
   Future<void> _writeManifest(
@@ -153,6 +166,8 @@ class AppBackupService {
     required int tripCount,
     required int fileCount,
     required int contentBytes,
+    required String tripsSha256,
+    required Map<String, String> fileSha256ByPath,
   }) async {
     final encoder = const JsonEncoder.withIndent('  ');
     final file = File(_join(workspace.path, 'manifest.json'));
@@ -163,6 +178,8 @@ class AppBackupService {
           tripCount: tripCount,
           fileCount: fileCount,
           contentBytes: contentBytes,
+          tripsSha256: tripsSha256,
+          fileSha256ByPath: fileSha256ByPath,
         ),
       ),
       flush: true,

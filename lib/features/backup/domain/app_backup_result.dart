@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:florys_diaries/features/backup/domain/backup_integrity_level.dart';
 import 'package:florys_diaries/features/trips/domain/trip.dart';
 
 class AppBackupCreateResult {
@@ -32,6 +33,7 @@ class AppBackupInspectionResult {
     this.checklistItemCount = 0,
     this.firstTripStartAt,
     this.lastTripEndAt,
+    this.integrityLevel = BackupIntegrityLevel.structural,
   });
 
   factory AppBackupInspectionResult.fromTrips({
@@ -40,6 +42,7 @@ class AppBackupInspectionResult {
     required int fileCount,
     required int sizeBytes,
     required String appVersion,
+    BackupIntegrityLevel integrityLevel = BackupIntegrityLevel.structural,
   }) {
     final countries = <String>{};
     final destinations = <String>{};
@@ -86,6 +89,7 @@ class AppBackupInspectionResult {
       checklistItemCount: checklistItemCount,
       firstTripStartAt: firstTripStartAt,
       lastTripEndAt: lastTripEndAt,
+      integrityLevel: integrityLevel,
     );
   }
 
@@ -101,6 +105,9 @@ class AppBackupInspectionResult {
   final int checklistItemCount;
   final DateTime? firstTripStartAt;
   final DateTime? lastTripEndAt;
+  final BackupIntegrityLevel integrityLevel;
+
+  bool get isCryptographicallyVerified => integrityLevel.isCryptographic;
 
   bool get hasTravelPeriod => firstTripStartAt != null && lastTripEndAt != null;
 }

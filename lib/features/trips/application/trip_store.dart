@@ -22,6 +22,7 @@ class TripStore extends ChangeNotifier {
   DateTime? _partitionDate;
   String? _loadErrorMessage;
   bool _isLoading = true;
+  bool _isReloading = false;
 
   bool get isLoading => _isLoading;
 
@@ -42,11 +43,11 @@ class TripStore extends ChangeNotifier {
   }
 
   Future<void> load() {
-    return _loadFromStorage();
+    return _loadFromStorage(initialLoad: true);
   }
 
   Future<void> reloadFromStorage() {
-    return _loadFromStorage();
+    return _loadFromStorage(initialLoad: false);
   }
 
   Future<void> addTrip(Trip trip) {
@@ -82,23 +83,36 @@ class TripStore extends ChangeNotifier {
 
   String createId() => DateTime.now().microsecondsSinceEpoch.toString();
 
-  Future<void> _loadFromStorage() async {
-    _isLoading = true;
-    _loadErrorMessage = null;
-    notifyListeners();
+  Future<void> _loadFromStorage({required bool initialLoad}) async {
+    if (initialLoad) {
+      _isLoading = true;
+      _loadErrorMessage = null;
+      notifyListeners();
+    } else {
+      // A restore must not temporarily replace the complete app shell with the
+      // startup loading screen. Keeping the mounted widget tree intact avoids
+      // deactivating inherited dependencies while a restore route is closing.
+      _isReloading = true;
+    }
 
+    String? nextLoadError;
     try {
       final savedTrips = await _storageService.loadTrips();
       _replaceTrips(savedTrips);
     } on TripStorageException catch (error) {
-      _loadErrorMessage = error.message;
+      nextLoadError = error.message;
     } catch (error) {
       debugPrint('Lokale Reisedaten konnten nicht geladen werden: $error');
-      _loadErrorMessage =
+      nextLoadError =
           'Die lokalen Reisedaten konnten nicht geladen werden. '
           'Die vorhandenen Dateien wurden nicht überschrieben.';
     } finally {
-      _isLoading = false;
+      _loadErrorMessage = nextLoadError;
+      if (initialLoad) {
+        _isLoading = false;
+      } else {
+        _isReloading = false;
+      }
       notifyListeners();
     }
   }
@@ -123,7 +137,7 @@ class TripStore extends ChangeNotifier {
   }
 
   void _ensureWritable() {
-    if (_isLoading) {
+    if (_isLoading || _isReloading) {
       throw StateError('Die Reisedaten werden noch geladen.');
     }
     if (hasLoadError) {

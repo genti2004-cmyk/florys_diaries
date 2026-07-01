@@ -5,6 +5,8 @@ import 'package:archive/archive_io.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:florys_diaries/features/backup/data/backup_archive_reader.dart';
+import 'package:florys_diaries/features/backup/data/backup_integrity_service.dart';
+import 'package:florys_diaries/features/backup/domain/backup_integrity_level.dart';
 import 'package:florys_diaries/features/documents/domain/travel_document.dart';
 import 'package:florys_diaries/features/trips/domain/trip.dart';
 
@@ -38,6 +40,68 @@ void main() {
     expect(package.trips, hasLength(1));
     expect(package.trips.single.id, 'trip-1');
     expect(package.fileEntries, hasLength(1));
+    expect(package.schemaVersion, BackupArchiveReader.schemaVersion);
+    expect(package.integrityLevel, BackupIntegrityLevel.sha256);
+  });
+
+  test('accepts legacy backups with structural validation', () async {
+    final backup = await _createBackup(
+      testRoot,
+      trips: [_tripWithoutDocument()],
+      files: const {},
+      schemaVersion: BackupArchiveReader.legacySchemaVersion,
+    );
+
+    final package = await reader.read(backup);
+
+    expect(package.schemaVersion, BackupArchiveReader.legacySchemaVersion);
+    expect(package.integrityLevel, BackupIntegrityLevel.structural);
+  });
+
+  test('rejects changed trip data even when counts stay valid', () async {
+    final original = _tripWithoutDocument();
+    final changed = original.copyWith(title: 'Veränderte Reise');
+    final backup = await _createBackup(
+      testRoot,
+      trips: [changed],
+      files: const {},
+      integrityTrips: [original],
+    );
+
+    await expectLater(
+      reader.read(backup),
+      throwsA(
+        isA<FormatException>().having(
+          (error) => error.message,
+          'message',
+          contains('Reisedaten'),
+        ),
+      ),
+    );
+  });
+
+  test('rejects changed file bytes even when size stays identical', () async {
+    final backup = await _createBackup(
+      testRoot,
+      trips: [_tripWithDocument()],
+      files: {
+        'Reisen/trip-1/documents/ticket.pdf': [9, 9, 9, 9],
+      },
+      integrityFiles: {
+        'Reisen/trip-1/documents/ticket.pdf': [1, 2, 3, 4],
+      },
+    );
+
+    await expectLater(
+      reader.read(backup),
+      throwsA(
+        isA<FormatException>().having(
+          (error) => error.message,
+          'message',
+          contains('verändert oder ist beschädigt'),
+        ),
+      ),
+    );
   });
 
   test('rejects a damaged zip file with a format error', () async {
@@ -346,36 +410,57 @@ Future<File> _createBackup(
   required Map<String, List<int>> files,
   List<Object?>? rawTripEntries,
   int? declaredTripCount,
+  int schemaVersion = BackupArchiveReader.schemaVersion,
+  List<Trip>? integrityTrips,
+  Map<String, List<int>>? integrityFiles,
 }) async {
+  const integrityService = BackupIntegrityService();
   final workspace = Directory(
     '${testRoot.path}${Platform.pathSeparator}'
     'workspace_${DateTime.now().microsecondsSinceEpoch}',
   );
   await workspace.create(recursive: true);
 
+  final actualTripEntries =
+      rawTripEntries ?? trips.map((trip) => trip.toJson()).toList();
+  final tripsJson = jsonEncode(actualTripEntries);
   final contentBytes = files.values.fold<int>(
     0,
     (sum, bytes) => sum + bytes.length,
   );
-  final manifest = {
+  final manifest = <String, Object>{
     'format': BackupArchiveReader.formatId,
-    'schemaVersion': BackupArchiveReader.schemaVersion,
+    'schemaVersion': schemaVersion,
     'appVersion': '0.18.2',
     'createdAt': DateTime.utc(2026, 6, 28).toIso8601String(),
-    'tripCount': declaredTripCount ?? rawTripEntries?.length ?? trips.length,
+    'tripCount': declaredTripCount ?? actualTripEntries.length,
     'fileCount': files.length,
     'contentBytes': contentBytes,
   };
+
+  if (schemaVersion == BackupArchiveReader.schemaVersion) {
+    final integrityTripEntries = integrityTrips == null
+        ? actualTripEntries
+        : integrityTrips.map((trip) => trip.toJson()).toList();
+    final hashSourceFiles = integrityFiles ?? files;
+    manifest['integrity'] = <String, Object>{
+      'algorithm': 'sha256',
+      'trips': integrityService.hashBytes(
+        utf8.encode(jsonEncode(integrityTripEntries)),
+      ),
+      'files': <String, String>{
+        for (final entry in hashSourceFiles.entries)
+          entry.key: integrityService.hashBytes(entry.value),
+      },
+    };
+  }
 
   await File(
     '${workspace.path}${Platform.pathSeparator}manifest.json',
   ).writeAsString(jsonEncode(manifest), flush: true);
   await File(
     '${workspace.path}${Platform.pathSeparator}trips.json',
-  ).writeAsString(
-    jsonEncode(rawTripEntries ?? trips.map((trip) => trip.toJson()).toList()),
-    flush: true,
-  );
+  ).writeAsString(tripsJson, flush: true);
 
   for (final entry in files.entries) {
     final pathParts = entry.key.split('/');

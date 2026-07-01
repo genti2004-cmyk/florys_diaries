@@ -1,4 +1,5 @@
 import 'package:florys_diaries/features/backup/domain/app_backup_result.dart';
+import 'package:florys_diaries/features/backup/domain/backup_integrity_level.dart';
 
 abstract final class SettingsBackupFormatter {
   static String savedBackupSummary(
@@ -19,7 +20,8 @@ abstract final class SettingsBackupFormatter {
         '${formatDateTime(inspection.backupCreatedAt.toLocal())} · '
         '${inspection.tripCount} Reisen, '
         '${inspection.countryCount} Länder, '
-        '${inspection.fileCount} Dateien';
+        '${inspection.fileCount} Dateien · '
+        '${inspection.integrityLevel.displayName}';
   }
 
   static String restoreSummary(AppBackupRestoreResult result) {

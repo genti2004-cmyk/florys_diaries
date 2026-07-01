@@ -56,12 +56,35 @@ class BackupPanel extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Aktives Ziel: $providerName. Gesichert werden Reisen, Album-Einträge und lokale Dokumente.',
+                        'Aktives Ziel: $providerName. Gesichert werden Reisen, '
+                        'Album-Einträge und lokale Dokumente.',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: AppColors.textMuted,
                         ),
                       ),
                     ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(
+                  Icons.verified_user_outlined,
+                  size: 18,
+                  color: AppColors.sage,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Neue Backups werden mit SHA-256-Prüfsummen erstellt '
+                    'und vor dem Speichern vollständig kontrolliert.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.textMuted,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ],

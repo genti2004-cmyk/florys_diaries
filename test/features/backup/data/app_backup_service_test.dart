@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:florys_diaries/features/backup/data/app_backup_service.dart';
 import 'package:florys_diaries/features/backup/data/backup_file_manager.dart';
+import 'package:florys_diaries/features/backup/domain/backup_integrity_level.dart';
 import 'package:florys_diaries/features/documents/data/travel_file_service.dart';
 import 'package:florys_diaries/features/documents/domain/travel_document.dart';
 import 'package:florys_diaries/features/trips/domain/trip.dart';
@@ -52,6 +53,7 @@ void main() {
     expect(await created.file.exists(), isTrue);
     expect(inspected.tripCount, 1);
     expect(inspected.fileCount, 1);
+    expect(inspected.integrityLevel, BackupIntegrityLevel.sha256);
   });
 
   test(

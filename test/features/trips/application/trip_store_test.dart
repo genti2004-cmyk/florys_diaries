@@ -162,6 +162,26 @@ void main() {
       expect(storage.saveCalls, 0);
     });
 
+    test('reload keeps the mounted app tree out of startup loading state', () async {
+      final storage = _FakeTripStorageService(
+        initialTrips: [_trip(id: 'before')],
+      );
+      final store = TripStore(storageService: storage, now: () => today);
+      await store.load();
+
+      await storage.saveTrips([_trip(id: 'after')]);
+      final loadingStates = <bool>[];
+      store.addListener(() => loadingStates.add(store.isLoading));
+
+      final reload = store.reloadFromStorage();
+
+      expect(store.isLoading, isFalse);
+      await reload;
+
+      expect(store.trips.single.id, 'after');
+      expect(loadingStates, [false]);
+    });
+
     test('clears the load error after a successful retry', () async {
       final storage = _FakeTripStorageService(
         initialTrips: [_trip(id: 'recovered')],
