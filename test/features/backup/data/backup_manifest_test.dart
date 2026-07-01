@@ -56,5 +56,7 @@ void main() {
     expect(AppMetadata.buildNumber, 7);
     expect(AppMetadata.displayVersion, 'v1.0.0');
     expect(AppMetadata.fullVersion, '1.0.0+7');
+    expect(AppMetadata.developmentMilestone, 'v2.5.0-dev');
+    expect(AppMetadata.releaseDisplayVersion, 'v1.0.0 (Build 7)');
   });
 }

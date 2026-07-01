@@ -54,6 +54,7 @@ class SettingsContent extends StatelessWidget {
     this.onRunDataSafetyCheck,
     this.onOpenReminders,
     this.onOpenSecurity,
+    this.onOpenReleaseQuality,
     required this.onOpenPrivacy,
   });
 
@@ -89,6 +90,7 @@ class SettingsContent extends StatelessWidget {
   final VoidCallback? onRunDataSafetyCheck;
   final VoidCallback? onOpenReminders;
   final VoidCallback? onOpenSecurity;
+  final VoidCallback? onOpenReleaseQuality;
   final VoidCallback onOpenPrivacy;
 
   @override
@@ -230,12 +232,25 @@ class SettingsContent extends StatelessWidget {
             onTap: onOpenSecurity,
           ),
           const SizedBox(height: 12),
+          AppSectionCard(
+            key: const ValueKey<String>('open-release-quality'),
+            icon: Icons.verified_outlined,
+            title: 'Release & Qualität',
+            subtitle:
+                'Buildmodus, Datenzustand, Backups und Release-Prüfpunkte kontrollieren.',
+            trailing: Icon(
+              Icons.chevron_right_rounded,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+            onTap: onOpenReleaseQuality,
+          ),
+          const SizedBox(height: 12),
           const AppSectionCard(
             icon: Icons.info_outline_rounded,
             title: 'Version',
             subtitle:
-                '${AppMetadata.name} ${AppMetadata.displayVersion} – '
-                'stabiler Release Candidate für die Vorbereitung von v1.0.',
+                '${AppMetadata.name} ${AppMetadata.releaseDisplayVersion} · '
+                '${AppMetadata.developmentMilestone}',
           ),
         ],
       ),

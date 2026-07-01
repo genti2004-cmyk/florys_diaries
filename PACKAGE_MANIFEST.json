@@ -1,83 +1,19 @@
 {
-  "package": "FlorysDiaries_v2_4_0_dev_backup_integrity",
-  "baseVersion": "v2.3.0-dev-stable",
-  "targetVersion": "v2.4.0-dev",
-  "fileCount": 15,
+  "package": "FlorysDiaries_v2_5_0_dev_release_quality_step1",
+  "base": "v2.4.0-dev-stable",
+  "target": "v2.5.0-dev",
+  "purpose": "Release diagnostics and quality readiness step 1",
   "files": [
-    {
-      "path": "README_ANWENDUNG.txt",
-      "sizeBytes": 2227,
-      "sha256": "61574d62ff2391bfe03c1b8ff920fdf626ee2607ae6b5b8aaccf307b7a4cd465"
-    },
-    {
-      "path": "lib/features/backup/data/app_backup_service.dart",
-      "sizeBytes": 7647,
-      "sha256": "0861ee22a1892183d87fc4b83be0323a09a73202069cdfa812a26e9a1f815469"
-    },
-    {
-      "path": "lib/features/backup/data/backup_archive_reader.dart",
-      "sizeBytes": 23274,
-      "sha256": "6feef2dad2d96c71103ef5402ab6852dd77cf6876747e0ac2b9584bfc48ed29e"
-    },
-    {
-      "path": "lib/features/backup/data/backup_integrity_service.dart",
-      "sizeBytes": 2009,
-      "sha256": "c7a45cc269ddd5921fc7a77c44762d07bf35dd0695a70e7645574793e5aaf865"
-    },
-    {
-      "path": "lib/features/backup/data/backup_manifest.dart",
-      "sizeBytes": 1094,
-      "sha256": "d1d966e374c539915ce88df0f5b635275cd7cfb486a03721fe531fff1d4f3589"
-    },
-    {
-      "path": "lib/features/backup/domain/app_backup_result.dart",
-      "sizeBytes": 3606,
-      "sha256": "07bfc5e61f2553760841d54ea4f19d813160bb7d6fc64faf47c584cd5286e248"
-    },
-    {
-      "path": "lib/features/backup/domain/backup_integrity_level.dart",
-      "sizeBytes": 748,
-      "sha256": "2af643a66a778334d1e2ef37139792655ce4f23fbd3c385191700c3616a92c1c"
-    },
-    {
-      "path": "lib/features/backup/presentation/widgets/backup_panel.dart",
-      "sizeBytes": 4576,
-      "sha256": "e0f7f1fdae41cf75f16f249eb04f53bd811650bae606cb5e98a889c1a64711f6"
-    },
-    {
-      "path": "lib/features/settings/presentation/settings_backup_formatter.dart",
-      "sizeBytes": 1673,
-      "sha256": "86962bfd0e564913547658641dafb0a6d32a5e21e390bc92143e414d46578df8"
-    },
-    {
-      "path": "lib/features/settings/presentation/widgets/backup_restore_preview.dart",
-      "sizeBytes": 12691,
-      "sha256": "5f48fe65504bd67a56aaeac75774d857fc09354bded29483e57976c91d372752"
-    },
-    {
-      "path": "test/features/backup/data/app_backup_service_test.dart",
-      "sizeBytes": 3574,
-      "sha256": "f347a0fba33d91165957c8ccfe233721228d8f322e284a869c2a9fbae0e8c289"
-    },
-    {
-      "path": "test/features/backup/data/backup_archive_reader_test.dart",
-      "sizeBytes": 13775,
-      "sha256": "58f1ae62ddabfda0be9869820cfd2c42afeb8c6dda5e06271f0b69545e2271d4"
-    },
-    {
-      "path": "test/features/backup/data/backup_integrity_service_test.dart",
-      "sizeBytes": 1686,
-      "sha256": "552765569b813d2c41f617d6ba51ff91992bcc31a6ccd8d1c4cf4f13f3db59de"
-    },
-    {
-      "path": "test/features/backup/data/backup_manifest_test.dart",
-      "sizeBytes": 2182,
-      "sha256": "a8954b435da94928b363ac6a01f123205486b27f999866b5197641d55cf5761f"
-    },
-    {
-      "path": "test/features/settings/presentation/backup_restore_preview_test.dart",
-      "sizeBytes": 2258,
-      "sha256": "c658159119c4789489afef7ff6aa4945af5e3f280b623dfc07269fa91d77eb8d"
-    }
+    "README_ANWENDUNG.txt",
+    "lib/core/constants/app_metadata.dart",
+    "lib/features/release/application/release_quality_analyzer.dart",
+    "lib/features/release/domain/release_quality_report.dart",
+    "lib/features/release/presentation/screens/release_quality_screen.dart",
+    "lib/features/settings/presentation/settings_screen.dart",
+    "lib/features/settings/presentation/widgets/settings_content.dart",
+    "test/features/backup/data/backup_manifest_test.dart",
+    "test/features/release/application/release_quality_analyzer_test.dart",
+    "test/features/release/presentation/release_quality_screen_test.dart",
+    "test/features/settings/presentation/settings_content_test.dart"
   ]
 }

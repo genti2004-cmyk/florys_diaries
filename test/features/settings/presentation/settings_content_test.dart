@@ -82,15 +82,33 @@ void main() {
     expect(find.text('Dropbox'), findsNothing);
     expect(find.textContaining('bleiben vorbereitet'), findsNothing);
 
+    final securityCard = find.byKey(
+      const ValueKey<String>('open-app-security'),
+    );
     await tester.scrollUntilVisible(
-      find.text('App-Schutz'),
+      securityCard,
       350,
       scrollable: scrollable,
     );
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
+    expect(securityCard, findsOneWidget);
     expect(find.text('App-Schutz'), findsOneWidget);
+
+    final releaseQualityCard = find.byKey(
+      const ValueKey<String>('open-release-quality'),
+    );
+    await tester.scrollUntilVisible(
+      releaseQualityCard,
+      350,
+      scrollable: scrollable,
+    );
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(releaseQualityCard, findsOneWidget);
+    expect(find.text('Release & Qualität'), findsOneWidget);
 
     await tester.scrollUntilVisible(
       find.text('Version'),

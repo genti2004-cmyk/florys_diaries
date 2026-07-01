@@ -18,6 +18,7 @@ import 'package:florys_diaries/features/backup/domain/data_safety_report.dart';
 import 'package:florys_diaries/features/backup/domain/google_drive_backup_models.dart';
 import 'package:florys_diaries/features/backup/domain/local_backup_entry.dart';
 import 'package:florys_diaries/features/reminders/presentation/screens/upcoming_reminders_screen.dart';
+import 'package:florys_diaries/features/release/presentation/screens/release_quality_screen.dart';
 import 'package:florys_diaries/features/security/presentation/screens/security_settings_screen.dart';
 import 'package:florys_diaries/features/settings/presentation/settings_backup_formatter.dart';
 import 'package:florys_diaries/features/settings/presentation/privacy_and_data_screen.dart';
@@ -894,6 +895,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  void _openReleaseQuality() {
+    final store = TripStoreScope.of(context);
+    Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (_) => ReleaseQualityScreen(
+          trips: List.unmodifiable(store.trips),
+          localBackups: List.unmodifiable(_localBackups),
+          dataSafetyReport: _dataSafetyReport,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final backupSyncStatus = BackupSyncStatusScope.of(context).status;
@@ -931,6 +945,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       onRunDataSafetyCheck: () => unawaited(_runDataSafetyCheck()),
       onOpenReminders: _openReminders,
       onOpenSecurity: _openSecurity,
+      onOpenReleaseQuality: _openReleaseQuality,
       onOpenPrivacy: _openPrivacyAndData,
     );
   }
