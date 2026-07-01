@@ -52,6 +52,7 @@ class SettingsContent extends StatelessWidget {
     required this.onRestoreLocalBackup,
     required this.onDeleteLocalBackup,
     this.onRunDataSafetyCheck,
+    this.onOpenReminders,
     required this.onOpenPrivacy,
   });
 
@@ -85,6 +86,7 @@ class SettingsContent extends StatelessWidget {
   final Future<void> Function(LocalBackupEntry entry) onRestoreLocalBackup;
   final Future<void> Function(LocalBackupEntry entry) onDeleteLocalBackup;
   final VoidCallback? onRunDataSafetyCheck;
+  final VoidCallback? onOpenReminders;
   final VoidCallback onOpenPrivacy;
 
   @override
@@ -121,6 +123,19 @@ class SettingsContent extends StatelessWidget {
             subtitle: 'Farben und Erscheinungsbild der App auswählen.',
           ),
           const AppThemeSelector(),
+          const SizedBox(height: 14),
+          AppSectionCard(
+            key: const ValueKey<String>('open-upcoming-reminders'),
+            icon: Icons.notifications_active_outlined,
+            title: 'Erinnerungen',
+            subtitle:
+                'Alle kommenden Hinweise aus Tagesplan und Reisedokumenten ansehen.',
+            trailing: Icon(
+              Icons.chevron_right_rounded,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+            onTap: onOpenReminders,
+          ),
           const SizedBox(height: 14),
           DataSafetyCard(
             report: dataSafetyReport,

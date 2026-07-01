@@ -23,6 +23,7 @@ void main() {
           location: 'Piazza del Colosseo',
           notes: 'Tickets bereithalten',
           linkedDocumentId: 'ticket-1',
+          reminderMinutesBefore: 60,
         ),
       ],
     );
@@ -40,6 +41,8 @@ void main() {
     expect(item.location, 'Piazza del Colosseo');
     expect(item.notes, 'Tickets bereithalten');
     expect(item.linkedDocumentId, 'ticket-1');
+    expect(item.reminderMinutesBefore, 60);
+    expect(item.reminderAt, DateTime(2026, 8, 2, 8, 30));
   });
 
   test('trip sorts restored plan items by date and time', () {

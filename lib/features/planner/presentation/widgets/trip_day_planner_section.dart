@@ -732,6 +732,12 @@ class _TimelineItemCard extends StatelessWidget {
                                   label: item.location.trim(),
                                   color: AppColors.plum,
                                 ),
+                              if (item.hasReminder)
+                                _InfoChip(
+                                  icon: Icons.notifications_active_rounded,
+                                  label: item.reminderLabel,
+                                  color: AppColors.warning,
+                                ),
                             ],
                           ),
                           if (item.notes.trim().isNotEmpty) ...[

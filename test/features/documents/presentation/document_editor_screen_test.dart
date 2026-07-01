@@ -20,6 +20,8 @@ void main() {
       fileSizeBytes: 4096,
       fileExtension: 'pdf',
       isFavorite: true,
+      expiresAt: DateTime(2027, 6, 1),
+      expiryReminderDaysBefore: 30,
     );
     final result = ValueNotifier<DocumentEditorResult?>(null);
     addTearDown(result.dispose);
@@ -55,6 +57,11 @@ void main() {
     expect(saved.fileSizeBytes, original.fileSizeBytes);
     expect(saved.fileExtension, original.fileExtension);
     expect(saved.isFavorite, isTrue);
+    expect(saved.expiresAt, original.expiresAt);
+    expect(
+      saved.expiryReminderDaysBefore,
+      original.expiryReminderDaysBefore,
+    );
     expect(result.value?.delete, isFalse);
   });
 

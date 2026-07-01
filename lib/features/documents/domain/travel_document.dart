@@ -12,6 +12,8 @@ class TravelDocument {
     this.fileSizeBytes = 0,
     this.fileExtension = '',
     this.isFavorite = false,
+    this.expiresAt,
+    this.expiryReminderDaysBefore,
   });
 
   final String id;
@@ -24,6 +26,11 @@ class TravelDocument {
   final int fileSizeBytes;
   final String fileExtension;
   final bool isFavorite;
+  final DateTime? expiresAt;
+  final int? expiryReminderDaysBefore;
+
+  bool get hasExpiryReminder =>
+      expiresAt != null && expiryReminderDaysBefore != null;
 
   DocumentCategory get category => DocumentCategories.byId(categoryId);
 
@@ -64,6 +71,8 @@ class TravelDocument {
       'fileSizeBytes': fileSizeBytes,
       'fileExtension': fileExtension,
       'isFavorite': isFavorite,
+      'expiresAt': expiresAt?.toIso8601String(),
+      'expiryReminderDaysBefore': expiryReminderDaysBefore,
     };
   }
 
@@ -80,6 +89,10 @@ class TravelDocument {
       fileSizeBytes: (json['fileSizeBytes'] as num?)?.toInt() ?? 0,
       fileExtension: (json['fileExtension'] as String?) ?? '',
       isFavorite: (json['isFavorite'] as bool?) ?? false,
+      expiresAt: _parseDate(json['expiresAt']),
+      expiryReminderDaysBefore: _parseReminderDays(
+        json['expiryReminderDaysBefore'],
+      ),
     );
   }
 
@@ -94,6 +107,10 @@ class TravelDocument {
     int? fileSizeBytes,
     String? fileExtension,
     bool? isFavorite,
+    DateTime? expiresAt,
+    bool clearExpiresAt = false,
+    int? expiryReminderDaysBefore,
+    bool clearExpiryReminder = false,
   }) {
     return TravelDocument(
       id: id ?? this.id,
@@ -106,7 +123,19 @@ class TravelDocument {
       fileSizeBytes: fileSizeBytes ?? this.fileSizeBytes,
       fileExtension: fileExtension ?? this.fileExtension,
       isFavorite: isFavorite ?? this.isFavorite,
+      expiresAt: clearExpiresAt ? null : expiresAt ?? this.expiresAt,
+      expiryReminderDaysBefore: clearExpiresAt || clearExpiryReminder
+          ? null
+          : expiryReminderDaysBefore ?? this.expiryReminderDaysBefore,
     );
+  }
+
+  static int? _parseReminderDays(Object? value) {
+    if (value is! num) {
+      return null;
+    }
+    final days = value.toInt();
+    return const <int>{1, 7, 14, 30}.contains(days) ? days : null;
   }
 
   static DateTime? _parseDate(Object? value) {

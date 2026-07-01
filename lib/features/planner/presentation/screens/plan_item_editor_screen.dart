@@ -4,6 +4,7 @@ import 'package:florys_diaries/app/theme/app_colors.dart';
 import 'package:florys_diaries/core/widgets/unsaved_changes_guard.dart';
 import 'package:florys_diaries/features/documents/domain/travel_document.dart';
 import 'package:florys_diaries/features/planner/domain/trip_plan_item.dart';
+import 'package:florys_diaries/features/reminders/data/trip_reminder_notification_service.dart';
 import 'package:florys_diaries/features/trips/domain/trip.dart';
 
 class PlanItemEditorResult {
@@ -47,6 +48,7 @@ class _PlanItemEditorScreenState extends State<PlanItemEditorScreen> {
   late TripPlanItemType _type;
   late bool _isCompleted;
   String _linkedDocumentId = '';
+  int? _reminderMinutesBefore;
   bool _isSaving = false;
   bool _hasUnsavedChanges = false;
 
@@ -67,6 +69,7 @@ class _PlanItemEditorScreenState extends State<PlanItemEditorScreen> {
     _type = item?.type ?? TripPlanItemType.activity;
     _isCompleted = item?.isCompleted ?? false;
     _linkedDocumentId = item?.linkedDocumentId ?? '';
+    _reminderMinutesBefore = item?.reminderMinutesBefore;
 
     _titleController.addListener(_markChanged);
     _locationController.addListener(_markChanged);
@@ -161,12 +164,32 @@ class _PlanItemEditorScreenState extends State<PlanItemEditorScreen> {
     });
   }
 
-  void _save() {
+  Future<void> _save() async {
+    FocusManager.instance.primaryFocus?.unfocus();
     if (_isSaving || !_formKey.currentState!.validate()) {
       return;
     }
 
     setState(() => _isSaving = true);
+
+    if (_reminderMinutesBefore != null) {
+      final permission = await TripReminderNotificationService.instance
+          .requestPermissions();
+      if (!mounted) {
+        return;
+      }
+      if (!permission.canNotify) {
+        setState(() => _isSaving = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Bitte Benachrichtigungen erlauben, damit die Erinnerung funktioniert.',
+            ),
+          ),
+        );
+        return;
+      }
+    }
     final oldItem = widget.item;
     final item = oldItem == null
         ? TripPlanItem(
@@ -182,6 +205,7 @@ class _PlanItemEditorScreenState extends State<PlanItemEditorScreen> {
             linkedDocumentId: _linkedDocumentId.isEmpty
                 ? null
                 : _linkedDocumentId,
+            reminderMinutesBefore: _reminderMinutesBefore,
           )
         : oldItem.copyWith(
             title: _titleController.text.trim(),
@@ -197,6 +221,8 @@ class _PlanItemEditorScreenState extends State<PlanItemEditorScreen> {
                 ? null
                 : _linkedDocumentId,
             clearLinkedDocument: _linkedDocumentId.isEmpty,
+            reminderMinutesBefore: _reminderMinutesBefore,
+            clearReminder: _reminderMinutesBefore == null,
           );
 
     setState(() {
@@ -431,6 +457,83 @@ class _PlanItemEditorScreenState extends State<PlanItemEditorScreen> {
                     alignLabelWithHint: true,
                     labelText: 'Notiz optional',
                     prefixIcon: Icon(Icons.notes_outlined),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Card(
+                  margin: EdgeInsets.zero,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(6, 4, 6, 12),
+                    child: Column(
+                      children: [
+                        SwitchListTile.adaptive(
+                          key: const ValueKey<String>('plan-editor-reminder'),
+                          value: _reminderMinutesBefore != null,
+                          onChanged: _isSaving
+                              ? null
+                              : (value) {
+                                  setState(() {
+                                    _reminderMinutesBefore = value ? 60 : null;
+                                    _hasUnsavedChanges = true;
+                                  });
+                                },
+                          title: const Text('Erinnerung aktivieren'),
+                          subtitle: const Text(
+                            'Benachrichtigung vor diesem Programmpunkt.',
+                          ),
+                          secondary: Icon(
+                            _reminderMinutesBefore == null
+                                ? Icons.notifications_none_rounded
+                                : Icons.notifications_active_rounded,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                        if (_reminderMinutesBefore != null)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                            child: DropdownButtonFormField<int>(
+                              key: const ValueKey<String>(
+                                'plan-editor-reminder-lead',
+                              ),
+                              initialValue: _reminderMinutesBefore,
+                              decoration: const InputDecoration(
+                                labelText: 'Vorwarnzeit',
+                                prefixIcon: Icon(Icons.schedule_rounded),
+                              ),
+                              items: const [
+                                DropdownMenuItem(
+                                  value: 15,
+                                  child: Text('15 Minuten vorher'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 30,
+                                  child: Text('30 Minuten vorher'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 60,
+                                  child: Text('1 Stunde vorher'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 1440,
+                                  child: Text('1 Tag vorher'),
+                                ),
+                              ],
+                              onChanged: _isSaving
+                                  ? null
+                                  : (value) {
+                                      if (value == null ||
+                                          value == _reminderMinutesBefore) {
+                                        return;
+                                      }
+                                      setState(() {
+                                        _reminderMinutesBefore = value;
+                                        _hasUnsavedChanges = true;
+                                      });
+                                    },
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
                 ),
                 const SizedBox(height: 8),

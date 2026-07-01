@@ -45,6 +45,7 @@ class TripPlanItem {
     this.notes = '',
     this.isCompleted = false,
     this.linkedDocumentId,
+    this.reminderMinutesBefore,
   });
 
   final String id;
@@ -57,12 +58,39 @@ class TripPlanItem {
   final String notes;
   final bool isCompleted;
   final String? linkedDocumentId;
+  final int? reminderMinutesBefore;
 
   DateTime get dateOnly => DateTime(date.year, date.month, date.day);
 
   int get sortValue => startMinutes.clamp(0, 1439).toInt();
 
   bool get hasEndTime => endMinutes != null;
+
+  bool get hasReminder => reminderMinutesBefore != null;
+
+  DateTime get startsAt => DateTime(
+    date.year,
+    date.month,
+    date.day,
+    startMinutes ~/ 60,
+    startMinutes % 60,
+  );
+
+  DateTime? get reminderAt {
+    final minutes = reminderMinutesBefore;
+    return minutes == null ? null : startsAt.subtract(Duration(minutes: minutes));
+  }
+
+  String get reminderLabel {
+    return switch (reminderMinutesBefore) {
+      15 => '15 Minuten vorher',
+      30 => '30 Minuten vorher',
+      60 => '1 Stunde vorher',
+      1440 => '1 Tag vorher',
+      final int value => '$value Minuten vorher',
+      null => 'Keine Erinnerung',
+    };
+  }
 
   Map<String, dynamic> toJson() {
     return {
@@ -76,6 +104,7 @@ class TripPlanItem {
       'notes': notes,
       'isCompleted': isCompleted,
       'linkedDocumentId': linkedDocumentId,
+      'reminderMinutesBefore': reminderMinutesBefore,
     };
   }
 
@@ -91,6 +120,9 @@ class TripPlanItem {
       notes: (json['notes'] as String?) ?? '',
       isCompleted: (json['isCompleted'] as bool?) ?? false,
       linkedDocumentId: json['linkedDocumentId'] as String?,
+      reminderMinutesBefore: _parseReminderMinutes(
+        json['reminderMinutesBefore'],
+      ),
     );
   }
 
@@ -107,6 +139,8 @@ class TripPlanItem {
     bool? isCompleted,
     String? linkedDocumentId,
     bool clearLinkedDocument = false,
+    int? reminderMinutesBefore,
+    bool clearReminder = false,
   }) {
     return TripPlanItem(
       id: id ?? this.id,
@@ -121,6 +155,9 @@ class TripPlanItem {
       linkedDocumentId: clearLinkedDocument
           ? null
           : linkedDocumentId ?? this.linkedDocumentId,
+      reminderMinutesBefore: clearReminder
+          ? null
+          : reminderMinutesBefore ?? this.reminderMinutesBefore,
     );
   }
 
@@ -137,6 +174,16 @@ class TripPlanItem {
       return null;
     }
     return DateTime.tryParse(value);
+  }
+
+  static int? _parseReminderMinutes(Object? value) {
+    if (value is! num) {
+      return null;
+    }
+    final minutes = value.toInt();
+    return const <int>{15, 30, 60, 1440}.contains(minutes)
+        ? minutes
+        : null;
   }
 
   static int? _parseMinutes(Object? value) {

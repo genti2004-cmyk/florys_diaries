@@ -9,6 +9,7 @@ import '../features/backup/application/backup_sync_status_store.dart';
 import '../features/backup/data/automatic_google_drive_backup_service.dart';
 import '../features/backup/data/local_backup_service.dart';
 import '../features/backup/domain/backup_sync_status.dart';
+import '../features/reminders/application/trip_reminder_coordinator.dart';
 import '../features/shell/presentation/main_shell_screen.dart';
 import '../features/trips/application/trip_store.dart';
 import '../features/trips/application/trip_store_scope.dart';
@@ -33,6 +34,7 @@ class _FlorysDiariesAppState extends State<FlorysDiariesApp>
   late final AppThemeController _themeController;
   late final BackupSyncStatusStore _backupSyncStatusStore;
   late final BackupSyncCoordinator _backupSyncCoordinator;
+  late final TripReminderCoordinator _reminderCoordinator;
 
   bool _storeListenerAttached = false;
   bool _isDisposed = false;
@@ -46,6 +48,7 @@ class _FlorysDiariesAppState extends State<FlorysDiariesApp>
     _themeController = AppThemeController();
     unawaited(_themeController.load());
     _backupSyncStatusStore = BackupSyncStatusStore();
+    _reminderCoordinator = TripReminderCoordinator();
     _backupSyncCoordinator = BackupSyncCoordinator(
       localBackupOperation: (trips) async {
         final created = await _localBackupService.createAutomaticBackupIfDue(
@@ -82,7 +85,10 @@ class _FlorysDiariesAppState extends State<FlorysDiariesApp>
       return;
     }
 
-    await _backupSyncCoordinator.flush(_tripStore.trips);
+    await Future.wait<void>([
+      _backupSyncCoordinator.flush(_tripStore.trips),
+      _reminderCoordinator.flush(_tripStore.trips),
+    ]);
   }
 
   void _handleTripStoreChanged() {
@@ -90,6 +96,7 @@ class _FlorysDiariesAppState extends State<FlorysDiariesApp>
       return;
     }
     _backupSyncCoordinator.schedule(_tripStore.trips);
+    _reminderCoordinator.schedule(_tripStore.trips);
   }
 
   @override
@@ -101,12 +108,14 @@ class _FlorysDiariesAppState extends State<FlorysDiariesApp>
     switch (state) {
       case AppLifecycleState.resumed:
         _backupSyncCoordinator.schedule(_tripStore.trips);
+        _reminderCoordinator.schedule(_tripStore.trips);
         break;
       case AppLifecycleState.inactive:
       case AppLifecycleState.hidden:
       case AppLifecycleState.paused:
       case AppLifecycleState.detached:
         unawaited(_backupSyncCoordinator.flush(_tripStore.trips));
+        unawaited(_reminderCoordinator.flush(_tripStore.trips));
         break;
     }
   }
@@ -121,6 +130,7 @@ class _FlorysDiariesAppState extends State<FlorysDiariesApp>
     }
 
     _backupSyncCoordinator.dispose();
+    _reminderCoordinator.dispose();
     _backupSyncStatusStore.dispose();
     _tripStore.dispose();
     _themeController.dispose();

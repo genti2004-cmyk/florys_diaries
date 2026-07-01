@@ -8,6 +8,7 @@ import 'package:florys_diaries/core/widgets/unsaved_changes_guard.dart';
 import 'package:florys_diaries/features/documents/data/travel_file_service.dart';
 import 'package:florys_diaries/features/documents/domain/document_category.dart';
 import 'package:florys_diaries/features/documents/domain/travel_document.dart';
+import 'package:florys_diaries/features/reminders/data/trip_reminder_notification_service.dart';
 
 class DocumentEditorResult {
   const DocumentEditorResult.save(this.document) : delete = false;
@@ -34,6 +35,8 @@ class _DocumentEditorScreenState extends State<DocumentEditorScreen> {
   late final TextEditingController _titleController;
   late final TextEditingController _descriptionController;
   late String _categoryId;
+  DateTime? _expiresAt;
+  int? _expiryReminderDaysBefore;
 
   String _selectedFilePath = '';
   String _selectedFileName = '';
@@ -52,6 +55,8 @@ class _DocumentEditorScreenState extends State<DocumentEditorScreen> {
     );
     _selectedFileName = document?.fileName ?? '';
     _categoryId = document?.categoryId ?? DocumentCategories.flight.id;
+    _expiresAt = document?.expiresAt;
+    _expiryReminderDaysBefore = document?.expiryReminderDaysBefore;
 
     _titleController.addListener(_markTextChanged);
     _descriptionController.addListener(_markTextChanged);
@@ -98,6 +103,40 @@ class _DocumentEditorScreenState extends State<DocumentEditorScreen> {
     });
   }
 
+  Future<void> _pickExpiryDate() async {
+    final initial = _expiresAt ?? DateTime.now().add(const Duration(days: 180));
+    final selected = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(DateTime.now().year + 30, 12, 31),
+      helpText: 'Ablaufdatum auswählen',
+      cancelText: 'Abbrechen',
+      confirmText: 'Übernehmen',
+    );
+    if (!mounted || selected == null) {
+      return;
+    }
+    setState(() {
+      _expiresAt = DateTime(selected.year, selected.month, selected.day);
+      _expiryReminderDaysBefore ??= 30;
+      _hasUnsavedChanges = true;
+    });
+  }
+
+  void _setExpiryEnabled(bool enabled) {
+    setState(() {
+      if (enabled) {
+        _expiresAt ??= DateTime.now().add(const Duration(days: 180));
+        _expiryReminderDaysBefore ??= 30;
+      } else {
+        _expiresAt = null;
+        _expiryReminderDaysBefore = null;
+      }
+      _hasUnsavedChanges = true;
+    });
+  }
+
   Future<void> _save() async {
     FocusManager.instance.primaryFocus?.unfocus();
 
@@ -108,6 +147,20 @@ class _DocumentEditorScreenState extends State<DocumentEditorScreen> {
     setState(() => _isSaving = true);
 
     try {
+      if (_expiresAt != null && _expiryReminderDaysBefore != null) {
+        final permission = await TripReminderNotificationService.instance
+            .requestPermissions();
+        if (!mounted) {
+          return;
+        }
+        if (!permission.canNotify) {
+          setState(() => _isSaving = false);
+          _showError(
+            'Bitte Benachrichtigungen erlauben, damit die Ablauf-Erinnerung funktioniert.',
+          );
+          return;
+        }
+      }
       final oldDocument = widget.document;
       final documentId = oldDocument?.id ?? _createId();
       var document = oldDocument == null
@@ -117,11 +170,17 @@ class _DocumentEditorScreenState extends State<DocumentEditorScreen> {
               categoryId: _categoryId,
               createdAt: DateTime.now(),
               description: _descriptionController.text.trim(),
+              expiresAt: _expiresAt,
+              expiryReminderDaysBefore: _expiryReminderDaysBefore,
             )
           : oldDocument.copyWith(
               title: _titleController.text.trim(),
               categoryId: _categoryId,
               description: _descriptionController.text.trim(),
+              expiresAt: _expiresAt,
+              clearExpiresAt: _expiresAt == null,
+              expiryReminderDaysBefore: _expiryReminderDaysBefore,
+              clearExpiryReminder: _expiryReminderDaysBefore == null,
             );
 
       if (_selectedFilePath.trim().isNotEmpty) {
@@ -322,6 +381,100 @@ class _DocumentEditorScreenState extends State<DocumentEditorScreen> {
                 ),
                 const SizedBox(height: 14),
                 _DocumentEditorSection(
+                  icon: Icons.event_available_rounded,
+                  title: 'Gültigkeit & Erinnerung',
+                  subtitle:
+                      'Optional für Reisepass, Versicherung, Visum oder andere Dokumente.',
+                  optional: true,
+                  child: Column(
+                    children: [
+                      SwitchListTile.adaptive(
+                        key: const ValueKey<String>('document-editor-expiry'),
+                        contentPadding: EdgeInsets.zero,
+                        value: _expiresAt != null,
+                        onChanged: _isSaving ? null : _setExpiryEnabled,
+                        title: const Text('Ablaufdatum speichern'),
+                        subtitle: const Text(
+                          'Du wirst vor dem gewählten Datum erinnert.',
+                        ),
+                        secondary: Icon(
+                          _expiresAt == null
+                              ? Icons.event_outlined
+                              : Icons.event_available_rounded,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                      if (_expiresAt != null) ...[
+                        const SizedBox(height: 8),
+                        ListTile(
+                          key: const ValueKey<String>(
+                            'document-editor-expiry-date',
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(18),
+                            side: const BorderSide(color: AppColors.border),
+                          ),
+                          leading: const Icon(
+                            Icons.calendar_month_rounded,
+                            color: AppColors.primary,
+                          ),
+                          title: const Text('Ablaufdatum'),
+                          subtitle: Text(_formatDate(_expiresAt!)),
+                          trailing: const Icon(Icons.edit_calendar_rounded),
+                          onTap: _isSaving ? null : _pickExpiryDate,
+                        ),
+                        const SizedBox(height: 12),
+                        DropdownButtonFormField<int>(
+                          key: const ValueKey<String>(
+                            'document-editor-expiry-reminder',
+                          ),
+                          initialValue: _expiryReminderDaysBefore,
+                          decoration: const InputDecoration(
+                            labelText: 'Erinnern',
+                            prefixIcon: Icon(
+                              Icons.notifications_active_rounded,
+                            ),
+                          ),
+                          items: const [
+                            DropdownMenuItem(
+                              value: 1,
+                              child: Text('1 Tag vorher'),
+                            ),
+                            DropdownMenuItem(
+                              value: 7,
+                              child: Text('1 Woche vorher'),
+                            ),
+                            DropdownMenuItem(
+                              value: 14,
+                              child: Text('2 Wochen vorher'),
+                            ),
+                            DropdownMenuItem(
+                              value: 30,
+                              child: Text('30 Tage vorher'),
+                            ),
+                          ],
+                          onChanged: _isSaving
+                              ? null
+                              : (value) {
+                                  if (value == null ||
+                                      value == _expiryReminderDaysBefore) {
+                                    return;
+                                  }
+                                  setState(() {
+                                    _expiryReminderDaysBefore = value;
+                                    _hasUnsavedChanges = true;
+                                  });
+                                },
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
+                _DocumentEditorSection(
                   icon: Icons.attach_file_rounded,
                   title: 'Datei',
                   subtitle: 'Wähle ein Ticket, PDF, Bild oder eine andere Reisedatei.',
@@ -362,6 +515,12 @@ class _DocumentEditorScreenState extends State<DocumentEditorScreen> {
         ),
       ),
     );
+  }
+
+  static String _formatDate(DateTime date) {
+    final day = date.day.toString().padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    return '$day.$month.${date.year}';
   }
 
   static String _createId() {

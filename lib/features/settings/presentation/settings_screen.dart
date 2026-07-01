@@ -17,6 +17,7 @@ import 'package:florys_diaries/features/backup/domain/backup_provider.dart';
 import 'package:florys_diaries/features/backup/domain/data_safety_report.dart';
 import 'package:florys_diaries/features/backup/domain/google_drive_backup_models.dart';
 import 'package:florys_diaries/features/backup/domain/local_backup_entry.dart';
+import 'package:florys_diaries/features/reminders/presentation/screens/upcoming_reminders_screen.dart';
 import 'package:florys_diaries/features/settings/presentation/settings_backup_formatter.dart';
 import 'package:florys_diaries/features/settings/presentation/privacy_and_data_screen.dart';
 import 'package:florys_diaries/features/settings/presentation/widgets/settings_backup_dialogs.dart';
@@ -869,6 +870,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
     messenger.showSnackBar(SnackBar(content: Text(message)));
   }
 
+  void _openReminders() {
+    Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (_) => const UpcomingRemindersScreen(),
+      ),
+    );
+  }
+
   void _openPrivacyAndData() {
     Navigator.of(context).push<void>(
       MaterialPageRoute<void>(builder: (_) => const PrivacyAndDataScreen()),
@@ -910,6 +919,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       onRestoreLocalBackup: _restoreLocalBackup,
       onDeleteLocalBackup: _deleteLocalBackup,
       onRunDataSafetyCheck: () => unawaited(_runDataSafetyCheck()),
+      onOpenReminders: _openReminders,
       onOpenPrivacy: _openPrivacyAndData,
     );
   }

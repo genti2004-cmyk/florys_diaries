@@ -4,6 +4,7 @@ import 'package:florys_diaries/app/theme/app_colors.dart';
 import 'package:florys_diaries/features/budget/presentation/widgets/trip_budget_section.dart';
 import 'package:florys_diaries/features/checklist/presentation/widgets/trip_checklist_section.dart';
 import 'package:florys_diaries/features/planner/presentation/widgets/trip_day_planner_section.dart';
+import 'package:florys_diaries/features/reminders/presentation/widgets/trip_reminders_section.dart';
 import 'package:florys_diaries/features/trips/domain/trip.dart';
 
 class TripPlanningSection extends StatelessWidget {
@@ -16,6 +17,10 @@ class TripPlanningSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        TripRemindersSection(trip: trip),
+        const SizedBox(height: 28),
+        const Divider(),
+        const SizedBox(height: 24),
         TripBudgetSection(trip: trip),
         const SizedBox(height: 28),
         const Divider(),
