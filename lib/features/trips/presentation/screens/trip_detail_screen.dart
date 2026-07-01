@@ -21,6 +21,8 @@ import 'package:florys_diaries/features/trips/data/trip_export_service.dart';
 import 'package:florys_diaries/features/trips/domain/trip.dart';
 import 'package:florys_diaries/features/trips/presentation/widgets/trip_detail_hero_card.dart';
 import 'package:florys_diaries/features/trips/presentation/widgets/trip_detail_quick_actions.dart';
+import 'package:florys_diaries/features/trips/presentation/widgets/trip_detail_snapshot_card.dart';
+import 'package:florys_diaries/features/trips/presentation/widgets/trip_detail_timeline.dart';
 import 'package:florys_diaries/features/trips/presentation/widgets/trip_vault_section.dart';
 
 import 'trip_editor_screen.dart';
@@ -781,7 +783,27 @@ class _OverviewPage extends StatelessWidget {
           onEdit: onEdit,
           onExport: onExport,
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 14),
+        TripDetailSnapshotCard(trip: trip),
+        const SizedBox(height: 24),
+        Text(
+          'Dein Reiseverlauf',
+          style: Theme.of(context).textTheme.titleLarge,
+        ),
+        const SizedBox(height: 5),
+        Text(
+          'Programmpunkte, Momente und Ausgaben chronologisch verbunden.',
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: AppColors.textMuted,
+          ),
+        ),
+        const SizedBox(height: 10),
+        TripDetailTimeline(
+          trip: trip,
+          onOpenPlanning: onOpenPlanning,
+          onOpenMemories: onOpenMemories,
+        ),
+        const SizedBox(height: 24),
         Text(
           'Reise organisieren',
           style: Theme.of(context).textTheme.titleLarge,
