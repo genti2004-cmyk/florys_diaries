@@ -37,9 +37,9 @@ class TravelVisuals {
       'mallorca',
     ])) {
       return const TravelVisualPalette(
-        gradient: [Color(0xFFF4A46B), Color(0xFFDA6B79), Color(0xFF2D466C)],
-        accent: Color(0xFFFFE1B3),
-        highlight: Color(0xFFFFF4D6),
+        gradient: [Color(0xFFF0B37B), Color(0xFFD8868D), Color(0xFF2F4D71)],
+        accent: Color(0xFFFFE4C2),
+        highlight: Color(0xFFFFF6E0),
         icon: Icons.wb_sunny_rounded,
       );
     }
@@ -57,9 +57,9 @@ class TravelVisuals {
       'skyline',
     ])) {
       return const TravelVisualPalette(
-        gradient: [Color(0xFF182848), Color(0xFF274B7A), Color(0xFF6C8FD9)],
-        accent: Color(0xFFD8E6FF),
-        highlight: Color(0xFFF4F8FF),
+        gradient: [Color(0xFF1A2842), Color(0xFF355B8A), Color(0xFF7C97D7)],
+        accent: Color(0xFFDCE8FF),
+        highlight: Color(0xFFF7FAFF),
         icon: Icons.location_city_rounded,
       );
     }
@@ -77,9 +77,9 @@ class TravelVisuals {
       'portugal',
     ])) {
       return const TravelVisualPalette(
-        gradient: [Color(0xFF8F5E3B), Color(0xFFC28258), Color(0xFFE6C39A)],
-        accent: Color(0xFFFFE8C8),
-        highlight: Color(0xFFFFF6E8),
+        gradient: [Color(0xFF8C5C3E), Color(0xFFC78A60), Color(0xFFE8C9A8)],
+        accent: Color(0xFFFFEBD2),
+        highlight: Color(0xFFFFF8ED),
         icon: Icons.castle_rounded,
       );
     }
@@ -97,17 +97,17 @@ class TravelVisuals {
       'canada',
     ])) {
       return const TravelVisualPalette(
-        gradient: [Color(0xFF153B44), Color(0xFF2D6D73), Color(0xFF7FB1A2)],
-        accent: Color(0xFFDDF6EE),
-        highlight: Color(0xFFF1FFFA),
+        gradient: [Color(0xFF183D48), Color(0xFF356F76), Color(0xFF89B6A6)],
+        accent: Color(0xFFE3F7F0),
+        highlight: Color(0xFFF4FFFB),
         icon: Icons.terrain_rounded,
       );
     }
 
     return const TravelVisualPalette(
-      gradient: [Color(0xFF11203B), Color(0xFF173B68), Color(0xFF507CC6)],
-      accent: Color(0xFFDCE8FF),
-      highlight: Color(0xFFF4F8FF),
+      gradient: [Color(0xFF13223C), Color(0xFF244B77), Color(0xFF6889CB)],
+      accent: Color(0xFFE2EBFF),
+      highlight: Color(0xFFF7FAFF),
       icon: Icons.travel_explore_rounded,
     );
   }

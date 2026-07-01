@@ -61,7 +61,7 @@ class _WorldMapScreenState extends State<WorldMapScreen> {
         bottom: false,
         child: ListView(
           key: const PageStorageKey<String>('world-map-v61'),
-          padding: const EdgeInsets.fromLTRB(16, 18, 16, 132),
+          padding: const EdgeInsets.fromLTRB(16, 18, 16, 156),
           children: [
             Text(
               'Weltkarte',
@@ -69,7 +69,7 @@ class _WorldMapScreenState extends State<WorldMapScreen> {
             ),
             const SizedBox(height: 6),
             Text(
-              'Karte, Reiserouten und bereiste Länder – ohne unnötig lange Seite.',
+              'Deine Reisewelt mit klaren Ansichten für Karte, Routen und Länder.',
               style: Theme.of(
                 context,
               ).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
@@ -142,49 +142,39 @@ class _WorldMapScreenState extends State<WorldMapScreen> {
     switch (_section) {
       case _MapSection.map:
         return [
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(14),
-              child: WorldMapControls(
-                selectedLayer: _layer,
-                selectedStyle: _style,
-                selectedYear: selectedYear,
-                years: snapshot.years,
-                onLayerChanged: (layer) {
-                  setState(() {
-                    _layer = layer;
-                    _focusedRouteId = null;
-                  });
-                },
-                onStyleChanged: (style) {
-                  setState(() => _style = style);
-                },
-                onYearChanged: (year) {
-                  setState(() {
-                    _selectedYear = year;
-                    _focusedRouteId = null;
-                  });
-                },
-              ),
-            ),
+          WorldMapControls(
+            selectedLayer: _layer,
+            selectedStyle: _style,
+            selectedYear: selectedYear,
+            years: snapshot.years,
+            onLayerChanged: (layer) {
+              setState(() {
+                _layer = layer;
+                _focusedRouteId = null;
+              });
+            },
+            onStyleChanged: (style) {
+              setState(() => _style = style);
+            },
+            onYearChanged: (year) {
+              setState(() {
+                _selectedYear = year;
+                _focusedRouteId = null;
+              });
+            },
           ),
           const SizedBox(height: 14),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(14),
-              child: RepaintBoundary(
-                child: ProfessionalWorldMap(
-                  countries: snapshot.countries,
-                  cities: snapshot.cities,
-                  routes: snapshot.routes,
-                  layer: _layer,
-                  style: _style,
-                  focusedRouteId: focusedRouteId,
-                  onRouteSelected: (routeId) {
-                    setState(() => _focusedRouteId = routeId);
-                  },
-                ),
-              ),
+          RepaintBoundary(
+            child: ProfessionalWorldMap(
+              countries: snapshot.countries,
+              cities: snapshot.cities,
+              routes: snapshot.routes,
+              layer: _layer,
+              style: _style,
+              focusedRouteId: focusedRouteId,
+              onRouteSelected: (routeId) {
+                setState(() => _focusedRouteId = routeId);
+              },
             ),
           ),
           const SizedBox(height: 14),

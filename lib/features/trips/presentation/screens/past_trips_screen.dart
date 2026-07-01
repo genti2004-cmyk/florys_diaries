@@ -51,7 +51,7 @@ class _PastTripsScreenState extends State<PastTripsScreen> {
         bottom: false,
         child: ListView(
           key: const PageStorageKey<String>('all-trips-v6'),
-          padding: const EdgeInsets.fromLTRB(16, 18, 16, 132),
+          padding: const EdgeInsets.fromLTRB(16, 18, 16, 156),
           children: [
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,

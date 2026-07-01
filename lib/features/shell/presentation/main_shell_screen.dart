@@ -90,11 +90,11 @@ class _MainShellScreenState extends State<MainShellScreen> {
           extendBody: true,
           body: IndexedStack(index: _index, children: screens),
           bottomNavigationBar: Padding(
-            padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+            padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
             child: DecoratedBox(
               decoration: BoxDecoration(
                 color: navBackground,
-                borderRadius: BorderRadius.circular(26),
+                borderRadius: BorderRadius.circular(24),
                 border: Border.all(color: navBorder),
                 boxShadow: const [
                   BoxShadow(
@@ -118,13 +118,13 @@ class _MainShellScreenState extends State<MainShellScreen> {
                       label: 'Home',
                     ),
                     NavigationDestination(
-                      icon: Icon(Icons.luggage_outlined),
-                      selectedIcon: Icon(Icons.luggage_rounded),
+                      icon: Icon(Icons.flight_takeoff_outlined),
+                      selectedIcon: Icon(Icons.flight_takeoff_rounded),
                       label: 'Reisen',
                     ),
                     NavigationDestination(
-                      icon: Icon(Icons.public_outlined),
-                      selectedIcon: Icon(Icons.public_rounded),
+                      icon: Icon(Icons.map_outlined),
+                      selectedIcon: Icon(Icons.map_rounded),
                       label: 'Karte',
                     ),
                     NavigationDestination(

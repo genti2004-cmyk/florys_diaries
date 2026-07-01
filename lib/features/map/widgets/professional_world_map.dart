@@ -125,7 +125,7 @@ class _ProfessionalWorldMapState extends State<ProfessionalWorldMap> {
           ClipRRect(
             borderRadius: BorderRadius.circular(24),
             child: SizedBox(
-              height: 420,
+              height: 380,
               child: Stack(
                 children: [
                   Positioned.fill(

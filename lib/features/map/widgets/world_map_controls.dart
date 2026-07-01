@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:florys_diaries/app/theme/app_colors.dart';
 import 'package:florys_diaries/features/map/domain/map_visit_models.dart';
 import 'package:florys_diaries/features/map/widgets/world_map_panel.dart';
 
@@ -26,18 +27,25 @@ class WorldMapControls extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return WorldMapPanel(
-      title: 'Kartensteuerung',
+      title: 'Kartenansicht',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Ebene', style: Theme.of(context).textTheme.labelLarge),
-          const SizedBox(height: 8),
+          Text(
+            'Was soll die Karte zeigen?',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: AppColors.textMuted,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 10),
           Wrap(
             spacing: 8,
             runSpacing: 8,
             children: WorldMapLayer.values
                 .map(
                   (layer) => ChoiceChip(
+                    avatar: Icon(_iconForLayer(layer), size: 16),
                     label: Text(layer.label),
                     selected: selectedLayer == layer,
                     onSelected: (_) => onLayerChanged(layer),
@@ -46,93 +54,61 @@ class WorldMapControls extends StatelessWidget {
                 .toList(growable: false),
           ),
           const SizedBox(height: 16),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final yearField = DropdownButtonFormField<int?>(
-                initialValue: selectedYear,
-                isExpanded: true,
-                decoration: const InputDecoration(
-                  labelText: 'Reisejahr',
-                  prefixIcon: Icon(Icons.calendar_month_outlined),
+          DropdownButtonFormField<int?>(
+            initialValue: selectedYear,
+            isExpanded: true,
+            decoration: const InputDecoration(
+              labelText: 'Reisejahr',
+              prefixIcon: Icon(Icons.calendar_month_outlined),
+            ),
+            items: [
+              const DropdownMenuItem<int?>(
+                value: null,
+                child: Text('Alle Jahre'),
+              ),
+              ...years.map(
+                (year) => DropdownMenuItem<int?>(
+                  value: year,
+                  child: Text(year.toString()),
                 ),
-                items: [
-                  const DropdownMenuItem<int?>(
-                    value: null,
-                    child: Text('Alle Jahre'),
-                  ),
-                  ...years.map(
-                    (year) => DropdownMenuItem<int?>(
-                      value: year,
-                      child: Text(year.toString()),
-                    ),
-                  ),
-                ],
-                onChanged: onYearChanged,
-              );
-
-              final styleButtons = Row(
-                children: [
-                  Expanded(
-                    child: _StyleButton(
-                      label: 'Hell',
-                      icon: Icons.wb_sunny_outlined,
-                      selected: selectedStyle == WorldMapStyle.light,
-                      onTap: () => onStyleChanged(WorldMapStyle.light),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _StyleButton(
-                      label: 'Dunkel',
-                      icon: Icons.dark_mode_outlined,
-                      selected: selectedStyle == WorldMapStyle.dark,
-                      onTap: () => onStyleChanged(WorldMapStyle.dark),
-                    ),
-                  ),
-                ],
-              );
-
-              if (constraints.maxWidth < 520) {
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    yearField,
-                    const SizedBox(height: 12),
-                    Text(
-                      'Kartenstil',
-                      style: Theme.of(context).textTheme.labelLarge,
-                    ),
-                    const SizedBox(height: 8),
-                    styleButtons,
-                  ],
-                );
-              }
-
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Expanded(child: yearField),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Kartenstil',
-                          style: Theme.of(context).textTheme.labelLarge,
-                        ),
-                        const SizedBox(height: 8),
-                        styleButtons,
-                      ],
-                    ),
-                  ),
-                ],
-              );
-            },
+              ),
+            ],
+            onChanged: onYearChanged,
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: _StyleButton(
+                  label: 'Hell',
+                  icon: Icons.light_mode_rounded,
+                  selected: selectedStyle == WorldMapStyle.light,
+                  onTap: () => onStyleChanged(WorldMapStyle.light),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _StyleButton(
+                  label: 'Dunkel',
+                  icon: Icons.dark_mode_rounded,
+                  selected: selectedStyle == WorldMapStyle.dark,
+                  onTap: () => onStyleChanged(WorldMapStyle.dark),
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
+  }
+
+  static IconData _iconForLayer(WorldMapLayer layer) {
+    return switch (layer) {
+      WorldMapLayer.all => Icons.layers_rounded,
+      WorldMapLayer.countries => Icons.flag_rounded,
+      WorldMapLayer.cities => Icons.location_city_rounded,
+      WorldMapLayer.routes => Icons.route_rounded,
+    };
   }
 }
 
@@ -151,36 +127,39 @@ class _StyleButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final foreground = selected ? AppColors.primary : AppColors.text;
+
     return Material(
-      color: selected
-          ? Theme.of(context).colorScheme.primaryContainer
-          : Theme.of(context).colorScheme.surface,
-      borderRadius: BorderRadius.circular(14),
+      color: selected ? AppColors.primarySoft : AppColors.surface,
+      borderRadius: BorderRadius.circular(18),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(18),
         child: Container(
-          constraints: const BoxConstraints(minHeight: 46),
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          constraints: const BoxConstraints(minHeight: 48),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(18),
             border: Border.all(
               color: selected
-                  ? Theme.of(context).colorScheme.primary
-                  : Theme.of(context).colorScheme.outlineVariant,
+                  ? AppColors.primary.withValues(alpha: 0.55)
+                  : AppColors.border,
             ),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 19),
+              Icon(icon, size: 18, color: foreground),
               const SizedBox(width: 7),
               Flexible(
                 child: Text(
                   label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontWeight: FontWeight.w800),
+                  style: TextStyle(
+                    color: foreground,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
             ],

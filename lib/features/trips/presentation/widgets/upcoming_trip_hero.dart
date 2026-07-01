@@ -23,6 +23,7 @@ class UpcomingTripHero extends StatelessWidget {
       '${trip.destination} ${trip.country} ${trip.title}',
     );
     final photoCount = TripCoverImage.photoDocuments(trip).length;
+    final photoLabel = photoCount == 1 ? '1 Foto' : '$photoCount Fotos';
 
     return Semantics(
       button: true,
@@ -116,7 +117,7 @@ class UpcomingTripHero extends StatelessWidget {
                               const SizedBox(height: 8),
                               _GlassFact(
                                 icon: Icons.photo_library_outlined,
-                                value: '$photoCount Fotos',
+                                value: photoLabel,
                                 expand: true,
                               ),
                             ],
@@ -139,7 +140,7 @@ class UpcomingTripHero extends StatelessWidget {
                               ),
                               _GlassFact(
                                 icon: Icons.photo_library_outlined,
-                                value: '$photoCount Fotos',
+                                value: photoLabel,
                               ),
                             ],
                           ),
@@ -300,10 +301,13 @@ class _HeroHeader extends StatelessWidget {
     final statusBadge = _GlassBadge(
       child: Text(
         status,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
+        maxLines: 2,
+        softWrap: true,
+        textAlign: TextAlign.center,
         style: const TextStyle(
           color: Colors.white,
+          fontSize: 12.5,
+          height: 1.12,
           fontWeight: FontWeight.w800,
         ),
       ),

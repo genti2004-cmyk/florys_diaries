@@ -68,7 +68,7 @@ class AppTheme {
         titleSpacing: 16,
       ),
       navigationBarTheme: NavigationBarThemeData(
-        height: 76,
+        height: 70,
         elevation: 0,
         backgroundColor: AppColors.surface,
         surfaceTintColor: Colors.transparent,
@@ -87,7 +87,7 @@ class AppTheme {
         iconTheme: WidgetStateProperty.resolveWith((states) {
           final isSelected = states.contains(WidgetState.selected);
           return IconThemeData(
-            size: 23,
+            size: 22,
             color: isSelected ? AppColors.primary : AppColors.textMuted,
           );
         }),
@@ -135,6 +135,28 @@ class AppTheme {
           ),
         ),
       ),
+      chipTheme: ChipThemeData(
+        backgroundColor: AppColors.surfaceSoft,
+        selectedColor: AppColors.primarySoft,
+        secondarySelectedColor: AppColors.primarySoft,
+        disabledColor: AppColors.surfaceMuted,
+        side: const BorderSide(color: AppColors.border),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+        ),
+        labelStyle: const TextStyle(
+          fontSize: 12.5,
+          fontWeight: FontWeight.w700,
+          color: AppColors.text,
+        ),
+        secondaryLabelStyle: const TextStyle(
+          fontSize: 12.5,
+          fontWeight: FontWeight.w800,
+          color: AppColors.primary,
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        showCheckmark: false,
+      ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.surface,
@@ -160,7 +182,7 @@ class AppTheme {
         color: AppColors.surface,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        shadowColor: const Color(0x0D183153),
+        shadowColor: AppColors.shadow,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(28),
           side: const BorderSide(color: AppColors.border),
