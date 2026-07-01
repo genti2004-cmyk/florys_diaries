@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'package:florys_diaries/app/theme/app_colors.dart';
-
 class AppSectionCard extends StatelessWidget {
   const AppSectionCard({
     required this.icon,
@@ -20,6 +18,8 @@ class AppSectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
     return Card(
       margin: EdgeInsets.zero,
       child: InkWell(
@@ -33,10 +33,10 @@ class AppSectionCard extends StatelessWidget {
                 width: 46,
                 height: 46,
                 decoration: BoxDecoration(
-                  color: AppColors.primarySoft,
+                  color: scheme.primaryContainer,
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: Icon(icon, color: AppColors.primary),
+                child: Icon(icon, color: scheme.onPrimaryContainer),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -46,16 +46,15 @@ class AppSectionCard extends StatelessWidget {
                     Text(
                       title,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.text,
-                      ),
+                            fontWeight: FontWeight.w800,
+                          ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       subtitle,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.textMuted,
-                      ),
+                            color: scheme.onSurfaceVariant,
+                          ),
                     ),
                   ],
                 ),

@@ -50,7 +50,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     final statistics = _statistics!;
 
     return ColoredBox(
-      color: AppColors.background,
+      color: Theme.of(context).scaffoldBackgroundColor,
       child: SafeArea(
         bottom: false,
         child: ListView(

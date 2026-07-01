@@ -173,6 +173,19 @@ void main() {
         'sourceKey': 'passport',
       },
     ];
+    tripJson['budgetAmountCents'] = 90000;
+    tripJson['budgetCurrency'] = 'EUR';
+    tripJson['budgetExpenses'] = [
+      {
+        'id': 'expense-1',
+        'title': 'Hotel',
+        'date': '2026-07-01T00:00:00.000',
+        'amountCents': 28000,
+        'category': 'accommodation',
+        'status': 'paid',
+        'notes': 'Vorab bezahlt',
+      },
+    ];
     tripJson['planItems'] = [
       {
         'id': 'plan-1',
@@ -207,6 +220,10 @@ void main() {
     expect(restored.planItems.single.id, 'plan-1');
     expect(restored.planItems.single.title, 'Altstadt-Rundgang');
     expect(restored.planItems.single.startMinutes, 600);
+    expect(restored.budgetAmountCents, 90000);
+    expect(restored.budgetCurrency, 'EUR');
+    expect(restored.budgetExpenses.single.id, 'expense-1');
+    expect(restored.budgetExpenses.single.amountCents, 28000);
     expect(restored.photoCount, 9);
   });
   test('rejects a document path assigned to the wrong trip', () async {

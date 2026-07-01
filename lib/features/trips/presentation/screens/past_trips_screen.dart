@@ -46,7 +46,7 @@ class _PastTripsScreenState extends State<PastTripsScreen> {
         .length;
 
     return ColoredBox(
-      color: AppColors.background,
+      color: Theme.of(context).scaffoldBackgroundColor,
       child: SafeArea(
         bottom: false,
         child: ListView(

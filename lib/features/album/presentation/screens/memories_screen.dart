@@ -38,7 +38,7 @@ class _MemoriesScreenState extends State<MemoriesScreen> {
     final tripCount = allMoments.map((moment) => moment.trip.id).toSet().length;
 
     return ColoredBox(
-      color: AppColors.background,
+      color: Theme.of(context).scaffoldBackgroundColor,
       child: SafeArea(
         bottom: false,
         child: ListView(

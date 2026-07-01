@@ -68,17 +68,25 @@ class _MainShellScreenState extends State<MainShellScreen> {
       const MemoriesScreen(),
     ];
 
+    final theme = Theme.of(context);
     final isDarkPage = _index == 0;
-    final navBackground = isDarkPage ? AppColors.homeSurface : AppColors.surface;
-    final navBorder = isDarkPage ? AppColors.homeBorder : AppColors.border;
-    final overlayStyle = isDarkPage
+    final isDarkTheme = theme.brightness == Brightness.dark;
+    final navBackground = isDarkPage
+        ? AppColors.homeSurface
+        : theme.colorScheme.surface;
+    final navBorder = isDarkPage
+        ? AppColors.homeBorder
+        : theme.colorScheme.outlineVariant;
+    final overlayStyle = isDarkPage || isDarkTheme
         ? SystemUiOverlayStyle.light.copyWith(
             statusBarColor: Colors.transparent,
-            systemNavigationBarColor: AppColors.homeBackground,
+            systemNavigationBarColor: isDarkPage
+                ? AppColors.homeBackground
+                : theme.scaffoldBackgroundColor,
           )
         : SystemUiOverlayStyle.dark.copyWith(
             statusBarColor: Colors.transparent,
-            systemNavigationBarColor: AppColors.background,
+            systemNavigationBarColor: theme.scaffoldBackgroundColor,
           );
 
     return AnnotatedRegion<SystemUiOverlayStyle>(

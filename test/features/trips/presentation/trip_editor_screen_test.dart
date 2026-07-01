@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:florys_diaries/features/album/domain/trip_album_entry.dart';
+import 'package:florys_diaries/features/budget/domain/trip_budget_expense.dart';
 import 'package:florys_diaries/features/checklist/domain/trip_checklist_item.dart';
 import 'package:florys_diaries/features/documents/domain/document_category.dart';
 import 'package:florys_diaries/features/documents/domain/travel_document.dart';
@@ -48,6 +49,9 @@ void main() {
     expect(saved.albumEntries.map((item) => item.id), ['album-1']);
     expect(saved.checklistItems.map((item) => item.id), ['checklist-1']);
     expect(saved.planItems.map((item) => item.id), ['plan-1']);
+    expect(saved.budgetAmountCents, 120000);
+    expect(saved.budgetCurrency, 'EUR');
+    expect(saved.budgetExpenses.map((item) => item.id), ['expense-1']);
     expect(saved.photoCount, 7);
     expect(storage.saveCalls, 1);
     expect(find.text('Editor öffnen'), findsOneWidget);
@@ -182,6 +186,18 @@ Trip _tripWithNestedContent() {
         date: DateTime(2026, 7, 2),
         startMinutes: 10 * 60,
         type: TripPlanItemType.sight,
+      ),
+    ],
+    budgetAmountCents: 120000,
+    budgetCurrency: 'EUR',
+    budgetExpenses: [
+      TripBudgetExpense(
+        id: 'expense-1',
+        title: 'Hotel',
+        date: DateTime(2026, 7, 1),
+        amountCents: 42000,
+        category: TripExpenseCategory.accommodation,
+        status: TripExpenseStatus.paid,
       ),
     ],
     photoCount: 7,

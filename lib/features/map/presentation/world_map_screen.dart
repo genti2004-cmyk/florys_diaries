@@ -56,7 +56,7 @@ class _WorldMapScreenState extends State<WorldMapScreen> {
         : null;
 
     return ColoredBox(
-      color: AppColors.background,
+      color: Theme.of(context).scaffoldBackgroundColor,
       child: SafeArea(
         bottom: false,
         child: ListView(

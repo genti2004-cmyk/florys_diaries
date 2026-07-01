@@ -210,6 +210,25 @@ class TripStorageService {
         documentPathKeys: documentPathKeys,
       );
 
+      final budgetAmount = rawTrip['budgetAmountCents'];
+      if (budgetAmount != null &&
+          (budgetAmount is! num || budgetAmount.toInt() < 0)) {
+        throw const FormatException(
+          'Das lokale Reisebudget ist ungültig.',
+        );
+      }
+
+      final budgetCurrency = rawTrip['budgetCurrency'];
+      if (budgetCurrency != null &&
+          (budgetCurrency is! String ||
+              !const <String>{'EUR', 'USD', 'GBP', 'CHF', 'ALL'}.contains(
+                budgetCurrency.trim().toUpperCase(),
+              ))) {
+        throw const FormatException(
+          'Die lokale Budgetwährung ist ungültig.',
+        );
+      }
+
       final photoCount = rawTrip['photoCount'];
       if (photoCount != null &&
           (photoCount is! num || photoCount.toInt() < 0)) {
@@ -301,6 +320,66 @@ class TripStorageService {
         final dueDate = entry['dueDate'];
         if (dueDate != null) {
           _requireValidDate(dueDate, label: 'Fälligkeitsdatum');
+        }
+      },
+    );
+    _validateNestedList(
+      tripJson['budgetExpenses'],
+      label: 'Budget-Ausgabe',
+      validate: (entry, ids) {
+        _requireUniqueId(entry, ids, label: 'Budget-Ausgabe');
+        final title = entry['title'];
+        if (title is! String || title.trim().isEmpty) {
+          throw const FormatException(
+            'Ein lokaler Ausgabentitel ist ungültig.',
+          );
+        }
+
+        final dateValue = entry['date'];
+        _requireValidDate(dateValue, label: 'Ausgabendatum');
+        final date = DateTime.parse(dateValue as String);
+        final dateOnly = DateTime(date.year, date.month, date.day);
+        final startOnly = DateTime(
+          startDate.year,
+          startDate.month,
+          startDate.day,
+        );
+        final endOnly = DateTime(endDate.year, endDate.month, endDate.day);
+        if (dateOnly.isBefore(startOnly) || dateOnly.isAfter(endOnly)) {
+          throw const FormatException(
+            'Eine Budget-Ausgabe liegt außerhalb des Reisezeitraums.',
+          );
+        }
+
+        final amount = entry['amountCents'];
+        if (amount is! num || amount.toInt() <= 0) {
+          throw const FormatException(
+            'Der Betrag einer lokalen Budget-Ausgabe ist ungültig.',
+          );
+        }
+
+        final category = entry['category'];
+        if (category is! String ||
+            !const <String>{
+              'accommodation',
+              'transport',
+              'food',
+              'activities',
+              'shopping',
+              'health',
+              'other',
+            }.contains(category)) {
+          throw const FormatException(
+            'Die Kategorie einer lokalen Budget-Ausgabe ist ungültig.',
+          );
+        }
+
+        final status = entry['status'];
+        if (status is! String ||
+            !const <String>{'planned', 'paid'}.contains(status)) {
+          throw const FormatException(
+            'Der Status einer lokalen Budget-Ausgabe ist ungültig.',
+          );
         }
       },
     );

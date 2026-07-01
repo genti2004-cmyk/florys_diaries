@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'package:florys_diaries/app/theme/app_colors.dart';
 import 'package:florys_diaries/core/constants/app_metadata.dart';
 import 'package:florys_diaries/core/widgets/app_section_card.dart';
 import 'package:florys_diaries/features/backup/domain/automatic_cloud_backup_settings.dart';
@@ -16,6 +15,7 @@ import 'package:florys_diaries/features/backup/presentation/widgets/data_safety_
 import 'package:florys_diaries/features/backup/presentation/widgets/google_drive_automatic_backup_settings.dart';
 import 'package:florys_diaries/features/backup/presentation/widgets/google_drive_backup_history.dart';
 import 'package:florys_diaries/features/backup/presentation/widgets/local_backup_history.dart';
+import 'package:florys_diaries/features/settings/presentation/widgets/app_theme_selector.dart';
 import 'package:florys_diaries/features/settings/presentation/widgets/settings_overview_card.dart';
 import 'package:florys_diaries/features/settings/presentation/widgets/settings_section_header.dart';
 
@@ -102,9 +102,9 @@ class SettingsContent extends StatelessWidget {
           const SizedBox(height: 5),
           Text(
             'Datenzustand prüfen, Backups verwalten und Wiederherstellungen sicher vorbereiten.',
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
           ),
           const SizedBox(height: 18),
           SettingsOverviewCard(
@@ -115,6 +115,12 @@ class SettingsContent extends StatelessWidget {
             automaticCloudEnabled: automaticCloudSettings.enabled,
             syncStatus: backupSyncStatus,
           ),
+          const SizedBox(height: 14),
+          const SettingsSectionHeader(
+            title: 'Darstellung',
+            subtitle: 'Farben und Erscheinungsbild der App auswählen.',
+          ),
+          const AppThemeSelector(),
           const SizedBox(height: 14),
           DataSafetyCard(
             report: dataSafetyReport,
@@ -187,9 +193,9 @@ class SettingsContent extends StatelessWidget {
             title: 'Datenschutz & Daten',
             subtitle:
                 'Lokale Speicherung, Google Drive, Karten und Löschung transparent ansehen.',
-            trailing: const Icon(
+            trailing: Icon(
               Icons.chevron_right_rounded,
-              color: AppColors.textMuted,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
             onTap: onOpenPrivacy,
           ),

@@ -13,6 +13,8 @@ import '../features/shell/presentation/main_shell_screen.dart';
 import '../features/trips/application/trip_store.dart';
 import '../features/trips/application/trip_store_scope.dart';
 import 'theme/app_theme.dart';
+import 'theme/app_theme_controller.dart';
+import 'theme/app_theme_scope.dart';
 
 class FlorysDiariesApp extends StatefulWidget {
   const FlorysDiariesApp({super.key});
@@ -28,6 +30,7 @@ class _FlorysDiariesAppState extends State<FlorysDiariesApp>
       AutomaticGoogleDriveBackupService();
 
   late final TripStore _tripStore;
+  late final AppThemeController _themeController;
   late final BackupSyncStatusStore _backupSyncStatusStore;
   late final BackupSyncCoordinator _backupSyncCoordinator;
 
@@ -40,6 +43,8 @@ class _FlorysDiariesAppState extends State<FlorysDiariesApp>
     WidgetsBinding.instance.addObserver(this);
 
     _tripStore = TripStore();
+    _themeController = AppThemeController();
+    unawaited(_themeController.load());
     _backupSyncStatusStore = BackupSyncStatusStore();
     _backupSyncCoordinator = BackupSyncCoordinator(
       localBackupOperation: (trips) async {
@@ -118,6 +123,7 @@ class _FlorysDiariesAppState extends State<FlorysDiariesApp>
     _backupSyncCoordinator.dispose();
     _backupSyncStatusStore.dispose();
     _tripStore.dispose();
+    _themeController.dispose();
     super.dispose();
   }
 
@@ -127,11 +133,19 @@ class _FlorysDiariesAppState extends State<FlorysDiariesApp>
       store: _backupSyncStatusStore,
       child: TripStoreScope(
         store: _tripStore,
-        child: MaterialApp(
-          title: AppMetadata.name,
-          debugShowCheckedModeBanner: false,
-          theme: AppTheme.light,
-          home: const MainShellScreen(),
+        child: AnimatedBuilder(
+          animation: _themeController,
+          builder: (context, child) {
+            return AppThemeScope(
+              controller: _themeController,
+              child: MaterialApp(
+                title: AppMetadata.name,
+                debugShowCheckedModeBanner: false,
+                theme: AppTheme.forPreset(_themeController.preset),
+                home: const MainShellScreen(),
+              ),
+            );
+          },
         ),
       ),
     );

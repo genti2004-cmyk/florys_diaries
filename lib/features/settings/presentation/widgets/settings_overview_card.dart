@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'package:florys_diaries/app/theme/app_colors.dart';
 import 'package:florys_diaries/features/backup/domain/backup_sync_status.dart';
 
 class SettingsOverviewCard extends StatelessWidget {
@@ -24,15 +23,16 @@ class SettingsOverviewCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final presentation = _presentation(syncStatus.overallState);
+    final scheme = Theme.of(context).colorScheme;
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [AppColors.primary, Color(0xFF1D5965)],
+          colors: [scheme.primary, scheme.secondary],
         ),
         borderRadius: BorderRadius.circular(26),
         boxShadow: const [
