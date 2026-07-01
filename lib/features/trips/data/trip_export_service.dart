@@ -90,8 +90,8 @@ class TripExportService {
     await documentsDirectory.create(recursive: true);
 
     for (final document in trip.documents) {
-      final source = await fileService.resolveDocumentFile(document);
-      if (source == null || !await source.exists()) {
+      final source = await fileService.resolveExistingDocumentFile(document);
+      if (source == null) {
         continue;
       }
 

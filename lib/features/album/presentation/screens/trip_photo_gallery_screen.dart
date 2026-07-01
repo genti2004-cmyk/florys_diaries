@@ -1,8 +1,6 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 
-import 'package:florys_diaries/features/documents/data/travel_file_service.dart';
+import 'package:florys_diaries/core/widgets/travel_document_image.dart';
 import 'package:florys_diaries/features/documents/domain/travel_document.dart';
 
 class TripPhotoGalleryScreen extends StatefulWidget {
@@ -21,10 +19,7 @@ class TripPhotoGalleryScreen extends StatefulWidget {
 }
 
 class _TripPhotoGalleryScreenState extends State<TripPhotoGalleryScreen> {
-  static const TravelFileService _fileService = TravelFileService();
-
   late final PageController _pageController;
-  late final Future<List<File?>> _filesFuture;
   late int _currentIndex;
 
   @override
@@ -35,19 +30,12 @@ class _TripPhotoGalleryScreenState extends State<TripPhotoGalleryScreen> {
         ? 0
         : (widget.initialIndex > maxIndex ? maxIndex : widget.initialIndex);
     _pageController = PageController(initialPage: _currentIndex);
-    _filesFuture = _resolveFiles();
   }
 
   @override
   void dispose() {
     _pageController.dispose();
     super.dispose();
-  }
-
-  Future<List<File?>> _resolveFiles() {
-    return Future.wait(
-      widget.photos.map(_fileService.resolveDocumentFile),
-    );
   }
 
   @override
@@ -87,65 +75,56 @@ class _TripPhotoGalleryScreenState extends State<TripPhotoGalleryScreen> {
           ],
         ),
       ),
-      body: FutureBuilder<List<File?>>(
-        future: _filesFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState != ConnectionState.done) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          final files = snapshot.data ?? const <File?>[];
-
-          return Column(
-            children: [
-              Expanded(
-                child: PageView.builder(
-                  controller: _pageController,
-                  itemCount: widget.photos.length,
-                  onPageChanged: (index) {
-                    setState(() => _currentIndex = index);
-                  },
-                  itemBuilder: (context, index) {
-                    final file = index < files.length ? files[index] : null;
-                    return _GalleryPage(file: file);
-                  },
-                ),
-              ),
-              _GalleryInfoBar(
-                photo: currentPhoto,
-                currentIndex: _currentIndex,
-                totalCount: widget.photos.length,
-              ),
-              _ThumbnailStrip(
-                photos: widget.photos,
-                files: files,
-                selectedIndex: _currentIndex,
-                onSelected: (index) {
-                  _pageController.animateToPage(
-                    index,
-                    duration: const Duration(milliseconds: 260),
-                    curve: Curves.easeOutCubic,
-                  );
-                },
-              ),
-            ],
-          );
-        },
+      body: Column(
+        children: [
+          Expanded(
+            child: PageView.builder(
+              controller: _pageController,
+              itemCount: widget.photos.length,
+              allowImplicitScrolling: false,
+              onPageChanged: (index) {
+                setState(() => _currentIndex = index);
+              },
+              itemBuilder: (context, index) {
+                return _GalleryPage(photo: widget.photos[index]);
+              },
+            ),
+          ),
+          _GalleryInfoBar(
+            photo: currentPhoto,
+            currentIndex: _currentIndex,
+            totalCount: widget.photos.length,
+          ),
+          _ThumbnailStrip(
+            photos: widget.photos,
+            selectedIndex: _currentIndex,
+            onSelected: (index) {
+              _pageController.animateToPage(
+                index,
+                duration: const Duration(milliseconds: 260),
+                curve: Curves.easeOutCubic,
+              );
+            },
+          ),
+        ],
       ),
     );
   }
 }
 
 class _GalleryPage extends StatelessWidget {
-  const _GalleryPage({required this.file});
+  const _GalleryPage({required this.photo});
 
-  final File? file;
+  final TravelDocument photo;
 
   @override
   Widget build(BuildContext context) {
-    if (file == null || !file!.existsSync()) {
-      return const _MissingPhoto();
-    }
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final devicePixelRatio = MediaQuery.devicePixelRatioOf(context);
+    final cacheWidth = (screenWidth * devicePixelRatio * 2)
+        .round()
+        .clamp(1200, 3200)
+        .toInt();
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
@@ -154,12 +133,16 @@ class _GalleryPage extends StatelessWidget {
         maxScale: 5,
         boundaryMargin: const EdgeInsets.all(40),
         child: Center(
-          child: Image.file(
-            file!,
+          child: TravelDocumentImage(
+            key: ValueKey<String>('gallery-${photo.id}-${photo.relativePath}'),
+            document: photo,
             fit: BoxFit.contain,
-            errorBuilder: (context, error, stackTrace) {
-              return const _MissingPhoto();
-            },
+            cacheWidth: cacheWidth,
+            filterQuality: FilterQuality.medium,
+            placeholder: const _MissingPhoto(),
+            semanticLabel: photo.title.trim().isEmpty
+                ? 'Reisefoto'
+                : photo.title,
           ),
         ),
       ),
@@ -242,13 +225,11 @@ class _GalleryInfoBar extends StatelessWidget {
 class _ThumbnailStrip extends StatelessWidget {
   const _ThumbnailStrip({
     required this.photos,
-    required this.files,
     required this.selectedIndex,
     required this.onSelected,
   });
 
   final List<TravelDocument> photos;
-  final List<File?> files;
   final int selectedIndex;
   final ValueChanged<int> onSelected;
 
@@ -264,7 +245,7 @@ class _ThumbnailStrip extends StatelessWidget {
           itemCount: photos.length,
           separatorBuilder: (context, index) => const SizedBox(width: 9),
           itemBuilder: (context, index) {
-            final file = index < files.length ? files[index] : null;
+            final photo = photos[index];
             final selected = index == selectedIndex;
 
             return GestureDetector(
@@ -281,15 +262,19 @@ class _ThumbnailStrip extends StatelessWidget {
                   ),
                 ),
                 clipBehavior: Clip.antiAlias,
-                child: file != null && file.existsSync()
-                    ? Image.file(
-                        file,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return const _ThumbnailPlaceholder();
-                        },
-                      )
-                    : const _ThumbnailPlaceholder(),
+                child: TravelDocumentImage(
+                  key: ValueKey<String>(
+                    'gallery-thumb-${photo.id}-${photo.relativePath}',
+                  ),
+                  document: photo,
+                  fit: BoxFit.cover,
+                  cacheWidth: 220,
+                  cacheHeight: 220,
+                  placeholder: const _ThumbnailPlaceholder(),
+                  semanticLabel: photo.title.trim().isEmpty
+                      ? 'Foto ${index + 1}'
+                      : photo.title,
+                ),
               ),
             );
           },

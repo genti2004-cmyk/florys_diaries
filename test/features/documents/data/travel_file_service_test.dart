@@ -93,12 +93,15 @@ void main() {
 
     final document = _document(relativePath: relativePath);
     final resolved = await service.resolveDocumentFile(document);
+    final existing = await service.resolveExistingDocumentFile(document);
 
     expect(resolved?.path, file.path);
+    expect(existing?.path, file.path);
     expect(await service.documentFileExists(document), isTrue);
 
     await service.deleteDocumentFile(document);
     expect(await file.exists(), isFalse);
+    expect(await service.resolveExistingDocumentFile(document), isNull);
   });
 }
 

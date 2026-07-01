@@ -37,10 +37,8 @@ class _PastTripsScreenState extends State<PastTripsScreen> {
   @override
   Widget build(BuildContext context) {
     final store = TripStoreScope.of(context);
-    final upcoming = [...store.upcomingTrips]
-      ..sort((left, right) => left.startDate.compareTo(right.startDate));
-    final past = [...store.pastTrips]
-      ..sort((left, right) => right.endDate.compareTo(left.endDate));
+    final upcoming = store.upcomingTrips;
+    final past = store.pastTrips.reversed.toList(growable: false);
     final countryCount = store.trips
         .map((trip) => trip.country.trim().toLowerCase())
         .where((country) => country.isNotEmpty)

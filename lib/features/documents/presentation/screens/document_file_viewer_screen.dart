@@ -28,14 +28,14 @@ class DocumentFileViewerScreen extends StatelessWidget {
         ],
       ),
       body: FutureBuilder<File?>(
-        future: _fileService.resolveDocumentFile(document),
+        future: _fileService.resolveExistingDocumentFile(document),
         builder: (context, snapshot) {
           if (snapshot.connectionState != ConnectionState.done) {
             return const Center(child: CircularProgressIndicator());
           }
 
           final file = snapshot.data;
-          if (file == null || !file.existsSync()) {
+          if (file == null) {
             return const _MissingFileView();
           }
 
@@ -58,12 +58,12 @@ class DocumentFileViewerScreen extends StatelessWidget {
 
   Future<void> _openExternal(BuildContext context) async {
     final messenger = ScaffoldMessenger.of(context);
-    final file = await _fileService.resolveDocumentFile(document);
+    final file = await _fileService.resolveExistingDocumentFile(document);
     if (!context.mounted) {
       return;
     }
 
-    if (file == null || !file.existsSync()) {
+    if (file == null) {
       _showMessage(messenger, 'Die Datei wurde nicht gefunden oder gelöscht.');
       return;
     }
@@ -113,6 +113,14 @@ class _ImageViewer extends StatelessWidget {
                 child: Image.file(
                   file,
                   fit: BoxFit.contain,
+                  cacheWidth: (MediaQuery.sizeOf(context).width *
+                          MediaQuery.devicePixelRatioOf(context) *
+                          2)
+                      .round()
+                      .clamp(1200, 3200)
+                      .toInt(),
+                  filterQuality: FilterQuality.medium,
+                  gaplessPlayback: true,
                   errorBuilder: (context, error, stackTrace) {
                     return const _MissingFileView(dark: true);
                   },

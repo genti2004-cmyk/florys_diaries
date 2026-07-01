@@ -1,9 +1,7 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 
 import 'package:florys_diaries/app/theme/app_colors.dart';
-import 'package:florys_diaries/features/documents/data/travel_file_service.dart';
+import 'package:florys_diaries/core/widgets/travel_document_image.dart';
 import 'package:florys_diaries/features/documents/domain/travel_document.dart';
 import 'package:florys_diaries/features/documents/presentation/screens/document_file_viewer_screen.dart';
 
@@ -11,8 +9,6 @@ class ReplayDocumentMoment extends StatelessWidget {
   const ReplayDocumentMoment({required this.document, super.key});
 
   final TravelDocument document;
-  static const _fileService = TravelFileService();
-
   @override
   Widget build(BuildContext context) {
     final isImage = _isImage(document.fileExtension);
@@ -22,25 +18,25 @@ class ReplayDocumentMoment extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          FutureBuilder<File?>(
-            future: _fileService.resolveDocumentFile(document),
-            builder: (context, snapshot) {
-              final file = snapshot.data;
-              if (isImage && file != null && file.existsSync()) {
-                return AspectRatio(
-                  aspectRatio: 16 / 10,
-                  child: Image.file(
-                    file,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return _DocumentFallback(document: document);
-                    },
-                  ),
-                );
-              }
-              return _DocumentFallback(document: document);
-            },
-          ),
+          if (isImage)
+            AspectRatio(
+              aspectRatio: 16 / 10,
+              child: TravelDocumentImage(
+                key: ValueKey<String>(
+                  'replay-document-${document.id}-${document.relativePath}',
+                ),
+                document: document,
+                fit: BoxFit.cover,
+                cacheWidth: 1200,
+                filterQuality: FilterQuality.medium,
+                placeholder: _DocumentFallback(document: document),
+                semanticLabel: document.title.trim().isEmpty
+                    ? 'Fotomoment'
+                    : document.title,
+              ),
+            )
+          else
+            _DocumentFallback(document: document),
           Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -113,7 +109,9 @@ class ReplayDocumentMoment extends StatelessWidget {
     return value == 'jpg' ||
         value == 'jpeg' ||
         value == 'png' ||
-        value == 'webp';
+        value == 'webp' ||
+        value == 'heic' ||
+        value == 'heif';
   }
 }
 

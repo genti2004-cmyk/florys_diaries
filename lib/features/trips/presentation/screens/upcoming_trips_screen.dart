@@ -92,19 +92,7 @@ class UpcomingTripsScreen extends StatelessWidget {
     final additionalTrips = upcomingTrips.skip(1).take(2).toList(growable: false);
     final allTrips = store.trips;
 
-    final countryCount = allTrips
-        .map((trip) => trip.country.trim().toLowerCase())
-        .where((country) => country.isNotEmpty)
-        .toSet()
-        .length;
-    final documentCount = allTrips.fold<int>(
-      0,
-      (sum, trip) => sum + trip.documentCount,
-    );
-    final memoryCount = allTrips.fold<int>(
-      0,
-      (sum, trip) => sum + trip.albumEntryCount,
-    );
+    final metrics = _HomeMetrics.fromTrips(allTrips);
 
     return ColoredBox(
       color: AppColors.homeBackground,
@@ -134,9 +122,9 @@ class UpcomingTripsScreen extends StatelessWidget {
               const SizedBox(height: 18),
               _CompactOverviewCard(
                 tripCount: allTrips.length,
-                countryCount: countryCount,
-                documentCount: documentCount,
-                memoryCount: memoryCount,
+                countryCount: metrics.countryCount,
+                documentCount: metrics.documentCount,
+                memoryCount: metrics.memoryCount,
                 onOpenMap: () => _showMap(context),
               ),
             ] else ...[
@@ -153,9 +141,9 @@ class UpcomingTripsScreen extends StatelessWidget {
               const SizedBox(height: 18),
               _CompactOverviewCard(
                 tripCount: allTrips.length,
-                countryCount: countryCount,
-                documentCount: documentCount,
-                memoryCount: memoryCount,
+                countryCount: metrics.countryCount,
+                documentCount: metrics.documentCount,
+                memoryCount: metrics.memoryCount,
                 onOpenMap: () => _showMap(context),
               ),
               if (additionalTrips.isNotEmpty) ...[
@@ -702,4 +690,37 @@ class _DarkEmptyState extends StatelessWidget {
       ),
     );
   }
+}
+
+class _HomeMetrics {
+  const _HomeMetrics({
+    required this.countryCount,
+    required this.documentCount,
+    required this.memoryCount,
+  });
+
+  factory _HomeMetrics.fromTrips(List<Trip> trips) {
+    final countries = <String>{};
+    var documentCount = 0;
+    var memoryCount = 0;
+
+    for (final trip in trips) {
+      final country = trip.country.trim().toLowerCase();
+      if (country.isNotEmpty) {
+        countries.add(country);
+      }
+      documentCount += trip.documentCount;
+      memoryCount += trip.albumEntryCount;
+    }
+
+    return _HomeMetrics(
+      countryCount: countries.length,
+      documentCount: documentCount,
+      memoryCount: memoryCount,
+    );
+  }
+
+  final int countryCount;
+  final int documentCount;
+  final int memoryCount;
 }

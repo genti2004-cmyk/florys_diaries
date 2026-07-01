@@ -1,13 +1,11 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 
 import 'package:florys_diaries/app/theme/app_colors.dart';
+import 'package:florys_diaries/core/widgets/travel_document_image.dart';
 import 'package:florys_diaries/features/album/domain/trip_album_entry.dart';
 import 'package:florys_diaries/features/album/presentation/screens/album_entry_editor_screen.dart';
 import 'package:florys_diaries/features/album/presentation/screens/trip_photo_gallery_screen.dart';
 import 'package:florys_diaries/features/album/presentation/widgets/album_entry_card.dart';
-import 'package:florys_diaries/features/documents/data/travel_file_service.dart';
 import 'package:florys_diaries/features/documents/domain/document_category.dart';
 import 'package:florys_diaries/features/documents/domain/travel_document.dart';
 import 'package:florys_diaries/features/trips/application/trip_store_scope.dart';
@@ -427,88 +425,82 @@ class _PhotoTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<File?>(
-      future: const TravelFileService().resolveDocumentFile(photo),
-      builder: (context, snapshot) {
-        final file = snapshot.data;
-        final hasPreview = file != null && file.existsSync();
-
-        return Material(
-          color: Colors.transparent,
-          borderRadius: BorderRadius.circular(22),
-          clipBehavior: Clip.antiAlias,
-          child: InkWell(
-            onTap: onTap,
-            child: Ink(
-              decoration: BoxDecoration(
-                color: AppColors.primarySoft,
-                borderRadius: BorderRadius.circular(22),
-                border: Border.all(color: AppColors.border),
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(22),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Ink(
+          decoration: BoxDecoration(
+            color: AppColors.primarySoft,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              TravelDocumentImage(
+                key: ValueKey<String>(
+                  'album-photo-${photo.id}-${photo.relativePath}',
+                ),
+                document: photo,
+                fit: BoxFit.cover,
+                cacheWidth: 900,
+                filterQuality: FilterQuality.medium,
+                placeholder: const _PhotoPlaceholder(),
+                semanticLabel: photo.title.trim().isEmpty
+                    ? 'Reisefoto'
+                    : photo.title,
               ),
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  if (hasPreview)
-                    Image.file(
-                      file,
-                      fit: BoxFit.cover,
-                      cacheWidth: 900,
-                      errorBuilder: (context, error, stackTrace) {
-                        return const _PhotoPlaceholder();
-                      },
-                    )
-                  else
-                    const _PhotoPlaceholder(),
-                  const DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [Colors.transparent, Color(0xB8000000)],
-                        stops: [0.5, 1],
-                      ),
-                    ),
+              const DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Colors.transparent, Color(0xB8000000)],
+                    stops: [0.5, 1],
                   ),
-                  Positioned(
-                    left: 10,
-                    right: 10,
-                    bottom: 9,
+                ),
+              ),
+              Positioned(
+                left: 10,
+                right: 10,
+                bottom: 9,
+                child: Text(
+                  photo.title.trim().isEmpty ? 'Reisefoto' : photo.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              if (remainingCount > 0)
+                Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
                     child: Text(
-                      photo.title.trim().isEmpty ? 'Reisefoto' : photo.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      '+$remainingCount',
+                      style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w900,
                       ),
                     ),
                   ),
-                  if (remainingCount > 0)
-                    Center(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.5),
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                        child: Text(
-                          '+$remainingCount',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
+                ),
+            ],
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 }

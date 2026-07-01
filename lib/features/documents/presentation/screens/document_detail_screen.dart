@@ -1,10 +1,9 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:share_plus/share_plus.dart';
 
 import 'package:florys_diaries/app/theme/app_colors.dart';
+import 'package:florys_diaries/core/widgets/travel_document_image.dart';
 import 'package:florys_diaries/features/documents/data/travel_file_service.dart';
 import 'package:florys_diaries/features/documents/domain/travel_document.dart';
 
@@ -20,12 +19,12 @@ class DocumentDetailScreen extends StatelessWidget {
 
   Future<void> _openFile(BuildContext context) async {
     final messenger = ScaffoldMessenger.of(context);
-    final file = await _fileService.resolveDocumentFile(document);
+    final file = await _fileService.resolveExistingDocumentFile(document);
     if (!context.mounted) {
       return;
     }
 
-    if (file == null || !file.existsSync()) {
+    if (file == null) {
       _showMissingFileMessage(messenger);
       return;
     }
@@ -39,12 +38,12 @@ class DocumentDetailScreen extends StatelessWidget {
   Future<void> _shareFile(BuildContext context) async {
     final messenger = ScaffoldMessenger.of(context);
     final box = context.findRenderObject() as RenderBox?;
-    final file = await _fileService.resolveDocumentFile(document);
+    final file = await _fileService.resolveExistingDocumentFile(document);
     if (!context.mounted) {
       return;
     }
 
-    if (file == null || !file.existsSync()) {
+    if (file == null) {
       _showMissingFileMessage(messenger);
       return;
     }
@@ -71,12 +70,12 @@ class DocumentDetailScreen extends StatelessWidget {
 
   Future<void> _showIntegratedPreview(BuildContext context) async {
     final messenger = ScaffoldMessenger.of(context);
-    final file = await _fileService.resolveDocumentFile(document);
+    final file = await _fileService.resolveExistingDocumentFile(document);
     if (!context.mounted) {
       return;
     }
 
-    if (file == null || !file.existsSync()) {
+    if (file == null) {
       _showMissingFileMessage(messenger);
       return;
     }
@@ -353,33 +352,44 @@ class _DocumentPreview extends StatelessWidget {
   const _DocumentPreview({required this.document});
 
   final TravelDocument document;
-  static const _fileService = TravelFileService();
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<File?>(
-      future: _fileService.resolveDocumentFile(document),
-      builder: (context, snapshot) {
-        final file = snapshot.data;
-        final showImage = file != null && _isImage(document.fileExtension);
+    final fallback = _PreviewFallback(document: document);
 
-        return Card(
-          clipBehavior: Clip.antiAlias,
-          child: SizedBox(
-            height: 240,
-            width: double.infinity,
-            child: showImage
-                ? Image.file(
-                    file,
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: SizedBox(
+        height: 240,
+        width: double.infinity,
+        child: _isImage(document.fileExtension)
+            ? LayoutBuilder(
+                builder: (context, constraints) {
+                  final devicePixelRatio = MediaQuery.devicePixelRatioOf(
+                    context,
+                  );
+                  final cacheWidth = (constraints.maxWidth * devicePixelRatio)
+                      .round()
+                      .clamp(600, 1600)
+                      .toInt();
+
+                  return TravelDocumentImage(
+                    key: ValueKey<String>(
+                      'document-detail-${document.id}-${document.relativePath}',
+                    ),
+                    document: document,
                     fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return _PreviewFallback(document: document);
-                    },
-                  )
-                : _PreviewFallback(document: document),
-          ),
-        );
-      },
+                    cacheWidth: cacheWidth,
+                    filterQuality: FilterQuality.medium,
+                    placeholder: fallback,
+                    semanticLabel: document.title.trim().isEmpty
+                        ? 'Dokumentvorschau'
+                        : document.title,
+                  );
+                },
+              )
+            : fallback,
+      ),
     );
   }
 
@@ -388,7 +398,9 @@ class _DocumentPreview extends StatelessWidget {
     return value == 'jpg' ||
         value == 'jpeg' ||
         value == 'png' ||
-        value == 'webp';
+        value == 'webp' ||
+        value == 'heic' ||
+        value == 'heif';
   }
 }
 

@@ -26,6 +26,8 @@ class TravelFileService {
   const TravelFileService({TravelFileClock? now, this.rootDirectoryProvider})
     : _now = now;
 
+  static Future<Directory>? _defaultRootDirectoryFuture;
+
   final TravelFileClock? _now;
   final TravelFileRootDirectoryProvider? rootDirectoryProvider;
 
@@ -85,9 +87,17 @@ class TravelFileService {
     return _managedFile(relativePath);
   }
 
-  Future<bool> documentFileExists(TravelDocument document) async {
+  Future<File?> resolveExistingDocumentFile(TravelDocument document) async {
     final file = await resolveDocumentFile(document);
-    return file != null && await file.exists();
+    if (file == null || !await file.exists()) {
+      return null;
+    }
+    return file;
+  }
+
+  Future<bool> documentFileExists(TravelDocument document) async {
+    final file = await resolveExistingDocumentFile(document);
+    return file != null;
   }
 
   Future<Directory> rootDirectory() {
@@ -138,6 +148,24 @@ class TravelFileService {
       return provider();
     }
 
+    final cached = _defaultRootDirectoryFuture;
+    if (cached != null) {
+      return cached;
+    }
+
+    final future = _loadDefaultRootDirectory();
+    _defaultRootDirectoryFuture = future;
+    try {
+      return await future;
+    } catch (_) {
+      if (identical(_defaultRootDirectoryFuture, future)) {
+        _defaultRootDirectoryFuture = null;
+      }
+      rethrow;
+    }
+  }
+
+  static Future<Directory> _loadDefaultRootDirectory() async {
     final directory = await getApplicationDocumentsDirectory();
     return Directory(_join(directory.path, 'FlorysDiaries'));
   }

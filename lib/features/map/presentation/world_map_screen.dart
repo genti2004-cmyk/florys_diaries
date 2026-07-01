@@ -172,16 +172,18 @@ class _WorldMapScreenState extends State<WorldMapScreen> {
           Card(
             child: Padding(
               padding: const EdgeInsets.all(14),
-              child: ProfessionalWorldMap(
-                countries: snapshot.countries,
-                cities: snapshot.cities,
-                routes: snapshot.routes,
-                layer: _layer,
-                style: _style,
-                focusedRouteId: focusedRouteId,
-                onRouteSelected: (routeId) {
-                  setState(() => _focusedRouteId = routeId);
-                },
+              child: RepaintBoundary(
+                child: ProfessionalWorldMap(
+                  countries: snapshot.countries,
+                  cities: snapshot.cities,
+                  routes: snapshot.routes,
+                  layer: _layer,
+                  style: _style,
+                  focusedRouteId: focusedRouteId,
+                  onRouteSelected: (routeId) {
+                    setState(() => _focusedRouteId = routeId);
+                  },
+                ),
               ),
             ),
           ),

@@ -1,9 +1,7 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 
 import 'package:florys_diaries/app/theme/app_colors.dart';
-import 'package:florys_diaries/features/documents/data/travel_file_service.dart';
+import 'package:florys_diaries/core/widgets/travel_document_image.dart';
 import 'package:florys_diaries/features/documents/domain/document_category.dart';
 import 'package:florys_diaries/features/documents/domain/travel_document.dart';
 
@@ -119,8 +117,6 @@ class TravelDocumentCard extends StatelessWidget {
 class _DocumentLeading extends StatelessWidget {
   const _DocumentLeading({required this.document});
 
-  static const TravelFileService _fileService = TravelFileService();
-
   final TravelDocument document;
 
   @override
@@ -129,33 +125,28 @@ class _DocumentLeading extends StatelessWidget {
       return _DocumentIcon(document: document);
     }
 
-    return FutureBuilder<File?>(
-      future: _fileService.resolveDocumentFile(document),
-      builder: (context, snapshot) {
-        final file = snapshot.data;
-        if (file == null || !file.existsSync()) {
-          return _DocumentIcon(document: document);
-        }
-
-        return Container(
-          width: 66,
-          height: 66,
-          decoration: BoxDecoration(
-            color: AppColors.primarySoft,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: AppColors.border),
-          ),
-          clipBehavior: Clip.antiAlias,
-          child: Image.file(
-            file,
-            fit: BoxFit.cover,
-            cacheWidth: 320,
-            errorBuilder: (context, error, stackTrace) {
-              return _DocumentIcon(document: document, compact: true);
-            },
-          ),
-        );
-      },
+    return Container(
+      width: 66,
+      height: 66,
+      decoration: BoxDecoration(
+        color: AppColors.primarySoft,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.border),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: TravelDocumentImage(
+        key: ValueKey<String>(
+          'document-card-${document.id}-${document.relativePath}',
+        ),
+        document: document,
+        fit: BoxFit.cover,
+        cacheWidth: 320,
+        cacheHeight: 320,
+        placeholder: _DocumentIcon(document: document, compact: true),
+        semanticLabel: document.title.trim().isEmpty
+            ? 'Dokumentvorschau'
+            : document.title,
+      ),
     );
   }
 

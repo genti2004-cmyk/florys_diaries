@@ -1,14 +1,12 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 
+import 'package:florys_diaries/core/widgets/travel_document_image.dart';
 import 'package:florys_diaries/core/widgets/travel_visuals.dart';
-import 'package:florys_diaries/features/documents/data/travel_file_service.dart';
 import 'package:florys_diaries/features/documents/domain/document_category.dart';
 import 'package:florys_diaries/features/documents/domain/travel_document.dart';
 import 'package:florys_diaries/features/trips/domain/trip.dart';
 
-class TripCoverImage extends StatefulWidget {
+class TripCoverImage extends StatelessWidget {
   const TripCoverImage({
     required this.trip,
     required this.borderRadius,
@@ -53,44 +51,23 @@ class TripCoverImage extends StatefulWidget {
   }
 
   @override
-  State<TripCoverImage> createState() => _TripCoverImageState();
-}
-
-class _TripCoverImageState extends State<TripCoverImage> {
-  Future<File?>? _fileFuture;
-  TravelDocument? _photo;
-
-  @override
-  void initState() {
-    super.initState();
-    _refreshPhoto();
-  }
-
-  @override
-  void didUpdateWidget(covariant TripCoverImage oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.trip.id != widget.trip.id ||
-        oldWidget.trip.documents != widget.trip.documents) {
-      _refreshPhoto();
-    }
-  }
-
-  void _refreshPhoto() {
-    _photo = TripCoverImage.firstPhotoDocument(widget.trip);
-    final photo = _photo;
-    _fileFuture = photo == null
-        ? null
-        : const TravelFileService().resolveDocumentFile(photo);
-  }
-
-  @override
   Widget build(BuildContext context) {
     final palette = TravelVisuals.forText(
-      '${widget.trip.title} ${widget.trip.destination} ${widget.trip.country}',
+      '${trip.title} ${trip.destination} ${trip.country}',
     );
+    final photo = firstPhotoDocument(trip);
+    final fallback = showFallbackIcon
+        ? Center(
+            child: Icon(
+              palette.icon,
+              color: Colors.white.withValues(alpha: 0.88),
+              size: 30,
+            ),
+          )
+        : const SizedBox.shrink();
 
     return ClipRRect(
-      borderRadius: widget.borderRadius,
+      borderRadius: borderRadius,
       child: Stack(
         fit: StackFit.expand,
         children: [
@@ -103,43 +80,38 @@ class _TripCoverImageState extends State<TripCoverImage> {
               ),
             ),
           ),
-          if (_fileFuture != null)
-            FutureBuilder<File?>(
-              future: _fileFuture,
-              builder: (context, snapshot) {
-                final file = snapshot.data;
-                if (file == null) {
-                  return const SizedBox.shrink();
-                }
-                return FutureBuilder<bool>(
-                  future: file.exists(),
-                  builder: (context, existsSnapshot) {
-                    if (existsSnapshot.data != true) {
-                      return const SizedBox.shrink();
-                    }
-                    return Image.file(
-                      file,
-                      fit: widget.fit,
-                      filterQuality: FilterQuality.medium,
-                      errorBuilder: (context, error, stackTrace) {
-                        return const SizedBox.shrink();
-                      },
-                    );
-                  },
+          if (photo != null)
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final devicePixelRatio = MediaQuery.devicePixelRatioOf(context);
+                final logicalWidth = constraints.maxWidth.isFinite
+                    ? constraints.maxWidth
+                    : MediaQuery.sizeOf(context).width;
+                final cacheWidth = (logicalWidth * devicePixelRatio)
+                    .round()
+                    .clamp(360, 1600)
+                    .toInt();
+
+                return TravelDocumentImage(
+                  key: ValueKey<String>(
+                    'trip-cover-${photo.id}-${photo.relativePath}',
+                  ),
+                  document: photo,
+                  fit: fit,
+                  cacheWidth: cacheWidth,
+                  filterQuality: FilterQuality.medium,
+                  placeholder: fallback,
+                  semanticLabel: photo.title.trim().isEmpty
+                      ? 'Reisefoto'
+                      : photo.title,
                 );
               },
-            ),
-          if (widget.overlay != null)
-            DecoratedBox(decoration: BoxDecoration(gradient: widget.overlay)),
-          if (_photo == null && widget.showFallbackIcon)
-            Center(
-              child: Icon(
-                palette.icon,
-                color: Colors.white.withValues(alpha: 0.88),
-                size: 30,
-              ),
-            ),
-          if (widget.child != null) widget.child!,
+            )
+          else
+            fallback,
+          if (overlay != null)
+            DecoratedBox(decoration: BoxDecoration(gradient: overlay)),
+          ?child,
         ],
       ),
     );

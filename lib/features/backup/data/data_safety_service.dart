@@ -61,8 +61,8 @@ class DataSafetyService {
         }
 
         try {
-          final file = await fileService.resolveDocumentFile(document);
-          if (file == null || !await file.exists()) {
+          final file = await fileService.resolveExistingDocumentFile(document);
+          if (file == null) {
             missingFileCount++;
           }
         } on FileSystemException {
