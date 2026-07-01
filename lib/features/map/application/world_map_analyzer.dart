@@ -10,13 +10,17 @@ class WorldMapAnalyzer {
     final years = _travelYears(source);
     final effectiveYear = year != null && years.contains(year) ? year : null;
     final trips = _filterTripsByYear(source, effectiveYear);
-    final countries = _buildCountryVisits(trips);
-    final cities = _buildCityVisits(trips, countries);
-    final routes = _buildTravelRoutes(trips);
+    final countries = _buildCountryVisits(trips, year: effectiveYear);
+    final cities = _buildCityVisits(
+      trips,
+      countries,
+      year: effectiveYear,
+    );
+    final routes = _buildTravelRoutes(trips, year: effectiveYear);
     final continents = _buildContinentStats(countries);
     final travelDays = trips.fold<int>(
       0,
-      (sum, trip) => sum + trip.durationDays,
+      (sum, trip) => sum + _travelDaysForTrip(trip, effectiveYear),
     );
 
     return WorldMapSnapshot(
@@ -66,7 +70,10 @@ class WorldMapAnalyzer {
     return years.toList()..sort((a, b) => b.compareTo(a));
   }
 
-  static List<CountryVisit> _buildCountryVisits(List<Trip> trips) {
+  static List<CountryVisit> _buildCountryVisits(
+    List<Trip> trips, {
+    required int? year,
+  }) {
     final grouped = <String, _CountryBucket>{};
 
     for (final trip in trips) {
@@ -94,7 +101,7 @@ class WorldMapAnalyzer {
             cityCount: cities.length,
             travelDays: bucket.trips.fold<int>(
               0,
-              (sum, trip) => sum + trip.durationDays,
+              (sum, trip) => sum + _travelDaysForTrip(trip, year),
             ),
             documentCount: bucket.trips.fold<int>(
               0,
@@ -124,8 +131,9 @@ class WorldMapAnalyzer {
 
   static List<CityVisit> _buildCityVisits(
     List<Trip> trips,
-    List<CountryVisit> countries,
-  ) {
+    List<CountryVisit> countries, {
+    required int? year,
+  }) {
     final countryByName = {
       for (final country in countries)
         normalizeGeoName(country.country): country,
@@ -156,7 +164,7 @@ class WorldMapAnalyzer {
             tripCount: bucket.trips.length,
             travelDays: bucket.trips.fold<int>(
               0,
-              (sum, trip) => sum + trip.durationDays,
+              (sum, trip) => sum + _travelDaysForTrip(trip, year),
             ),
             documentCount: bucket.trips.fold<int>(
               0,
@@ -188,7 +196,10 @@ class WorldMapAnalyzer {
     return cities;
   }
 
-  static List<TravelRoute> _buildTravelRoutes(List<Trip> trips) {
+  static List<TravelRoute> _buildTravelRoutes(
+    List<Trip> trips, {
+    required int? year,
+  }) {
     final sortedTrips =
         trips
             .where(
@@ -235,7 +246,7 @@ class WorldMapAnalyzer {
             countryPosition(current.country),
           ),
           date: current.startDate,
-          travelDays: current.durationDays,
+          travelDays: _travelDaysForTrip(current, year),
           documentCount: current.documents.length,
           highlightCount: current.highlightCount,
         ),
@@ -267,6 +278,44 @@ class WorldMapAnalyzer {
     });
 
     return result;
+  }
+
+  static int _travelDaysForTrip(Trip trip, int? year) {
+    final start = _tripStart(trip);
+    final end = _tripEnd(trip);
+    if (year == null) {
+      return _inclusiveDays(start, end);
+    }
+
+    final yearStart = DateTime(year);
+    final yearEnd = DateTime(year, 12, 31);
+    final overlapStart = start.isAfter(yearStart) ? start : yearStart;
+    final overlapEnd = end.isBefore(yearEnd) ? end : yearEnd;
+    if (overlapStart.isAfter(overlapEnd)) {
+      return 0;
+    }
+    return _inclusiveDays(overlapStart, overlapEnd);
+  }
+
+  static DateTime _tripStart(Trip trip) {
+    final start = _dateOnly(trip.startDate);
+    final end = _dateOnly(trip.endDate);
+    return start.isBefore(end) ? start : end;
+  }
+
+  static DateTime _tripEnd(Trip trip) {
+    final start = _dateOnly(trip.startDate);
+    final end = _dateOnly(trip.endDate);
+    return start.isAfter(end) ? start : end;
+  }
+
+  static DateTime _dateOnly(DateTime value) =>
+      DateTime(value.year, value.month, value.day);
+
+  static int _inclusiveDays(DateTime start, DateTime end) {
+    final utcStart = DateTime.utc(start.year, start.month, start.day);
+    final utcEnd = DateTime.utc(end.year, end.month, end.day);
+    return utcEnd.difference(utcStart).inDays + 1;
   }
 
   static List<String> _uniqueValues(Iterable<String> values) {

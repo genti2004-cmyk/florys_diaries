@@ -44,8 +44,12 @@ class _CountingStatisticsAnalyzer extends TravelStatisticsAnalyzer {
   int callCount = 0;
 
   @override
-  TravelStatistics analyze(List<Trip> trips) {
+  TravelStatistics analyze(
+    List<Trip> trips, {
+    int? year,
+    DateTime? now,
+  }) {
     callCount += 1;
-    return super.analyze(trips);
+    return super.analyze(trips, year: year, now: now);
   }
 }

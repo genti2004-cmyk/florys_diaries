@@ -10,6 +10,7 @@ import 'package:florys_diaries/features/map/widgets/world_map_controls.dart';
 import 'package:florys_diaries/features/map/widgets/world_map_focus_panel.dart';
 import 'package:florys_diaries/features/map/widgets/world_map_overview_panels.dart';
 import 'package:florys_diaries/features/map/widgets/world_summary_card.dart';
+import 'package:florys_diaries/features/statistics/presentation/statistics_screen.dart';
 import 'package:florys_diaries/features/trips/application/trip_store_scope.dart';
 import 'package:florys_diaries/features/trips/domain/trip.dart';
 
@@ -82,6 +83,18 @@ class _WorldMapScreenState extends State<WorldMapScreen> {
               travelDays: snapshot.travelDays,
               progressPercent: snapshot.progressPercent,
             ),
+            if (allTrips.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  key: const ValueKey<String>('open-travel-statistics'),
+                  onPressed: () => _openStatistics(selectedYear),
+                  icon: const Icon(Icons.insights_rounded),
+                  label: const Text('Reisebilanz öffnen'),
+                ),
+              ),
+            ],
             const SizedBox(height: 14),
             SizedBox(
               width: double.infinity,
@@ -217,6 +230,20 @@ class _WorldMapScreenState extends State<WorldMapScreen> {
           WorldMapContinentOverview(continents: snapshot.continents),
         ];
     }
+  }
+
+  Future<void> _openStatistics(int? initialYear) {
+    return Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => Scaffold(
+          appBar: AppBar(title: const Text('Reisebilanz')),
+          body: StatisticsScreen(
+            showHeader: false,
+            initialYear: initialYear,
+          ),
+        ),
+      ),
+    );
   }
 
   WorldMapSnapshot _snapshotFor(List<Trip> trips, int? year) {

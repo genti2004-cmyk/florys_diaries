@@ -12,14 +12,20 @@ void main() {
   test('returns a complete empty state', () {
     final statistics = analyzer.analyze(const <Trip>[]);
 
+    expect(statistics.selectedYear, isNull);
+    expect(statistics.availableYears, isEmpty);
     expect(statistics.tripCount, 0);
     expect(statistics.countryCount, 0);
     expect(statistics.cityCount, 0);
     expect(statistics.travelDays, 0);
     expect(statistics.averageTripDays, 0);
+    expect(statistics.completedTripCount, 0);
+    expect(statistics.activeTripCount, 0);
+    expect(statistics.upcomingTripCount, 0);
     expect(statistics.documentCount, 0);
     expect(statistics.photoTotal, 0);
     expect(statistics.worldProgressFraction, 0);
+    expect(statistics.periodLabel, 'Alle Jahre');
     expect(statistics.worldPercentLabel, '0.0 %');
     expect(statistics.averageTripDaysLabel, '0 Tage');
     expect(statistics.longestTripLabel, 'Noch keine Reise');
@@ -105,13 +111,21 @@ void main() {
       ),
     ];
 
-    final statistics = analyzer.analyze(trips);
+    final statistics = analyzer.analyze(
+      trips,
+      now: DateTime(2025, 1, 15),
+    );
 
+    expect(statistics.selectedYear, isNull);
+    expect(statistics.availableYears, [2025, 2024]);
     expect(statistics.tripCount, 3);
     expect(statistics.countryCount, 2);
     expect(statistics.cityCount, 3);
     expect(statistics.travelDays, 6);
     expect(statistics.averageTripDays, 2);
+    expect(statistics.completedTripCount, 2);
+    expect(statistics.activeTripCount, 0);
+    expect(statistics.upcomingTripCount, 1);
     expect(statistics.documentCount, 3);
     expect(statistics.pdfCount, 1);
     expect(statistics.imageCount, 2);
@@ -121,7 +135,7 @@ void main() {
     expect(statistics.highlightCount, 1);
     expect(statistics.favoriteMomentCount, 1);
     expect(statistics.longestTripLabel, 'Berlin Wochenende · 3 Tage');
-    expect(statistics.shortestTripLabel, 'Rom, Italien · 1 Tage');
+    expect(statistics.shortestTripLabel, 'Rom, Italien · 1 Tag');
 
     expect(statistics.topCountries.first.label, 'Deutschland');
     expect(statistics.topCountries.first.value, 2);
@@ -133,7 +147,7 @@ void main() {
       'München',
       'Rom',
     ]);
-    expect(statistics.topCityLabel, 'Berlin · 1 Reisen');
+    expect(statistics.topCityLabel, 'Berlin · 1 Reise');
 
     expect(statistics.continents, hasLength(1));
     expect(statistics.continents.single.label, 'Europa');
@@ -144,6 +158,51 @@ void main() {
     expect(statistics.years.first.travelDays, 5);
     expect(statistics.years.first.countryCount, 1);
     expect(statistics.years.first.cityCount, 2);
+  });
+
+  test('filters by year and counts only overlapping travel days', () {
+    final trips = [
+      Trip(
+        id: 'long',
+        title: 'Lange Reise',
+        destination: 'Reykjavik',
+        country: 'Island',
+        startDate: DateTime(2023, 12, 30),
+        endDate: DateTime(2025, 1, 2),
+      ),
+      Trip(
+        id: 'short',
+        title: 'Kurzreise',
+        destination: 'Wien',
+        country: 'Österreich',
+        startDate: DateTime(2024, 5, 10),
+        endDate: DateTime(2024, 5, 12),
+      ),
+    ];
+
+    final statistics = analyzer.analyze(
+      trips,
+      year: 2024,
+      now: DateTime(2024, 6, 1),
+    );
+
+    expect(statistics.selectedYear, 2024);
+    expect(statistics.periodLabel, '2024');
+    expect(statistics.availableYears, [2025, 2024, 2023]);
+    expect(statistics.tripCount, 2);
+    expect(statistics.travelDays, 369);
+    expect(statistics.averageTripDays, 184.5);
+    expect(statistics.completedTripCount, 1);
+    expect(statistics.activeTripCount, 1);
+    expect(statistics.upcomingTripCount, 0);
+    expect(statistics.longestTripLabel, 'Lange Reise · 366 Tage');
+    expect(statistics.shortestTripLabel, 'Kurzreise · 3 Tage');
+
+    final year = statistics.years.singleWhere((item) => item.year == 2024);
+    expect(year.tripCount, 2);
+    expect(year.travelDays, 369);
+    expect(year.countryCount, 2);
+    expect(year.cityCount, 2);
   });
 
   test('groups country and city names case-insensitively', () {
@@ -200,6 +259,10 @@ void main() {
     );
     expect(
       () => statistics.years.add(statistics.years.first),
+      throwsUnsupportedError,
+    );
+    expect(
+      () => statistics.availableYears.add(2023),
       throwsUnsupportedError,
     );
   });

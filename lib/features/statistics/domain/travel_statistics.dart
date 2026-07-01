@@ -1,11 +1,16 @@
 class TravelStatistics {
   const TravelStatistics({
+    required this.selectedYear,
+    required this.availableYears,
     required this.tripCount,
     required this.countryCount,
     required this.cityCount,
     required this.worldProgressFraction,
     required this.travelDays,
     required this.averageTripDays,
+    required this.completedTripCount,
+    required this.activeTripCount,
+    required this.upcomingTripCount,
     required this.documentCount,
     required this.pdfCount,
     required this.imageCount,
@@ -22,12 +27,17 @@ class TravelStatistics {
     required this.years,
   });
 
+  final int? selectedYear;
+  final List<int> availableYears;
   final int tripCount;
   final int countryCount;
   final int cityCount;
   final double worldProgressFraction;
   final int travelDays;
   final double averageTripDays;
+  final int completedTripCount;
+  final int activeTripCount;
+  final int upcomingTripCount;
   final int documentCount;
   final int pdfCount;
   final int imageCount;
@@ -42,6 +52,10 @@ class TravelStatistics {
   final List<StatisticsRankItem> topCities;
   final List<StatisticsRankItem> continents;
   final List<YearStatistics> years;
+
+  String get periodLabel => selectedYear == null
+      ? 'Alle Jahre'
+      : selectedYear.toString();
 
   String get worldPercentLabel =>
       '${(worldProgressFraction * 100).toStringAsFixed(1)} %';

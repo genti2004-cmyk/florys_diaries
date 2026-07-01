@@ -75,6 +75,9 @@ void main() {
     expect(middleYear.trips, [trip]);
     expect(middleYear.countryCount, 1);
     expect(middleYear.cityCount, 1);
+    expect(middleYear.travelDays, 366);
+    expect(middleYear.countries.single.travelDays, 366);
+    expect(middleYear.cities.single.travelDays, 366);
   });
 
   test('does not mutate source data and exposes immutable lists', () {

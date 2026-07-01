@@ -5,6 +5,7 @@ import 'package:florys_diaries/core/widgets/travel_data_empty_state.dart';
 import 'package:florys_diaries/features/statistics/application/travel_statistics_analyzer.dart';
 import 'package:florys_diaries/features/statistics/domain/travel_statistics.dart';
 import 'package:florys_diaries/features/statistics/presentation/widgets/statistics_overview_cards.dart';
+import 'package:florys_diaries/features/statistics/presentation/widgets/statistics_period_filter.dart';
 import 'package:florys_diaries/features/statistics/presentation/widgets/statistics_rank_panels.dart';
 import 'package:florys_diaries/features/statistics/presentation/widgets/statistics_vault_memory_panel.dart';
 import 'package:florys_diaries/features/trips/application/trip_store_scope.dart';
@@ -15,10 +16,12 @@ class StatisticsScreen extends StatefulWidget {
     super.key,
     this.analyzer = const TravelStatisticsAnalyzer(),
     this.showHeader = true,
+    this.initialYear,
   });
 
   final TravelStatisticsAnalyzer analyzer;
   final bool showHeader;
+  final int? initialYear;
 
   @override
   State<StatisticsScreen> createState() => _StatisticsScreenState();
@@ -26,7 +29,15 @@ class StatisticsScreen extends StatefulWidget {
 
 class _StatisticsScreenState extends State<StatisticsScreen> {
   List<Trip>? _analyzedTrips;
+  int? _selectedYear;
+  int? _analyzedYear;
   TravelStatistics? _statistics;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedYear = widget.initialYear;
+  }
 
   @override
   void didChangeDependencies() {
@@ -37,11 +48,12 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   @override
   void didUpdateWidget(covariant StatisticsScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (!identical(widget.analyzer, oldWidget.analyzer)) {
-      final trips = _analyzedTrips;
-      if (trips != null) {
-        _statistics = widget.analyzer.analyze(trips);
-      }
+    final yearChanged = widget.initialYear != oldWidget.initialYear;
+    if (yearChanged) {
+      _selectedYear = widget.initialYear;
+    }
+    if (yearChanged || !identical(widget.analyzer, oldWidget.analyzer)) {
+      _recalculate();
     }
   }
 
@@ -54,7 +66,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       child: SafeArea(
         bottom: false,
         child: ListView(
-          key: const PageStorageKey<String>('travel-statistics'),
+          key: const PageStorageKey<String>('travel-statistics-v23'),
           padding: const EdgeInsets.fromLTRB(16, 18, 16, 150),
           children: [
             if (widget.showHeader) ...[
@@ -71,6 +83,14 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
               ),
               const SizedBox(height: 18),
             ],
+            if (statistics.availableYears.isNotEmpty) ...[
+              StatisticsPeriodFilter(
+                selectedYear: statistics.selectedYear,
+                years: statistics.availableYears,
+                onChanged: _selectYear,
+              ),
+              const SizedBox(height: 14),
+            ],
             if (statistics.tripCount == 0)
               const TravelDataEmptyState(
                 icon: Icons.bar_chart_rounded,
@@ -82,6 +102,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
               )
             else ...[
               StatisticsHeroGrid(statistics: statistics),
+              const SizedBox(height: 14),
+              StatisticsTripStatusCard(statistics: statistics),
               const SizedBox(height: 14),
               StatisticsWorldProgressCard(statistics: statistics),
               const SizedBox(height: 14),
@@ -111,13 +133,36 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     );
   }
 
+  void _selectYear(int? year) {
+    if (year == _selectedYear) {
+      return;
+    }
+    setState(() {
+      _selectedYear = year;
+      _recalculate();
+    });
+  }
+
   void _refreshStatistics() {
     final trips = TripStoreScope.of(context).trips;
-    if (identical(_analyzedTrips, trips) && _statistics != null) {
+    if (identical(_analyzedTrips, trips) &&
+        _analyzedYear == _selectedYear &&
+        _statistics != null) {
       return;
     }
 
     _analyzedTrips = trips;
-    _statistics = widget.analyzer.analyze(trips);
+    _recalculate();
+  }
+
+  void _recalculate() {
+    final trips = _analyzedTrips;
+    if (trips == null) {
+      return;
+    }
+    final statistics = widget.analyzer.analyze(trips, year: _selectedYear);
+    _selectedYear = statistics.selectedYear;
+    _analyzedYear = statistics.selectedYear;
+    _statistics = statistics;
   }
 }

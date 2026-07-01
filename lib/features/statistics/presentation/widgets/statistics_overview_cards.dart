@@ -37,7 +37,7 @@ class StatisticsHeroGrid extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final columns = constraints.maxWidth < 340 ? 1 : 2;
-        final spacing = 10.0;
+        const spacing = 10.0;
         final width =
             (constraints.maxWidth - spacing * (columns - 1)) / columns;
 
@@ -49,6 +49,71 @@ class StatisticsHeroGrid extends StatelessWidget {
               .toList(growable: false),
         );
       },
+    );
+  }
+}
+
+class StatisticsTripStatusCard extends StatelessWidget {
+  const StatisticsTripStatusCard({super.key, required this.statistics});
+
+  final TravelStatistics statistics;
+
+  @override
+  Widget build(BuildContext context) {
+    final items = [
+      _StatusItem(
+        icon: Icons.check_circle_rounded,
+        label: 'Abgeschlossen',
+        value: statistics.completedTripCount,
+        color: AppColors.success,
+      ),
+      _StatusItem(
+        icon: Icons.flight_rounded,
+        label: 'Unterwegs',
+        value: statistics.activeTripCount,
+        color: AppColors.primary,
+      ),
+      _StatusItem(
+        icon: Icons.schedule_rounded,
+        label: 'Geplant',
+        value: statistics.upcomingTripCount,
+        color: AppColors.warning,
+      ),
+    ];
+
+    return StatisticsPanel(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          StatisticsPanelHeader(
+            icon: Icons.timeline_rounded,
+            title: 'Reisestatus',
+            subtitle: statistics.selectedYear == null
+                ? 'Heutiger Stand über alle gespeicherten Reisen.'
+                : 'Heutiger Stand für Reisen im Jahr ${statistics.selectedYear}.',
+          ),
+          const SizedBox(height: 14),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final width = constraints.maxWidth < 420
+                  ? constraints.maxWidth
+                  : (constraints.maxWidth - 20) / 3;
+              return Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: items
+                    .map(
+                      (item) => SizedBox(
+                        width: width,
+                        child: _StatusTile(item: item),
+                      ),
+                    )
+                    .toList(growable: false),
+              );
+            },
+          ),
+        ],
+      ),
     );
   }
 }
@@ -192,6 +257,69 @@ class _StatTile extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _StatusItem {
+  const _StatusItem({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  final IconData icon;
+  final String label;
+  final int value;
+  final Color color;
+}
+
+class _StatusTile extends StatelessWidget {
+  const _StatusTile({required this.item});
+
+  final _StatusItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minHeight: 84),
+      padding: const EdgeInsets.all(13),
+      decoration: BoxDecoration(
+        color: item.color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: item.color.withValues(alpha: 0.20)),
+      ),
+      child: Row(
+        children: [
+          Icon(item.icon, color: item.color, size: 22),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.value.toString(),
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: item.color,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                Text(
+                  item.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.textMuted,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

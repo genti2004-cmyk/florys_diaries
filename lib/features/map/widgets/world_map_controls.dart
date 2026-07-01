@@ -55,6 +55,9 @@ class WorldMapControls extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           DropdownButtonFormField<int?>(
+            key: ValueKey<String>(
+              'world-map-year-filter-${selectedYear ?? 'all'}',
+            ),
             initialValue: selectedYear,
             isExpanded: true,
             decoration: const InputDecoration(
